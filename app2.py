@@ -50,7 +50,6 @@ def convert_file():
         
         input_path = os.path.join(TEMP_FOLDER, f"{unique_id}_{filename}")
         
-        # O LibreOffice salva mantendo o nome do arquivo, mudando apenas a extensão
         nome_base = f"{unique_id}_{filename.rsplit('.', 1)[0]}"
         output_path = os.path.join(TEMP_FOLDER, f"{nome_base}.pdf")
         
@@ -88,7 +87,3 @@ def convert_file():
             return jsonify({'error': f'Erro durante a conversão: {str(e)}'}), 500
             
     return jsonify({'error': 'Formato não suportado.'}), 415
-
-if __name__ == '__main__':
-    # Mantém o acesso para testes locais
-    app.run(host='0.0.0.0', debug=True, port=5000)
