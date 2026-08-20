@@ -139,11 +139,15 @@ def paginas():
     import re
 
     def _paginas(dados):
-        contagens = re.findall(rb'/Count (\d+)', dados)
+        contagens = re.findall(rb'/Count\s+(\d+)', dados)
         assert contagens, 'PDF sem /Count'
         total = int(contagens[-1])
 
-        caixas = re.findall(rb'/MediaBox \[ 0 0 ([\d.]+) ([\d.]+) \]', dados)
+        # Espacos frouxos de proposito: o formato exato e detalhe do escritor
+        # de PDF do Pillow, e a pin do requirements muda com o tempo.
+        caixas = re.findall(
+            rb'/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]', dados
+        )
         assert len(caixas) >= total, 'menos MediaBox que paginas'
 
         return [(float(l), float(a)) for l, a in caixas[-total:]]

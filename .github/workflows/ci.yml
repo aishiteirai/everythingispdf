@@ -101,7 +101,7 @@ jobs:
           dados = open('galeria.pdf', 'rb').read()
           # O append incremental deixa geracoes antigas no arquivo; o /Count da
           # ultima e o numero de paginas que vale.
-          total = int(re.findall(rb'/Count (\d+)', dados)[-1])
+          total = int(re.findall(rb'/Count\s+(\d+)', dados)[-1])
           assert total == 2, f'esperava 2 paginas, veio {total}'
           print('2 paginas')
           "
