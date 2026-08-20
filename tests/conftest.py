@@ -112,3 +112,88 @@ def rate_limit():
 
     appmod.limiter.enabled = False
     appmod.limiter.reset()
+
+
+@pytest.fixture
+def imagem():
+    """Fabrica bytes de imagem no tamanho, formato e modo pedidos."""
+    from PIL import Image
+
+    def _imagem(largura, altura, formato='PNG', cor=(200, 30, 30), modo='RGB', **extra):
+        buf = io.BytesIO()
+        Image.new(modo, (largura, altura), cor).save(buf, formato, **extra)
+        return buf.getvalue()
+
+    return _imagem
+
+
+@pytest.fixture
+def paginas():
+    """Dimensoes em pontos de cada pagina do PDF, na ordem final.
+
+    O PDF e montado com append incremental, entao cada geracao reescreve a
+    arvore de paginas e as anteriores continuam no arquivo: um PDF de 3
+    paginas tem 6 MediaBox gravados (1 + 2 + 3). O /Count da ultima geracao
+    diz quantas paginas valem, e sao as ultimas -- por isso a fatia no fim.
+    """
+    import re
+
+    def _paginas(dados):
+        contagens = re.findall(rb'/Count (\d+)', dados)
+        assert contagens, 'PDF sem /Count'
+        total = int(contagens[-1])
+
+        caixas = re.findall(rb'/MediaBox \[ 0 0 ([\d.]+) ([\d.]+) \]', dados)
+        assert len(caixas) >= total, 'menos MediaBox que paginas'
+
+        return [(float(l), float(a)) for l, a in caixas[-total:]]
+
+    return _paginas
+
+
+@pytest.fixture
+def opcoes():
+    """Monta o JSON do campo `options` de /api/imgtopdf."""
+    import json
+
+    def _opcoes(quantidade=1, size='image', rotations=None, **extra):
+        giros = rotations if rotations is not None else [0] * quantidade
+        corpo = {'pages': [{'rotation': giro} for giro in giros], 'size': size}
+        corpo.update(extra)
+        return json.dumps(corpo)
+
+    return _opcoes
+
+
+@pytest.fixture
+def envio():
+    """Payload multipart de /api/imgtopdf.
+
+    `arquivos` e uma lista de (bytes, nome). `options=None` omite o campo, para
+    exercitar o payload incompleto.
+    """
+    def _envio(arquivos, options=None):
+        dados = {
+            'files': [(io.BytesIO(conteudo), nome) for conteudo, nome in arquivos],
+        }
+        if options is not None:
+            dados['options'] = options
+
+        return {'data': dados, 'content_type': 'multipart/form-data'}
+
+    return _envio
+
+
+@pytest.fixture
+def limite_pequeno(flask_app):
+    """Baixa MAX_CONTENT_LENGTH para o teste de 413.
+
+    O teto de producao e 32 MB e alocar isso por teste e desperdicio; o que
+    importa e o comportamento no estouro, nao o valor exato.
+    """
+    original = flask_app.config['MAX_CONTENT_LENGTH']
+    flask_app.config['MAX_CONTENT_LENGTH'] = 4096
+
+    yield 4096
+
+    flask_app.config['MAX_CONTENT_LENGTH'] = original

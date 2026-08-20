@@ -138,8 +138,10 @@ class TestValidacaoDeEntrada:
 
         assert r.status_code == 200
 
-    def test_acima_do_limite_da_413_em_json(self, client, upload, flask_app):
-        grande = b'a' * (flask_app.config['MAX_CONTENT_LENGTH'] + 1024)
+    def test_acima_do_limite_da_413_em_json(self, client, upload, limite_pequeno):
+        # O teto de producao e 32 MB; alocar isso por teste e desperdicio, e o
+        # que importa aqui e o comportamento no estouro, nao o valor exato.
+        grande = b'a' * (limite_pequeno + 1024)
 
         r = client.post('/api/convert', **upload(grande, 'grande.docx'))
 

@@ -13,6 +13,8 @@ from PIL import Image
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
 
+import imgtopdf
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(levelname)s [%(name)s] %(message)s',
@@ -34,7 +36,9 @@ if TRUSTED_PROXIES:
 
 swagger = Swagger(app)
 
-MAX_CONTENT_LENGTH = 16 * 1024 * 1024
+# 32 MB e nao 16: um PDF de varias imagens sobe todas de uma vez, e o limite
+# do Flask e do request inteiro, nao por arquivo.
+MAX_CONTENT_LENGTH = 32 * 1024 * 1024
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
 # Conversao e caro: cada documento sobe um LibreOffice. Sem limite, um punhado
@@ -218,6 +222,93 @@ def convert_file():
     finally:
         # Roda em sucesso e em erro. Era o vazamento antigo: o cleanup so
         # existia no caminho de sucesso.
+        shutil.rmtree(work_dir, ignore_errors=True)
+
+
+@app.route('/api/imgtopdf', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
+def imagens_para_pdf():
+    """
+    Monta um PDF unico a partir de varias imagens, na ordem enviada.
+    ---
+    consumes:
+      - multipart/form-data
+    parameters:
+      - name: files
+        in: formData
+        type: file
+        required: true
+        description: >
+          Imagem a incluir. Repita o campo para cada pagina; a ordem do envio
+          e a ordem das paginas. De 1 a 20 imagens.
+      - name: options
+        in: formData
+        type: string
+        required: true
+        description: >
+          JSON com as opcoes. `pages` e uma lista do mesmo tamanho de `files`,
+          cada item com `rotation` em 0, 90, 180 ou 270 (graus no sentido
+          horario). `size` e "image", "a4" ou "letter". `margin_mm` e um
+          inteiro de 0 a 50, ignorado quando `size` e "image". Exemplo:
+          {"pages": [{"rotation": 90}], "size": "a4", "margin_mm": 10}
+    responses:
+      200:
+        description: Arquivo PDF gerado com sucesso.
+      400:
+        description: Opcoes invalidas, quantidade fora da faixa ou imagem ilegivel.
+      413:
+        description: Envio maior que o limite permitido.
+      415:
+        description: Formato de imagem nao suportado.
+      429:
+        description: Limite de requisicoes excedido.
+      500:
+        description: Erro interno.
+    """
+    arquivos = [f for f in request.files.getlist('files') if f.filename]
+    if not arquivos:
+        return jsonify({'error': 'Nenhuma imagem enviada.'}), 400
+
+    for arquivo in arquivos:
+        if get_extension(arquivo.filename) not in IMAGE_EXTENSIONS:
+            return jsonify({'error': 'Formato de imagem nao suportado.'}), 415
+
+    try:
+        opcoes = imgtopdf.valida_opcoes(request.form.get('options'), len(arquivos))
+    except imgtopdf.OpcoesInvalidas as exc:
+        return jsonify({'error': str(exc)}), 400
+
+    work_dir = os.path.join(TEMP_FOLDER, str(uuid.uuid4()))
+    os.makedirs(work_dir, exist_ok=True)
+
+    try:
+        # O nome enviado nunca toca o disco: le direto do stream do werkzeug e
+        # grava so a saida. Assim path traversal no nome nao tem superficie.
+        output_path = os.path.join(work_dir, 'saida.pdf')
+        imgtopdf.monta_pdf(
+            (arquivo.stream for arquivo in arquivos), opcoes, output_path
+        )
+
+        with open(output_path, 'rb') as pdf:
+            conteudo = pdf.read()
+
+        # N arquivos de entrada nao tem um nome de saida obvio.
+        return send_file(
+            io.BytesIO(conteudo),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name='imagens.pdf',
+        )
+
+    except imgtopdf.ImagemInvalida as exc:
+        logger.info('Imagem recusada: %s', exc)
+        return jsonify({'error': str(exc)}), 400
+
+    except Exception:
+        logger.exception('Falha ao montar PDF de %s imagens', len(arquivos))
+        return jsonify({'error': 'Erro ao montar o PDF.'}), 500
+
+    finally:
         shutil.rmtree(work_dir, ignore_errors=True)
 
 
