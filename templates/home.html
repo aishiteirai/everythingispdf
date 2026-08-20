@@ -7,15 +7,17 @@
     <title>Everything is PDF</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
 </head>
-<body>
+<body class="tema-neutro">
 
 {# Sem JavaScript de proposito: o hub e so dois links. #}
-<main class="cartao">
+<main class="cartao cartao-hub">
     <h1>Everything is PDF</h1>
     <p class="subtitulo">Escolha o que você quer fazer.</p>
 
     <div class="celulas">
-        <a class="celula" href="/convert">
+        {# Cada celula carrega o tema da sua funcao: os tokens de acento
+           cascateiam para dentro do link. #}
+        <a class="celula tema-convert" href="/convert">
             <svg class="celula-icone" width="28" height="28" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
                  stroke-linejoin="round" aria-hidden="true">
@@ -26,9 +28,10 @@
             <span class="celula-descricao">
                 Word, PowerPoint, planilha, ODF ou uma imagem. Um arquivo entra, um PDF sai.
             </span>
+            <span class="celula-seta" aria-hidden="true">&rarr;</span>
         </a>
 
-        <a class="celula" href="/imgtopdf">
+        <a class="celula tema-imgtopdf" href="/imgtopdf">
             <svg class="celula-icone" width="28" height="28" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
                  stroke-linejoin="round" aria-hidden="true">
@@ -40,6 +43,7 @@
             <span class="celula-descricao">
                 Várias imagens numa só página por vez: ordene, gire e gere um PDF único.
             </span>
+            <span class="celula-seta" aria-hidden="true">&rarr;</span>
         </a>
     </div>
 

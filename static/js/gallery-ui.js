@@ -39,7 +39,9 @@ function botao({ acao, simbolo, titulo }, desabilitado) {
     const elemento = document.createElement('button');
     // Sem type="button" o clique submeteria o formulário.
     elemento.type = 'button';
-    elemento.className = `pagina-acao acao-${acao}`;
+    // Classe fixa e variacao por data-acao: o CSS diferencia com
+    // [data-acao="remove"], sem nome de classe montado em tempo de execucao.
+    elemento.className = 'pagina-acao';
     elemento.dataset.acao = acao;
     elemento.textContent = simbolo;
     elemento.title = titulo;

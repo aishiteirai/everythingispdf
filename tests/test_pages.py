@@ -180,3 +180,223 @@ class TestMensagensDaGaleria:
 
         assert re.search(rf'^\s*{status}:', bloco.group(1), re.M), \
             f'status {status} sem mensagem dedicada'
+
+
+# =============================================================
+# Tokens de cor, contraste e fonte
+# =============================================================
+
+TEMAS = {
+    '/': 'tema-neutro',
+    '/convert': 'tema-convert',
+    '/imgtopdf': 'tema-imgtopdf',
+}
+
+# (frente, fundo, razao minima). 4.5 para texto, 3.0 para componente grafico
+# -- o que a WCAG 2.1 AA exige de cada um.
+PARES_DE_CONTRASTE = [
+    ('--texto', '--fundo', 4.5),
+    ('--texto', '--superficie', 4.5),
+    ('--texto-fraco', '--superficie', 4.5),
+    ('--acento-contraste', '--acento', 4.5),
+    ('--acento', '--superficie', 3.0),
+    ('--erro', '--erro-fundo', 4.5),
+    ('--sucesso', '--sucesso-fundo', 4.5),
+]
+
+MODOS = ('claro', 'escuro')
+
+
+def _blocos_do_media_escuro(css):
+    """Trechos dentro de @media (prefers-color-scheme: dark), com as chaves
+    balanceadas -- regex sozinha nao fecha bloco aninhado."""
+    trechos = []
+    marcador = '@media (prefers-color-scheme: dark)'
+
+    inicio = css.find(marcador)
+    while inicio != -1:
+        abertura = css.find('{', inicio)
+        profundidade = 0
+        for posicao in range(abertura, len(css)):
+            if css[posicao] == '{':
+                profundidade += 1
+            elif css[posicao] == '}':
+                profundidade -= 1
+                if profundidade == 0:
+                    trechos.append(css[abertura + 1:posicao])
+                    break
+        inicio = css.find(marcador, abertura)
+
+    return trechos
+
+
+def _declaracoes(trecho, seletor):
+    """Tokens declarados nos blocos cujo seletor contem `seletor`."""
+    encontrados = {}
+
+    for seletores, corpo in re.findall(r'([^{}]+)\{([^{}]*)\}', trecho):
+        if seletor not in seletores:
+            continue
+        for nome, valor in re.findall(r'(--[\w-]+)\s*:\s*([^;]+);', corpo):
+            encontrados[nome] = valor.strip()
+
+    return encontrados
+
+
+def tokens(css, tema, modo):
+    """Tokens em vigor para um tema e um modo, na ordem em que a cascata os
+    aplica: neutro, neutro escuro, acento do tema, acento escuro do tema."""
+    escuro = '\n'.join(_blocos_do_media_escuro(css))
+    claro = css
+    for trecho in _blocos_do_media_escuro(css):
+        claro = claro.replace(trecho, '')
+
+    valores = {}
+    valores.update(_declaracoes(claro, ':root'))
+    if modo == 'escuro':
+        valores.update(_declaracoes(escuro, ':root'))
+    valores.update(_declaracoes(claro, tema))
+    if modo == 'escuro':
+        valores.update(_declaracoes(escuro, tema))
+
+    return valores
+
+
+def _canal(valor):
+    valor = valor / 255
+    return valor / 12.92 if valor <= 0.03928 else ((valor + 0.055) / 1.055) ** 2.4
+
+
+def luminancia(hexadecimal):
+    cor = hexadecimal.lstrip('#')
+    if len(cor) == 3:
+        cor = ''.join(letra * 2 for letra in cor)
+
+    vermelho, verde, azul = (int(cor[i:i + 2], 16) for i in (0, 2, 4))
+
+    return (
+        0.2126 * _canal(vermelho)
+        + 0.7152 * _canal(verde)
+        + 0.0722 * _canal(azul)
+    )
+
+
+def contraste(frente, fundo):
+    clara, escura = sorted((luminancia(frente), luminancia(fundo)), reverse=True)
+
+    return (clara + 0.05) / (escura + 0.05)
+
+
+@pytest.fixture
+def css_do_site(client):
+    resposta = client.get('/static/css/estilo.css')
+    assert resposta.status_code == 200
+    return resposta.get_data(as_text=True)
+
+
+class TestContraste:
+    """Cor por função só serve se der para ler. Este teste calcula a razão de
+    contraste dos tokens em vez de confiar na palavra de quem escolheu."""
+
+    @pytest.mark.parametrize('tema', sorted(set(TEMAS.values())))
+    @pytest.mark.parametrize('modo', MODOS)
+    def test_todo_token_do_tema_existe(self, css_do_site, tema, modo):
+        valores = tokens(css_do_site, tema, modo)
+        necessarios = {nome for par in PARES_DE_CONTRASTE for nome in par[:2]}
+
+        faltando = sorted(necessarios - valores.keys())
+        assert not faltando, f'{tema}/{modo} sem os tokens {faltando}'
+
+    @pytest.mark.parametrize('tema', sorted(set(TEMAS.values())))
+    @pytest.mark.parametrize('modo', MODOS)
+    def test_pares_passam_em_aa(self, css_do_site, tema, modo):
+        valores = tokens(css_do_site, tema, modo)
+
+        for frente, fundo, minimo in PARES_DE_CONTRASTE:
+            razao = contraste(valores[frente], valores[fundo])
+            assert razao >= minimo, (
+                f'{tema}/{modo}: {frente} sobre {fundo} da {razao:.2f}:1, '
+                f'precisa de {minimo}:1'
+            )
+
+
+class TestTemaPorPagina:
+    @pytest.mark.parametrize('rota, tema', sorted(TEMAS.items()))
+    def test_body_declara_o_tema_da_pagina(self, client, rota, tema):
+        pagina = client.get(rota).get_data(as_text=True)
+        corpo = re.search(r'<body([^>]*)>', pagina)
+
+        assert corpo, f'{rota} sem <body>'
+        assert tema in corpo.group(1), f'{rota} sem a classe {tema}'
+
+
+class TestClassesQueOJavaScriptLiga:
+    """Renomear uma classe que o JavaScript alterna quebra a interface inteira
+    sem nenhum outro teste falhar: o CSS fica válido e o JS continua rodando,
+    só não pinta nada."""
+
+    MODULOS = (
+        'main.js', 'interface.js', 'feedback.js',
+        'imgtopdf.js', 'gallery-ui.js',
+    )
+
+    @pytest.fixture
+    def classes_do_javascript(self, client):
+        encontradas = set()
+
+        for modulo in self.MODULOS:
+            resposta = client.get(f'/static/js/{modulo}')
+            assert resposta.status_code == 200, f'{modulo} nao e servido'
+            fonte = resposta.get_data(as_text=True)
+
+            chamadas = re.findall(
+                r'classList\.(?:add|remove|toggle)\(([^)]*)\)', fonte
+            )
+            atribuicoes = re.findall(r'className\s*=\s*[\'`]([^\'`]+)', fonte)
+
+            for chamada in chamadas:
+                for literal in re.findall(r"'([^']+)'", chamada):
+                    encontradas.add(literal)
+            for atribuicao in atribuicoes:
+                encontradas.update(atribuicao.split())
+
+        assert encontradas, 'nenhuma classe encontrada nos modulos'
+        return encontradas
+
+    def test_o_css_define_todas(self, css_do_site, classes_do_javascript):
+        faltando = sorted(
+            classe for classe in classes_do_javascript
+            if not re.search(rf'\.{re.escape(classe)}\b', css_do_site)
+        )
+
+        assert not faltando, f'classes ligadas pelo JS e ausentes do CSS: {faltando}'
+
+
+class TestFonte:
+    def test_o_css_declara_font_face(self, css_do_site):
+        assert '@font-face' in css_do_site
+
+    def test_nenhuma_fonte_vem_de_host_externo(self, css_do_site):
+        """Host externo quebraria a página autocontida e a CSP."""
+        externas = [
+            url for url in re.findall(r'url\(([^)]+)\)', css_do_site)
+            if '//' in url
+        ]
+
+        assert externas == [], f'fonte de host externo: {externas}'
+
+    def test_todo_arquivo_de_fonte_e_servido(self, client, css_do_site):
+        caminhos = {
+            url.strip('\'"') for url in re.findall(r'url\(([^)]+)\)', css_do_site)
+        }
+        assert caminhos, 'nenhum arquivo de fonte referenciado'
+
+        for caminho in caminhos:
+            assert client.get(caminho).status_code == 200, f'{caminho} nao e servido'
+
+    def test_a_licenca_da_fonte_acompanha_o_arquivo(self, client):
+        """A OFL exige distribuir a licença junto da fonte."""
+        resposta = client.get('/static/fonts/Inter-LICENSE.txt')
+
+        assert resposta.status_code == 200
+        assert 'SIL Open Font License' in resposta.get_data(as_text=True)

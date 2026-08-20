@@ -175,6 +175,24 @@ runner nativo do Node, sem dependência e sem navegador.
 
 ## Notas de implementação
 
+**Cor por função.** Todo o CSS colorido referencia só `--acento`,
+`--acento-forte`, `--acento-fraco` e `--acento-contraste`. Quem define os
+valores é uma classe no `<body>` (`tema-convert` azul, `tema-imgtopdf` âmbar), e
+no hub cada célula sobrescreve a sua. Assim existe uma folha de estilo e a cor
+entra por variável, em vez de uma cópia das mesmas regras por página.
+
+No tema escuro o acento é claro, então o texto sobre ele é escuro — branco sobre
+âmbar claro dá 2,15:1 e reprova em AA. `tests/test_pages.py` calcula a razão de
+contraste de cada par de tokens nos dois modos e nos três temas, e falha se
+alguma cor reprovar. Outro teste lê os nomes de classe que o JavaScript alterna
+e exige que o CSS os defina: renomear `.oculto` num redesign quebraria a
+interface inteira sem nenhum outro teste falhar.
+
+**Fonte auto-hospedada.** Inter variável em `static/fonts/`, subsets latin
+(48 KB) e latin-ext (85 KB) separados por `unicode-range` — o caso comum paga só
+a latin. Um host externo quebraria a página autocontida e precisaria de exceção
+na CSP. A licença OFL acompanha o arquivo, como ela exige.
+
 **Limpeza de temporários.** Cada request ganha um `temp/{uuid}/` próprio. O
 PDF é lido em memória e o diretório é removido num `finally` — sucesso, erro
 e timeout. Antes o cleanup vivia num `@after_this_request` registrado só no
