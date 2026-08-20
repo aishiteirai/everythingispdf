@@ -26,7 +26,9 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 # que o --timeout do gunicorn, senao o worker morre antes do subprocesso.
 CONVERSION_TIMEOUT = int(os.environ.get('CONVERSION_TIMEOUT', '90'))
 
-TEMP_FOLDER = os.path.abspath(os.path.join(os.getcwd(), 'temp'))
+TEMP_FOLDER = os.path.abspath(
+    os.environ.get('TEMP_FOLDER') or os.path.join(os.getcwd(), 'temp')
+)
 os.makedirs(TEMP_FOLDER, exist_ok=True)
 
 IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'}

@@ -1,0 +1,47 @@
+#!/bin/sh
+# Dublê do LibreOffice para os testes.
+#
+# Valida os argumentos que o app precisa passar e simula os cenarios de
+# conversao. O comportamento e escolhido pela variavel LO_STUB_MODE:
+#
+#   ok      (default) gera o PDF no --outdir, como o LibreOffice real
+#   fail    sai com codigo 1 (documento corrompido, fonte faltando, etc.)
+#   nopdf   sai com codigo 0 sem gerar nada (falha silenciosa conhecida)
+#   hang    dorme, para exercitar o timeout do subprocess
+#
+# Sai com 3 se o app esquecer o -env:UserInstallation. Sem esse argumento,
+# conversoes simultaneas disputam o perfil default do LibreOffice.
+
+OUTDIR=""
+INPUT=""
+PROFILE_SEEN=0
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -env:UserInstallation=*) PROFILE_SEEN=1 ;;
+    --outdir) shift; OUTDIR="$1" ;;
+    --headless|--norestore|--convert-to|pdf) ;;
+    *) INPUT="$1" ;;
+  esac
+  shift
+done
+
+if [ "$PROFILE_SEEN" != "1" ]; then
+  echo "stub: chamada sem -env:UserInstallation" >&2
+  exit 3
+fi
+
+case "${LO_STUB_MODE:-ok}" in
+  fail)  exit 1 ;;
+  nopdf) exit 0 ;;
+  hang)  sleep 30 ;;
+esac
+
+if [ -z "$OUTDIR" ] || [ -z "$INPUT" ]; then
+  echo "stub: --outdir ou arquivo de entrada ausente" >&2
+  exit 4
+fi
+
+BASE=$(basename "$INPUT")
+BASE="${BASE%.*}"
+printf '%%PDF-1.4\n%%stub\n' > "$OUTDIR/$BASE.pdf"
