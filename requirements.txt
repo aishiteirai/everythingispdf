@@ -7,4 +7,5 @@ click==8.1.7
 blinker==1.8.2
 Pillow==10.4.0
 flasgger==0.9.7.1
+flask-limiter==3.8.0
 gunicorn==21.2.0

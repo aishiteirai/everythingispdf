@@ -172,3 +172,42 @@ class TestRotasDeApoio:
 
         assert r.status_code == 200
         assert '/api/convert' in r.get_json()['paths']
+
+
+class TestRateLimit:
+    """Conversao sobe um LibreOffice por documento. Sem limite, poucos
+    requests simultaneos derrubam o servidor."""
+
+    def test_excesso_de_requests_da_429(self, client, upload, png, rate_limit):
+        limite = int(rate_limit.split(' per ')[0])
+
+        respostas = [
+            client.post('/api/convert', **upload(png, 'foto.png')).status_code
+            for _ in range(limite + 2)
+        ]
+
+        assert respostas[:limite] == [200] * limite
+        assert respostas[limite:] == [429, 429]
+
+    def test_429_responde_json(self, client, upload, png, rate_limit):
+        limite = int(rate_limit.split(' per ')[0])
+        for _ in range(limite):
+            client.post('/api/convert', **upload(png, 'foto.png'))
+
+        r = client.post('/api/convert', **upload(png, 'foto.png'))
+
+        assert r.status_code == 429
+        assert r.is_json
+        assert 'error' in r.get_json()
+
+    def test_429_nao_deixa_resto(self, client, upload, png, rate_limit, restos):
+        limite = int(rate_limit.split(' per ')[0])
+        for _ in range(limite + 2):
+            client.post('/api/convert', **upload(png, 'foto.png'))
+
+        assert restos() == []
+
+    def test_rotas_de_apoio_nao_sao_limitadas(self, client, rate_limit):
+        codigos = [client.get('/health').status_code for _ in range(30)]
+
+        assert set(codigos) == {200}

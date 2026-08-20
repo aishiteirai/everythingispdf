@@ -31,6 +31,11 @@ sys.path.insert(0, REPO_ROOT)
 
 import app as appmod  # noqa: E402  (import depois do setup, de proposito)
 
+# O rate limit atrapalha os testes de contrato, que disparam varios requests
+# na mesma sessao. Fica desligado por default e e religado pela fixture
+# `rate_limit` nos testes que exercitam o 429.
+appmod.limiter.enabled = False
+
 
 def pytest_unconfigure(config):
     shutil.rmtree(_TEMP_FOLDER, ignore_errors=True)
@@ -95,3 +100,15 @@ def upload():
         }
 
     return _upload
+
+
+@pytest.fixture
+def rate_limit():
+    """Liga o rate limit para o teste e zera os contadores no inicio e no fim."""
+    appmod.limiter.reset()
+    appmod.limiter.enabled = True
+
+    yield appmod.RATE_LIMIT
+
+    appmod.limiter.enabled = False
+    appmod.limiter.reset()

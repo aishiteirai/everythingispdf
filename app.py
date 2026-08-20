@@ -7,7 +7,10 @@ import uuid
 
 from flask import Flask, jsonify, render_template, request, send_file
 from flasgger import Swagger
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from PIL import Image
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
 
 logging.basicConfig(
@@ -17,10 +20,38 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+# Numero de proxies reversos confiaveis na frente do app. Enquanto for 0, o
+# X-Forwarded-For e ignorado e o rate limit usa o IP da conexao. Atras de um
+# proxy (Render, nginx) precisa ser 1, senao todo mundo compartilha o mesmo
+# balde. Confiar no header sem proxy real deixa qualquer cliente falsificar o
+# IP e escapar do limite -- por isso o default e desligado.
+TRUSTED_PROXIES = int(os.environ.get('TRUSTED_PROXIES', '0'))
+if TRUSTED_PROXIES:
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app, x_for=TRUSTED_PROXIES, x_proto=TRUSTED_PROXIES
+    )
+
 swagger = Swagger(app)
 
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
+
+# Conversao e caro: cada documento sobe um LibreOffice. Sem limite, um punhado
+# de requests derruba o servidor.
+RATE_LIMIT = os.environ.get('RATE_LIMIT', '10 per minute;60 per hour')
+
+# memory:// conta por worker do gunicorn, entao o limite efetivo e
+# RATE_LIMIT x numero de workers. Para um teto real, aponte
+# RATELIMIT_STORAGE_URI para um Redis compartilhado.
+RATELIMIT_STORAGE_URI = os.environ.get('RATELIMIT_STORAGE_URI', 'memory://')
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    storage_uri=RATELIMIT_STORAGE_URI,
+    strategy='fixed-window',
+)
 
 # Segundos maximos para o LibreOffice converter um arquivo. Precisa ser menor
 # que o --timeout do gunicorn, senao o worker morre antes do subprocesso.
@@ -89,7 +120,14 @@ def convert_image(input_path, work_dir):
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html')
+    # Formatos e limite vem do backend para o formulario nao divergir do que
+    # /api/convert realmente aceita.
+    return render_template(
+        'index.html',
+        extensoes=sorted(ALLOWED_EXTENSIONS),
+        max_bytes=MAX_CONTENT_LENGTH,
+        max_mb=MAX_CONTENT_LENGTH // (1024 * 1024),
+    )
 
 
 @app.route('/health', methods=['GET'])
@@ -98,6 +136,7 @@ def health():
 
 
 @app.route('/api/convert', methods=['POST'])
+@limiter.limit(RATE_LIMIT)
 def convert_file():
     """
     Converte Imagens, Word e PowerPoint para PDF (LibreOffice headless).
@@ -119,6 +158,8 @@ def convert_file():
         description: Arquivo maior que o limite permitido.
       415:
         description: Formato nao suportado.
+      429:
+        description: Limite de requisicoes excedido.
       500:
         description: Erro interno.
       504:
@@ -180,10 +221,63 @@ def convert_file():
         shutil.rmtree(work_dir, ignore_errors=True)
 
 
+# Rota temporaria para calibrar TRUSTED_PROXIES. Só e registrada quando
+# DEBUG_PROXY esta definido, entao nao existe em producao por padrao. Remova
+# junto com este comentario depois de descobrir a contagem de saltos.
+if os.environ.get('DEBUG_PROXY'):
+
+    @app.route('/debug/proxy', methods=['GET'])
+    @limiter.exempt
+    def debug_proxy():
+        cadeia = [
+            parte.strip()
+            for parte in request.headers.get('X-Forwarded-For', '').split(',')
+            if parte.strip()
+        ]
+        cf = request.headers.get('CF-Connecting-IP')
+
+        # ProxyFix com x_for=N le o N-esimo endereco da direita para a
+        # esquerda (werkzeug usa values[-N]). Cada chave abaixo e o valor que
+        # TRUSTED_PROXIES=N produziria como chave do rate limit.
+        candidatos = {str(n): cadeia[-n] for n in range(1, len(cadeia) + 1)}
+
+        # A Cloudflare informa o IP real do cliente em CF-Connecting-IP. Achar
+        # esse IP na cadeia da direto a contagem de saltos a confiar.
+        recomendado = None
+        if cf:
+            recomendado = next(
+                (int(n) for n, ip in candidatos.items() if ip == cf), None
+            )
+
+        return jsonify({
+            'remote_addr': request.remote_addr,
+            'chave_do_rate_limit_agora': get_remote_address(),
+            'x_forwarded_for': request.headers.get('X-Forwarded-For'),
+            'cadeia': cadeia,
+            'cf_connecting_ip': cf,
+            'x_forwarded_proto': request.headers.get('X-Forwarded-Proto'),
+            'candidatos_por_trusted_proxies': candidatos,
+            'trusted_proxies_atual': TRUSTED_PROXIES,
+            'trusted_proxies_recomendado': recomendado,
+            'como_ler': (
+                'trusted_proxies_recomendado e o valor a usar. Se vier null, '
+                'compare os candidatos com o seu IP publico e use a chave '
+                'cujo valor bate.'
+            ),
+        })
+
+
 @app.errorhandler(413)
 def arquivo_muito_grande(_error):
     limite_mb = MAX_CONTENT_LENGTH // (1024 * 1024)
     return jsonify({'error': f'Arquivo maior que o limite de {limite_mb} MB.'}), 413
+
+
+@app.errorhandler(429)
+def limite_excedido(_error):
+    return jsonify({
+        'error': 'Muitas conversoes em pouco tempo. Tente novamente em instantes.'
+    }), 429
 
 
 if __name__ == '__main__':

@@ -18,12 +18,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py .
 COPY templates/ ./templates/
+COPY static/ ./static/
 
 # O app escreve em temp/ durante a conversao
 RUN mkdir -p /app/temp && \
     useradd --create-home --shell /usr/sbin/nologin appuser && \
     chown -R appuser:appuser /app
 USER appuser
+
+# O Docker nao define HOME a partir do USER. Sem isso HOME vira "/", que
+# appuser nao pode escrever, e o LibreOffice falha ao criar cache de fontes.
+ENV HOME=/home/appuser
 
 # Porta padrao do Render
 EXPOSE 10000
