@@ -70,6 +70,19 @@ IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 DOCUMENT_EXTENSIONS = {'docx', 'doc', 'pptx', 'ppt', 'odt', 'odp', 'xlsx', 'xls'}
 ALLOWED_EXTENSIONS = IMAGE_EXTENSIONS | DOCUMENT_EXTENSIONS
 
+# Rotulos dos tamanhos de pagina que /api/imgtopdf aceita. Montado a partir de
+# imgtopdf.TAMANHOS para o select nao poder oferecer um tamanho que a API
+# recusa -- e para faltar rotulo virar erro no import, nao opcao em branco.
+ROTULOS_DE_TAMANHO = {
+    'image': 'Tamanho da imagem',
+    'a4': 'A4',
+    'letter': 'Carta',
+}
+TAMANHOS_DE_PAGINA = [
+    {'valor': valor, 'rotulo': ROTULOS_DE_TAMANHO[valor]}
+    for valor in imgtopdf.TAMANHOS
+]
+
 
 def get_extension(filename):
     if '.' not in filename:
@@ -124,13 +137,33 @@ def convert_image(input_path, work_dir):
 
 @app.route('/', methods=['GET'])
 def index():
+    return render_template('home.html')
+
+
+@app.route('/convert', methods=['GET'])
+def pagina_de_conversao():
     # Formatos e limite vem do backend para o formulario nao divergir do que
     # /api/convert realmente aceita.
     return render_template(
-        'index.html',
+        'convert.html',
         extensoes=sorted(ALLOWED_EXTENSIONS),
         max_bytes=MAX_CONTENT_LENGTH,
         max_mb=MAX_CONTENT_LENGTH // (1024 * 1024),
+    )
+
+
+@app.route('/imgtopdf', methods=['GET'])
+def pagina_da_galeria():
+    # Mesmo motivo: todo limite que a UI mostra ou valida vem daqui, nao
+    # escrito na mao no HTML.
+    return render_template(
+        'imgtopdf.html',
+        extensoes=sorted(IMAGE_EXTENSIONS),
+        max_bytes=MAX_CONTENT_LENGTH,
+        max_mb=MAX_CONTENT_LENGTH // (1024 * 1024),
+        max_imagens=imgtopdf.MAX_IMAGENS,
+        margem_max=imgtopdf.MARGEM_MAX_MM,
+        tamanhos=TAMANHOS_DE_PAGINA,
     )
 
 

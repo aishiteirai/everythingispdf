@@ -158,8 +158,9 @@ class TestValidacaoDeEntrada:
 
 
 class TestRotasDeApoio:
-    def test_index_responde(self, client):
-        r = client.get('/')
+    def test_pagina_de_conversao_responde(self, client):
+        # O hub em / e coberto por test_pages.py.
+        r = client.get('/convert')
 
         assert r.status_code == 200
         assert 'Conversor' in r.get_data(as_text=True)

@@ -20,10 +20,10 @@ export function mensagensDeErro(maxMb) {
 }
 
 /**
- * O nome vem do Content-Disposition, que o backend já monta. Cai no nome
- * local só se o header não vier.
+ * O nome vem do Content-Disposition, que o backend já monta. Cai em `padrao`
+ * só se o header não vier.
  */
-function nomeDoDownload(xhr, arquivo) {
+export function nomeDoDownload(xhr, padrao) {
     const header = xhr.getResponseHeader('Content-Disposition') || '';
     const casa = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(header);
 
@@ -35,15 +35,17 @@ function nomeDoDownload(xhr, arquivo) {
         }
     }
 
-    return `${semExtensao(arquivo.name)}.pdf`;
+    return padrao;
 }
 
 /**
  * A resposta chega como blob. Num erro o corpo é JSON, então lê como texto.
+ *
+ * `mensagens` é o mapa de status daquele endpoint: /api/convert e
+ * /api/imgtopdf produzem conjuntos diferentes de erro.
  */
-async function mensagemDoErro(xhr, maxMb) {
-    const conhecidas = mensagensDeErro(maxMb);
-    if (conhecidas[xhr.status]) return conhecidas[xhr.status];
+export async function mensagemDoErro(xhr, mensagens) {
+    if (mensagens[xhr.status]) return mensagens[xhr.status];
 
     try {
         const dados = JSON.parse(await xhr.response.text());
@@ -80,9 +82,10 @@ export function envia({ arquivo, maxMb, aoProgresso }) {
 
         xhr.addEventListener('load', async () => {
             if (xhr.status === 200) {
-                resolve({ blob: xhr.response, nome: nomeDoDownload(xhr, arquivo) });
+                const padrao = `${semExtensao(arquivo.name)}.pdf`;
+                resolve({ blob: xhr.response, nome: nomeDoDownload(xhr, padrao) });
             } else {
-                reject(new Error(await mensagemDoErro(xhr, maxMb)));
+                reject(new Error(await mensagemDoErro(xhr, mensagensDeErro(maxMb))));
             }
         });
 

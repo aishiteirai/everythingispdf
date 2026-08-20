@@ -61,6 +61,10 @@ body {
     line-height: 1.5;
 }
 
+body.pagina-alta {
+    align-items: flex-start;
+}
+
 /* =============================================================
    Cartão
    ============================================================= */
@@ -75,6 +79,24 @@ body {
     padding: 32px;
 }
 
+.cartao-largo {
+    max-width: 760px;
+}
+
+.voltar {
+    margin: 0 0 10px;
+    font-size: 13px;
+}
+
+.voltar a {
+    color: var(--texto-fraco);
+    text-decoration: none;
+}
+
+.voltar a:hover {
+    color: var(--primaria);
+}
+
 .cartao h1 {
     margin: 0 0 6px;
     font-size: 21px;
@@ -85,6 +107,53 @@ body {
     margin: 0 0 24px;
     color: var(--texto-fraco);
     font-size: 14px;
+}
+
+/* =============================================================
+   Hub: as duas funções do site
+   ============================================================= */
+
+.celulas {
+    display: grid;
+    gap: 12px;
+}
+
+.celula {
+    display: block;
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    padding: 18px;
+    color: inherit;
+    text-decoration: none;
+    transition: border-color .15s, background-color .15s;
+}
+
+.celula:hover {
+    border-color: var(--primaria);
+    background: var(--primaria-fraca);
+}
+
+.celula:focus-visible {
+    outline: 2px solid var(--primaria);
+    outline-offset: 2px;
+}
+
+.celula-icone {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--primaria);
+}
+
+.celula-titulo {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.celula-descricao {
+    display: block;
+    color: var(--texto-fraco);
+    font-size: 13px;
 }
 
 /* =============================================================
@@ -207,6 +276,179 @@ body {
 .remover:hover {
     border-color: var(--erro);
     color: var(--erro);
+}
+
+/* =============================================================
+   Galeria de páginas
+
+   <ol> de propósito: a ordem visual É a ordem das páginas do PDF, e o leitor
+   de tela anuncia a posição.
+   ============================================================= */
+
+.grade {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pagina {
+    position: relative;
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    padding: 10px;
+    background: var(--superficie);
+}
+
+.pagina[draggable="true"] {
+    cursor: grab;
+}
+
+.pagina-numero {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    min-width: 20px;
+    padding: 1px 5px;
+    border-radius: 6px;
+    background: var(--primaria);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Caixa quadrada: com object-fit: contain, girar 90° cabe sem recalcular
+   layout e sem cortar a imagem. */
+.pagina-caixa {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--fundo);
+}
+
+.pagina-imagem {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform .15s;
+}
+
+.pagina-nome {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--texto-fraco);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pagina-acoes {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.pagina-acao {
+    flex: 1;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--texto-fraco);
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.pagina-acao:hover:not(:disabled) {
+    border-color: var(--primaria);
+    color: var(--primaria);
+}
+
+.pagina-acao:focus-visible {
+    outline: 2px solid var(--primaria);
+    outline-offset: 1px;
+}
+
+.pagina-acao:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+}
+
+.acao-remove:hover:not(:disabled) {
+    border-color: var(--erro);
+    color: var(--erro);
+}
+
+/* =============================================================
+   Opções da página
+   ============================================================= */
+
+.opcoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 16px 0 0;
+    padding: 14px 16px;
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+}
+
+.opcoes legend {
+    padding: 0 6px;
+    color: var(--texto-fraco);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.opcao {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+}
+
+.opcao select,
+.opcao input {
+    padding: 7px 9px;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    background: var(--superficie);
+    color: var(--texto);
+    font-family: inherit;
+    font-size: 13.5px;
+}
+
+.opcao input[type="number"] {
+    width: 72px;
+}
+
+.opcao select:focus-visible,
+.opcao input:focus-visible {
+    outline: 2px solid var(--primaria);
+    outline-offset: 1px;
+}
+
+/* Margem não tem efeito quando a página herda o tamanho da imagem. */
+.opcao input:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pagina-imagem {
+        transition: none;
+    }
 }
 
 /* =============================================================

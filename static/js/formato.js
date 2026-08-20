@@ -41,3 +41,25 @@ export function problemaCom(arquivo, { extensoes, maxBytes, maxMb }) {
 
     return null;
 }
+
+/**
+ * Valida o conjunto antes de subir. O limite do servidor é do request
+ * inteiro, não por arquivo, então é a soma que importa — e o teto de imagens
+ * vem do backend, não escrito à mão aqui.
+ */
+export function problemaComConjunto(itens, { maxImagens, maxBytes, maxMb }) {
+    if (itens.length === 0) {
+        return 'Adicione pelo menos uma imagem.';
+    }
+
+    if (itens.length > maxImagens) {
+        return `No máximo ${maxImagens} imagens por PDF.`;
+    }
+
+    const total = itens.reduce((soma, item) => soma + item.arquivo.size, 0);
+    if (total > maxBytes) {
+        return `As imagens somam ${formataTamanho(total)}, acima do limite de ${maxMb} MB.`;
+    }
+
+    return null;
+}

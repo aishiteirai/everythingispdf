@@ -1,7 +1,10 @@
 # everythingispdf
 
-Serviço web que converte documentos e imagens para PDF. Upload de um arquivo,
-download do PDF.
+Serviço web que gera PDF de duas formas:
+
+- **Converter um arquivo** — um documento ou imagem entra, um PDF sai.
+- **Montar PDF de imagens** — várias imagens viram um PDF único, com ordem e
+  rotação escolhidas na tela.
 
 Documentos passam pelo LibreOffice em modo headless; imagens vão pelo Pillow.
 
@@ -14,7 +17,8 @@ Documentos passam pelo LibreOffice em modo headless; imagens vão pelo Pillow.
 | Planilha | `xlsx`, `xls` |
 | Imagem | `png`, `jpg`, `jpeg` |
 
-Limite de 16 MB por arquivo.
+Limite de 32 MB por envio. É o limite do request inteiro, então na montagem de
+imagens vale para a soma dos arquivos, não para cada um. Até 20 imagens por PDF.
 
 ## Rodando com Docker
 
@@ -55,7 +59,7 @@ curl -F 'file=@relatorio.docx' http://localhost:10000/api/convert -o saida.pdf
 |---|---|
 | `200` | PDF no corpo da resposta |
 | `400` | Campo `file` ausente ou nome vazio |
-| `413` | Arquivo acima de 16 MB |
+| `413` | Arquivo acima de 32 MB |
 | `415` | Extensão não suportada |
 | `429` | Rate limit excedido |
 | `500` | Falha na conversão |
@@ -63,11 +67,47 @@ curl -F 'file=@relatorio.docx' http://localhost:10000/api/convert -o saida.pdf
 
 Erros vêm como JSON: `{"error": "..."}`.
 
+### `POST /api/imgtopdf`
+
+`multipart/form-data` com o campo `files` repetido — **a ordem do envio é a
+ordem das páginas** — e um campo `options` com JSON.
+
+```bash
+curl -F 'files=@p1.png' -F 'files=@p2.png' \
+  -F 'options={"pages":[{"rotation":0},{"rotation":90}],"size":"a4","margin_mm":10}' \
+  http://localhost:10000/api/imgtopdf -o galeria.pdf
+```
+
+| Campo de `options` | Regra |
+|---|---|
+| `pages` | Lista do mesmo tamanho de `files`. Comprimento diferente é `400`: ordem e rotação desalinhariam em silêncio |
+| `pages[].rotation` | `0`, `90`, `180` ou `270`, graus no sentido horário |
+| `size` | `image` (a página herda o tamanho da imagem), `a4` ou `letter`. Com `a4` e `letter` a orientação é automática por imagem |
+| `margin_mm` | Inteiro de 0 a 50. Ignorado quando `size` é `image` |
+
+| Status | Significado |
+|---|---|
+| `200` | PDF no corpo da resposta |
+| `400` | `options` inválido, quantidade fora de 1..20 ou imagem ilegível |
+| `413` | Envio acima de 32 MB |
+| `415` | Extensão que não é de imagem |
+| `429` | Rate limit excedido |
+| `500` | Falha ao montar o PDF |
+
+Não existe `504` aqui: não há LibreOffice neste caminho.
+
+Imagem ilegível dá `400`, e não o `500` de `/api/convert`. A diferença é
+intencional: aqui o Pillow é o único executor, então bytes que ele não abre são
+entrada inválida do cliente, não falha do servidor.
+
 ### Outras rotas
 
-- `GET /` — página de upload (arrastar e soltar, colar imagem com Ctrl+V,
-  validação de formato e tamanho antes de enviar, barra de progresso, tema
-  claro e escuro)
+- `GET /` — hub com as duas funções
+- `GET /convert` — página de conversão de arquivo único (arrastar e soltar,
+  colar imagem com Ctrl+V, validação de formato e tamanho antes de enviar,
+  barra de progresso, tema claro e escuro)
+- `GET /imgtopdf` — montador de PDF de imagens (adicionar sem substituir,
+  reordenar por botão ou arrasto, girar, escolher tamanho de página e margem)
 - `GET /health` — `{"status": "ok"}`
 - `GET /apidocs` — Swagger UI
 
@@ -80,7 +120,7 @@ Tudo por variável de ambiente.
 | `PORT` | `5000` | Porta do servidor de desenvolvimento |
 | `TEMP_FOLDER` | `./temp` | Diretório de trabalho das conversões |
 | `CONVERSION_TIMEOUT` | `90` | Segundos até abortar o LibreOffice |
-| `RATE_LIMIT` | `10 per minute;60 per hour` | Limite por IP em `/api/convert` |
+| `RATE_LIMIT` | `10 per minute;60 per hour` | Limite por IP nos dois endpoints |
 | `RATELIMIT_STORAGE_URI` | `memory://` | Onde guardar os contadores |
 | `TRUSTED_PROXIES` | `0` | Quantos proxies reversos confiar |
 
@@ -116,6 +156,7 @@ RATELIMIT_STORAGE_URI=redis://localhost:6379/0
 ```bash
 pip install -r requirements-dev.txt
 python -m pytest tests/ -q
+node --test tests/js/*.test.mjs
 ```
 
 A suíte não precisa de LibreOffice instalado: documentos passam por um dublê
@@ -123,12 +164,39 @@ A suíte não precisa de LibreOffice instalado: documentos passam por um dublê
 travamento. O dublê também recusa a chamada se faltar o
 `-env:UserInstallation`, o que trava o isolamento de perfil no lugar.
 
+Também não precisa de biblioteca de PDF: `/MediaBox` fica em texto claro nos
+bytes do arquivo, e com `size: "image"` a página herda o tamanho da imagem —
+então imagens de tamanhos diferentes tornam ordem e rotação verificáveis por
+expressão regular.
+
+`static/js/gallery.js` não toca DOM nem rede, então o estado da galeria
+(reordenar, girar, teto de imagens, revogar URL de objeto) é testado pelo
+runner nativo do Node, sem dependência e sem navegador.
+
 ## Notas de implementação
 
 **Limpeza de temporários.** Cada request ganha um `temp/{uuid}/` próprio. O
 PDF é lido em memória e o diretório é removido num `finally` — sucesso, erro
 e timeout. Antes o cleanup vivia num `@after_this_request` registrado só no
 caminho de sucesso, então toda exceção deixava arquivo para trás.
+
+**PDF montado página por página.** `Image.save(caminho, 'PDF', append=True)`
+grava uma página por vez e cada imagem é liberada antes da próxima. Montar de
+uma vez com `append_images` manteria todas as imagens transformadas em memória
+ao mesmo tempo — o `PdfImagePlugin` do Pillow materializa a lista antes de
+escrever, então nem generator ajuda — e 20 páginas em tamanho original
+passariam de 500 MB. Assim o pico não escala com a contagem de páginas, e
+nenhuma biblioteca de PDF entra no `requirements.txt`.
+
+O efeito colateral é que o append é incremental: gerações antigas da árvore de
+páginas ficam no arquivo, então `/MediaBox` aparece repetido. O `/Count` da
+última geração é o número de páginas que vale.
+
+**Rotação sem reamostragem.** Só múltiplos de 90 são aceitos, então a rotação
+usa `transpose` em vez de `rotate`: sai exata, sem interpolação e sem canto
+vazio para preencher. A orientação do EXIF é corrigida antes, para a rotação
+escolhida pelo usuário somar em cima da orientação real da foto — senão o
+preview na tela e o PDF discordariam.
 
 **Conversões simultâneas.** Cada chamada ao LibreOffice recebe um
 `-env:UserInstallation` próprio. Sem isso duas conversões concorrentes

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>Everything is PDF</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+</head>
+<body>
+
+{# Sem JavaScript de proposito: o hub e so dois links. #}
+<main class="cartao">
+    <h1>Everything is PDF</h1>
+    <p class="subtitulo">Escolha o que você quer fazer.</p>
+
+    <div class="celulas">
+        <a class="celula" href="/convert">
+            <svg class="celula-icone" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                 stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+                <path d="M14 3v5h5"/>
+            </svg>
+            <span class="celula-titulo">Converter um arquivo</span>
+            <span class="celula-descricao">
+                Word, PowerPoint, planilha, ODF ou uma imagem. Um arquivo entra, um PDF sai.
+            </span>
+        </a>
+
+        <a class="celula" href="/imgtopdf">
+            <svg class="celula-icone" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                 stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="5" width="13" height="13" rx="2"/>
+                <path d="M19 8v9a2 2 0 0 1-2 2H8"/>
+                <path d="M6 14l3-3 3 3 2-2 2 2"/>
+            </svg>
+            <span class="celula-titulo">Montar PDF de imagens</span>
+            <span class="celula-descricao">
+                Várias imagens numa só página por vez: ordene, gire e gere um PDF único.
+            </span>
+        </a>
+    </div>
+
+    <p class="rodape"><a href="/apidocs">Documentação da API</a></p>
+</main>
+
+</body>
+</html>

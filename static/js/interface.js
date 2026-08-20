@@ -1,8 +1,9 @@
 /**
- * Tudo que toca o DOM. Nada de rede, nada de validação.
+ * Tudo que toca o DOM na página de conversão. Nada de rede, nada de validação.
  */
 
 import { formataTamanho } from './formato.js';
+import { criaFeedback } from './feedback.js';
 
 const ELEMENTOS = {
     formulario: 'formulario',
@@ -23,10 +24,18 @@ export function criaInterface() {
         Object.entries(ELEMENTOS).map(([chave, id]) => [chave, document.getElementById(id)])
     );
 
-    let urlAnterior = null;
+    const feedback = criaFeedback({
+        barra: el.barra,
+        preenchimento: el.preenchimento,
+        recado: el.recado,
+    });
 
     return {
         el,
+        ...feedback,
+
+        // Nome próprio desta página para o estado indeterminado da barra.
+        mostraConvertendo: feedback.mostraTrabalhando,
 
         mostraArquivo(arquivo) {
             el.nome.textContent = arquivo.name;
@@ -41,50 +50,6 @@ export function criaInterface() {
             el.enviar.disabled = true;
         },
 
-        mostraErro(texto) {
-            el.recado.className = 'recado erro';
-            el.recado.textContent = texto;
-        },
-
-        /**
-         * Monta o recado de sucesso por DOM, não por innerHTML: o nome do
-         * arquivo vem do usuário e passaria HTML direto para a página.
-         *
-         * O link fica na mensagem porque, se o navegador bloquear o download
-         * automático, o usuário ainda precisa de um jeito de pegar o arquivo.
-         */
-        mostraSucesso(url, nomeArquivo) {
-            el.recado.className = 'recado sucesso';
-            el.recado.textContent = 'Pronto. Se o download não começou, ';
-
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = nomeArquivo;
-            link.textContent = 'baixe aqui';
-            el.recado.append(link, '.');
-        },
-
-        limpaRecado() {
-            el.recado.className = 'recado oculto';
-            el.recado.textContent = '';
-        },
-
-        mostraProgresso(porcentagem) {
-            el.barra.classList.remove('oculto', 'indeterminada');
-            el.preenchimento.style.width = `${porcentagem}%`;
-            el.barra.setAttribute('aria-valuenow', String(Math.round(porcentagem)));
-        },
-
-        mostraConvertendo() {
-            el.barra.classList.remove('oculto');
-            el.barra.classList.add('indeterminada');
-            el.barra.removeAttribute('aria-valuenow');
-        },
-
-        escondeProgresso() {
-            el.barra.classList.add('oculto');
-        },
-
         marcaEnviando(enviando, temArquivo) {
             el.enviar.textContent = enviando ? 'Convertendo...' : 'Converter para PDF';
             el.enviar.disabled = enviando || !temArquivo;
@@ -92,20 +57,6 @@ export function criaInterface() {
 
         marcaArrastando(arrastando) {
             el.area.classList.toggle('arrastando', arrastando);
-        },
-
-        baixa(blob, nomeArquivo) {
-            if (urlAnterior) URL.revokeObjectURL(urlAnterior);
-            urlAnterior = URL.createObjectURL(blob);
-
-            const link = document.createElement('a');
-            link.href = urlAnterior;
-            link.download = nomeArquivo;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-
-            return urlAnterior;
         },
     };
 }

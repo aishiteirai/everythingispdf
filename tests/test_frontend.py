@@ -1,4 +1,8 @@
-"""Testes da página de upload.
+"""Testes da página de conversão de arquivo único (/convert).
+
+O que vale para as três páginas do site -- autocontida, sem JavaScript inline
+executável, CSS referenciado, tema -- está parametrizado em test_pages.py. Aqui
+fica só o que é específico desta página.
 
 O formulário declarava a lista de formatos na mão e ela divergiu do backend
 (a API aceitava .doc e .ppt, o input não). Agora os valores vêm do backend
@@ -18,7 +22,7 @@ import app as appmod
 
 @pytest.fixture
 def pagina(client):
-    return client.get('/').get_data(as_text=True)
+    return client.get('/convert').get_data(as_text=True)
 
 
 @pytest.fixture
@@ -30,13 +34,6 @@ def configuracao(pagina):
     )
     assert casa, 'bloco de configuração ausente na página'
     return json.loads(casa.group(1))
-
-
-@pytest.fixture
-def css(client):
-    resposta = client.get('/static/css/estilo.css')
-    assert resposta.status_code == 200
-    return resposta.get_data(as_text=True)
 
 
 @pytest.fixture
@@ -92,9 +89,6 @@ class TestArquivosEstaticos:
     def test_sao_servidos(self, client, caminho):
         assert client.get(caminho).status_code == 200
 
-    def test_a_pagina_referencia_o_css(self, pagina):
-        assert 'css/estilo.css' in pagina
-
     def test_a_pagina_carrega_o_javascript_como_modulo(self, pagina):
         assert re.search(r'<script type="module" src="[^"]*js/main\.js"', pagina)
 
@@ -113,33 +107,15 @@ class TestEstrutura:
     def test_campo_tem_o_nome_que_a_api_espera(self, pagina):
         assert 'name="file"' in pagina
 
-    def test_pagina_e_autocontida(self, pagina):
-        """Sem CDN: nada de script, folha de estilo ou fonte externa."""
-        assert re.findall(r'(?:src|href)="(?:https?:)?//[^"]+"', pagina) == []
-
-    def test_nao_tem_javascript_inline_executavel(self, pagina):
-        """A configuração vai num bloco application/json, que o navegador não
-        executa. Assim a página funciona sob CSP sem unsafe-inline."""
-        blocos = re.findall(r'<script([^>]*)>', pagina)
-
-        for atributos in blocos:
-            assert 'src=' in atributos or 'application/json' in atributos, \
-                f'script inline executável na página: <script{atributos}>'
-
     def test_aponta_para_a_documentacao_da_api(self, pagina):
         assert '/apidocs' in pagina
+
+    def test_volta_para_o_inicio(self, pagina):
+        assert 'href="/"' in pagina
 
     def test_progresso_e_anunciado_para_leitor_de_tela(self, pagina):
         assert 'role="progressbar"' in pagina
         assert 'aria-live' in pagina
-
-
-class TestTema:
-    def test_css_tem_tema_escuro(self, css):
-        assert 'prefers-color-scheme: dark' in css
-
-    def test_css_respeita_movimento_reduzido(self, css):
-        assert 'prefers-reduced-motion: reduce' in css
 
 
 class TestMensagensDeErro:

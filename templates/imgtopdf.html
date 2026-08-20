@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>Montar PDF de imagens</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+</head>
+{# A galeria cresce para baixo, e o body centralizado verticalmente
+   estrangularia a pagina. #}
+<body class="pagina-alta">
+
+<main class="cartao cartao-largo">
+    <p class="voltar"><a href="/">&larr; início</a></p>
+    <h1>Montar PDF de imagens</h1>
+    <p class="subtitulo">
+        Adicione imagens, ordene e gire o que precisar. Até {{ max_imagens }} imagens
+        e {{ max_mb }} MB no total.
+    </p>
+
+    <form id="formulario" novalidate>
+        <label class="area" id="area">
+            <svg class="area-icone" width="30" height="30" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                 stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/>
+                <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
+            </svg>
+            <span class="area-titulo">Arraste imagens ou clique para escolher</span>
+            <span class="area-dica">Também dá para colar com Ctrl+V. Adicionar não substitui.</span>
+            <input type="file" id="entrada" name="files" multiple
+                   accept="{% for ext in extensoes %}.{{ ext }}{% if not loop.last %},{% endif %}{% endfor %}">
+        </label>
+
+        <p class="formatos" id="formatos">{{ extensoes | join(', ') }}</p>
+
+        {# Lista ordenada: a ordem visual E a ordem das paginas. #}
+        <ol class="grade oculto" id="grade"></ol>
+
+        <fieldset class="opcoes oculto" id="opcoes">
+            <legend>Página</legend>
+
+            <div class="opcao">
+                <label for="tamanho">Tamanho</label>
+                <select id="tamanho">
+                    {% for tamanho in tamanhos %}
+                    <option value="{{ tamanho.valor }}">{{ tamanho.rotulo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="opcao">
+                <label for="margem">Margem (mm)</label>
+                <input type="number" id="margem" value="0" min="0" max="{{ margem_max }}" step="1">
+            </div>
+        </fieldset>
+
+        <button type="submit" class="principal" id="enviar" disabled>Gerar PDF</button>
+    </form>
+
+    <div class="barra oculto" id="barra" role="progressbar" aria-label="Progresso da geração"
+         aria-valuemin="0" aria-valuemax="100">
+        <div class="barra-preenchimento" id="preenchimento"></div>
+    </div>
+
+    <div class="recado oculto" id="recado" aria-live="polite"></div>
+
+    <p class="rodape"><a href="/apidocs">Documentação da API</a></p>
+</main>
+
+{# Configuração do backend. Bloco JSON em vez de JavaScript inline: não é
+   executado, então sobrevive a uma CSP sem unsafe-inline. #}
+<script type="application/json" id="config-galeria">
+{{ {
+    'extensoes': extensoes,
+    'maxBytes': max_bytes,
+    'maxMb': max_mb,
+    'maxImagens': max_imagens,
+    'margemMax': margem_max,
+    'tamanhos': tamanhos,
+} | tojson }}
+</script>
+
+<script type="module" src="{{ url_for('static', filename='js/imgtopdf.js') }}"></script>
+
+</body>
+</html>

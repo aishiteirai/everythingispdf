@@ -25,6 +25,15 @@ jobs:
       - name: Testes
         run: python -m pytest tests/ -q
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # gallery.js nao toca DOM nem rede, entao reordenar e girar sao
+      # verificaveis sem navegador. Runner nativo do Node, sem dependencia.
+      - name: Testes de JavaScript
+        run: node --test tests/js/*.test.mjs
+
   docker:
     runs-on: ubuntu-latest
     steps:
@@ -73,6 +82,29 @@ jobs:
           curl -fs -F 'file=@amostra.png' \
             http://localhost:10000/api/convert -o imagem.pdf
           head -c 5 imagem.pdf | grep -q '%PDF-' && echo "PDF valido"
+
+      # Montagem de varias imagens num PDF, com rotacao e pagina A4. A suite
+      # de pytest cobre a logica; isto prova o caminho real no container.
+      - name: Monta um PDF de duas imagens
+        run: |
+          python -c "
+          from PIL import Image
+          Image.new('RGB', (600, 400), (10, 90, 200)).save('p1.png')
+          Image.new('RGB', (400, 600), (200, 90, 10)).save('p2.png')
+          "
+          curl -fs -F 'files=@p1.png' -F 'files=@p2.png' \
+            -F 'options={"pages":[{"rotation":0},{"rotation":90}],"size":"a4","margin_mm":10}' \
+            http://localhost:10000/api/imgtopdf -o galeria.pdf
+          head -c 5 galeria.pdf | grep -q '%PDF-' && echo "PDF valido"
+          python -c "
+          import re
+          dados = open('galeria.pdf', 'rb').read()
+          # O append incremental deixa geracoes antigas no arquivo; o /Count da
+          # ultima e o numero de paginas que vale.
+          total = int(re.findall(rb'/Count (\d+)', dados)[-1])
+          assert total == 2, f'esperava 2 paginas, veio {total}'
+          print('2 paginas')
+          "
 
       - name: Verifica que nao sobrou temporario
         run: |
