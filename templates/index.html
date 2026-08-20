@@ -3,164 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
     <title>Conversor de Arquivos para PDF</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-        }
-        h1 {
-            color: #333;
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        p {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-        .file-input-wrapper {
-            margin-bottom: 20px;
-        }
-        input[type="file"] {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            border: 2px dashed #ccc;
-            border-radius: 8px;
-            cursor: pointer;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        button:disabled {
-            background-color: #a0c4ff;
-            cursor: not-allowed;
-        }
-        #status-message {
-            margin-top: 20px;
-            font-size: 14px;
-            font-weight: bold;
-        }
-        .error { color: #dc3545; }
-        .success { color: #28a745; }
-        .loading { color: #007bff; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
 </head>
 <body>
 
-<div class="container">
-    <h1>Conversor Universal</h1>
-    <p>Converta documentos do Office, ODF e imagens para PDF.</p>
+<main class="cartao">
+    <h1>Conversor para PDF</h1>
+    <p class="subtitulo">Documentos do Office, ODF e imagens. Até {{ max_mb }} MB.</p>
 
-    <form id="uploadForm">
-        <div class="file-input-wrapper">
-            <input type="file" id="fileInput" name="file" accept=".docx,.doc,.pptx,.ppt,.odt,.odp,.xlsx,.xls,.jpg,.jpeg,.png" required>
+    <form id="formulario" novalidate>
+        <label class="area" id="area">
+            <svg class="area-icone" width="30" height="30" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                 stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/>
+                <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
+            </svg>
+            <span class="area-titulo">Arraste um arquivo ou clique para escolher</span>
+            <span class="area-dica">Também dá para colar uma imagem com Ctrl+V</span>
+            <input type="file" id="entrada" name="file"
+                   accept="{% for ext in extensoes %}.{{ ext }}{% if not loop.last %},{% endif %}{% endfor %}">
+        </label>
+
+        <p class="formatos" id="formatos">{{ extensoes | join(', ') }}</p>
+
+        <div class="selecionado oculto" id="selecionado">
+            <div class="selecionado-info">
+                <div class="selecionado-nome" id="nome"></div>
+                <div class="selecionado-meta" id="tamanho"></div>
+            </div>
+            <button type="button" class="remover" id="remover" aria-label="Remover arquivo">&times;</button>
         </div>
-        <button type="submit" id="convertBtn">Converter para PDF</button>
+
+        <button type="submit" class="principal" id="enviar" disabled>Converter para PDF</button>
     </form>
 
-    <div id="status-message"></div>
-</div>
+    <div class="barra oculto" id="barra" role="progressbar" aria-label="Progresso da conversão"
+         aria-valuemin="0" aria-valuemax="100">
+        <div class="barra-preenchimento" id="preenchimento"></div>
+    </div>
 
-<script>
-    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const fileInput = document.getElementById('fileInput');
-        const file = fileInput.files[0];
-        const btn = document.getElementById('convertBtn');
-        const statusDiv = document.getElementById('status-message');
+    <div class="recado oculto" id="recado" aria-live="polite"></div>
 
-        if (!file) return;
+    <p class="rodape"><a href="/apidocs">Documentação da API</a></p>
+</main>
 
-        // Atualiza a interface para estado de carregamento
-        btn.disabled = true;
-        btn.innerText = "Convertendo... Aguarde.";
-        statusDiv.className = 'loading';
-        statusDiv.innerText = "O servidor está processando o arquivo. Isso pode levar alguns segundos.";
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            const response = await fetch('/api/convert', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (response.ok) {
-                // Como a resposta é um arquivo (PDF), precisamos tratar como Blob
-                const blob = await response.blob();
-                
-                // Cria um link temporário e simula o clique para iniciar o download
-                const downloadUrl = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = downloadUrl;
-                
-                // Define o nome do arquivo baixado
-                const nomeOriginal = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-                a.download = `${nomeOriginal}.pdf`;
-                
-                document.body.appendChild(a);
-                a.click();
-                
-                // Limpeza
-                window.URL.revokeObjectURL(downloadUrl);
-                a.remove();
-
-                statusDiv.className = 'success';
-                statusDiv.innerText = "Conversão concluída com sucesso!";
-            } else {
-                // Erros do servidor (413, 502) podem vir como HTML, nao JSON
-                let mensagem = "Erro ao converter o arquivo.";
-                try {
-                    const errData = await response.json();
-                    mensagem = errData.error || mensagem;
-                } catch {
-                    mensagem = `Erro ${response.status} ao converter o arquivo.`;
-                }
-                statusDiv.className = 'error';
-                statusDiv.innerText = mensagem;
-            }
-        } catch (error) {
-            statusDiv.className = 'error';
-            statusDiv.innerText = "Erro de conexão com o servidor.";
-            console.error(error);
-        } finally {
-            // Restaura o botão
-            btn.disabled = false;
-            btn.innerText = "Converter para PDF";
-        }
-    });
+{# Configuração do backend. Bloco JSON em vez de JavaScript inline: não é
+   executado, então sobrevive a uma CSP sem unsafe-inline. #}
+<script type="application/json" id="config-conversor">
+{{ {'extensoes': extensoes, 'maxBytes': max_bytes, 'maxMb': max_mb} | tojson }}
 </script>
+
+<script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
 
 </body>
 </html>

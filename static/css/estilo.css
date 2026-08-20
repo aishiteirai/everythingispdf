@@ -1,0 +1,337 @@
+/* =============================================================
+   Tokens
+   ============================================================= */
+
+:root {
+    --fundo: #f5f6f8;
+    --superficie: #ffffff;
+    --borda: #dfe3e8;
+    --borda-forte: #c4cad2;
+    --texto: #1c1f23;
+    --texto-fraco: #626a74;
+    --primaria: #2563eb;
+    --primaria-forte: #1d4ed8;
+    --primaria-fraca: #eff4ff;
+    --erro: #c0392b;
+    --erro-fundo: #fdeeec;
+    --sucesso: #1a7f4e;
+    --sucesso-fundo: #eaf7f0;
+    --sombra: 0 1px 2px rgba(16, 24, 40, .06), 0 8px 24px rgba(16, 24, 40, .08);
+    --raio: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --fundo: #14161a;
+        --superficie: #1c1f24;
+        --borda: #2e333b;
+        --borda-forte: #444b55;
+        --texto: #e8eaed;
+        --texto-fraco: #a0a7b1;
+        --primaria: #5b8dff;
+        --primaria-forte: #7ba4ff;
+        --primaria-fraca: #1e2735;
+        --erro: #ff8f80;
+        --erro-fundo: #2c1d1b;
+        --sucesso: #6ddc9f;
+        --sucesso-fundo: #16261f;
+        --sombra: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+    }
+}
+
+/* =============================================================
+   Base
+   ============================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+/* =============================================================
+   Cartão
+   ============================================================= */
+
+.cartao {
+    width: 100%;
+    max-width: 480px;
+    background: var(--superficie);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    box-shadow: var(--sombra);
+    padding: 32px;
+}
+
+.cartao h1 {
+    margin: 0 0 6px;
+    font-size: 21px;
+    letter-spacing: -.01em;
+}
+
+.subtitulo {
+    margin: 0 0 24px;
+    color: var(--texto-fraco);
+    font-size: 14px;
+}
+
+/* =============================================================
+   Área de soltar
+
+   É um <label>: clique e teclado funcionam pelo input nativo, sem
+   JavaScript no meio.
+   ============================================================= */
+
+.area {
+    display: block;
+    border: 2px dashed var(--borda-forte);
+    border-radius: var(--raio);
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    background: transparent;
+    transition: border-color .15s, background-color .15s;
+}
+
+.area:hover {
+    border-color: var(--primaria);
+}
+
+.area:focus-within {
+    border-color: var(--primaria);
+    outline: 2px solid var(--primaria);
+    outline-offset: 2px;
+}
+
+.area.arrastando {
+    border-color: var(--primaria);
+    background: var(--primaria-fraca);
+}
+
+/* Fora da tela em vez de display:none, para continuar focável. */
+.area input[type="file"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.area-icone {
+    display: block;
+    margin: 0 auto 10px;
+    color: var(--texto-fraco);
+}
+
+.area.arrastando .area-icone {
+    color: var(--primaria);
+}
+
+.area-titulo {
+    font-weight: 600;
+}
+
+.area-dica {
+    margin-top: 4px;
+    color: var(--texto-fraco);
+    font-size: 13px;
+}
+
+.formatos {
+    margin-top: 12px;
+    color: var(--texto-fraco);
+    font-size: 12px;
+    text-align: center;
+    word-break: break-word;
+}
+
+/* =============================================================
+   Arquivo escolhido
+   ============================================================= */
+
+.selecionado {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    padding: 12px 14px;
+    background: var(--superficie);
+}
+
+.selecionado-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.selecionado-nome {
+    font-weight: 600;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.selecionado-meta {
+    color: var(--texto-fraco);
+    font-size: 12px;
+}
+
+.remover {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--texto-fraco);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.remover:hover {
+    border-color: var(--erro);
+    color: var(--erro);
+}
+
+/* =============================================================
+   Botão
+   ============================================================= */
+
+.principal {
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: var(--primaria);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color .15s;
+}
+
+.principal:hover:not(:disabled) {
+    background: var(--primaria-forte);
+}
+
+.principal:focus-visible {
+    outline: 2px solid var(--primaria);
+    outline-offset: 2px;
+}
+
+.principal:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+/* =============================================================
+   Progresso
+   ============================================================= */
+
+.barra {
+    margin-top: 16px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--borda);
+    overflow: hidden;
+}
+
+.barra-preenchimento {
+    height: 100%;
+    width: 0;
+    border-radius: 3px;
+    background: var(--primaria);
+    transition: width .15s linear;
+}
+
+/* Conversão não tem progresso mensurável: o servidor não reporta. */
+.barra.indeterminada .barra-preenchimento {
+    width: 35%;
+    animation: desliza 1.1s ease-in-out infinite;
+}
+
+@keyframes desliza {
+    0% {
+        margin-left: -35%;
+    }
+    100% {
+        margin-left: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .barra.indeterminada .barra-preenchimento {
+        width: 100%;
+        animation: none;
+        opacity: .5;
+    }
+
+    .barra-preenchimento {
+        transition: none;
+    }
+}
+
+/* =============================================================
+   Recado
+   ============================================================= */
+
+.recado {
+    margin-top: 16px;
+    padding: 11px 13px;
+    border-radius: 8px;
+    font-size: 13.5px;
+}
+
+.recado.erro {
+    background: var(--erro-fundo);
+    color: var(--erro);
+}
+
+.recado.sucesso {
+    background: var(--sucesso-fundo);
+    color: var(--sucesso);
+}
+
+.recado a {
+    color: inherit;
+    font-weight: 600;
+}
+
+/* =============================================================
+   Rodapé e utilitários
+   ============================================================= */
+
+.rodape {
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--borda);
+    text-align: center;
+    font-size: 12px;
+    color: var(--texto-fraco);
+}
+
+.rodape a {
+    color: var(--texto-fraco);
+}
+
+.oculto {
+    display: none !important;
+}
