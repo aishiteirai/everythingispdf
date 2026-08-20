@@ -50,33 +50,59 @@
     --raio-pequeno: 10px;
 }
 
+/* -------------------------------------------------------------
+   Modo noturno
+
+   Tres estados: data-tema="auto" segue o sistema, "claro" e "escuro" fixam.
+   O :not([data-tema="claro"]) existe para quem escolheu claro na mao nao
+   receber escuro por causa do sistema.
+
+   O bloco escuro aparece duas vezes porque CSS puro nao junta um @media com
+   um seletor fora dele. tests/test_pages.py exige que os dois escopos
+   declarem o mesmo mapa token -> valor, entao divergir quebra o teste.
+   ------------------------------------------------------------- */
+
 @media (prefers-color-scheme: dark) {
-    :root {
-        --fundo: #0e1116;
-        --superficie: #161a21;
-        --borda: #262c36;
-        --borda-forte: #3b434f;
-        --texto: #e9ecf1;
-        --texto-fraco: #9aa3b0;
+    :root:not([data-tema="claro"]) {
+        --fundo: #000000;
+        --superficie: #0b0b0d;
+        --borda: #23242a;
+        --borda-forte: #3a3c44;
+        --texto: #f2f3f5;
+        --texto-fraco: #9ba0a8;
         --erro: #ff9d92;
-        --erro-fundo: #2a1a19;
+        --erro-fundo: #2a1413;
         --sucesso: #6ee7a8;
-        --sucesso-fundo: #12261d;
-        --sombra: 0 1px 2px rgba(0, 0, 0, .5), 0 12px 32px rgba(0, 0, 0, .35);
+        --sucesso-fundo: #0d2016;
+        --sombra: 0 0 0 1px rgba(255, 255, 255, .02), 0 12px 32px rgba(0, 0, 0, .6);
     }
 }
 
+:root[data-tema="escuro"] {
+    --fundo: #000000;
+    --superficie: #0b0b0d;
+    --borda: #23242a;
+    --borda-forte: #3a3c44;
+    --texto: #f2f3f5;
+    --texto-fraco: #9ba0a8;
+    --erro: #ff9d92;
+    --erro-fundo: #2a1413;
+    --sucesso: #6ee7a8;
+    --sucesso-fundo: #0d2016;
+    --sombra: 0 0 0 1px rgba(255, 255, 255, .02), 0 12px 32px rgba(0, 0, 0, .6);
+}
+
 /* =============================================================
-   Acento por função
+   Acento por funcao
 
-   Toda regra colorida abaixo usa só estes quatro tokens, então a folha é
-   uma e a cor entra por variável: o <body> escolhe o tema, e no hub cada
-   célula sobrescreve o seu. Sem isso cada página precisaria de uma cópia
-   das mesmas regras.
+   Toda regra colorida abaixo usa so estes quatro tokens, entao a folha e uma
+   e a cor entra por variavel: o <body> escolhe o tema, e no hub cada celula
+   sobrescreve o seu. Sem isso cada pagina precisaria de uma copia das mesmas
+   regras.
 
-   No tema escuro o acento é claro, então o texto sobre ele é escuro --
-   branco sobre âmbar claro não passa em AA. tests/test_pages.py calcula a
-   razão de contraste de cada par e falha se alguma cor reprovar.
+   No escuro o acento e claro, entao o texto sobre ele e escuro -- branco
+   sobre ambar claro da 2,15:1 e reprova em AA. O teste calcula a razao de
+   contraste de cada par nos tres modos e nos tres temas.
    ============================================================= */
 
 :root,
@@ -102,27 +128,49 @@
 }
 
 @media (prefers-color-scheme: dark) {
-    :root,
-    .tema-neutro {
+    :root:not([data-tema="claro"]),
+    :root:not([data-tema="claro"]) .tema-neutro {
         --acento: #cdd5e0;
         --acento-forte: #e6ebf2;
-        --acento-fraco: #1c2129;
-        --acento-contraste: #0e1116;
+        --acento-fraco: #15161a;
+        --acento-contraste: #000000;
     }
 
-    .tema-convert {
+    :root:not([data-tema="claro"]) .tema-convert {
         --acento: #6b95ff;
         --acento-forte: #8fb0ff;
-        --acento-fraco: #16203a;
-        --acento-contraste: #0b1020;
+        --acento-fraco: #101a30;
+        --acento-contraste: #000000;
     }
 
-    .tema-imgtopdf {
+    :root:not([data-tema="claro"]) .tema-imgtopdf {
         --acento: #fbbf24;
         --acento-forte: #fcd34d;
-        --acento-fraco: #2a2013;
-        --acento-contraste: #1a1205;
+        --acento-fraco: #201803;
+        --acento-contraste: #000000;
     }
+}
+
+:root[data-tema="escuro"],
+:root[data-tema="escuro"] .tema-neutro {
+    --acento: #cdd5e0;
+    --acento-forte: #e6ebf2;
+    --acento-fraco: #15161a;
+    --acento-contraste: #000000;
+}
+
+:root[data-tema="escuro"] .tema-convert {
+    --acento: #6b95ff;
+    --acento-forte: #8fb0ff;
+    --acento-fraco: #101a30;
+    --acento-contraste: #000000;
+}
+
+:root[data-tema="escuro"] .tema-imgtopdf {
+    --acento: #fbbf24;
+    --acento-forte: #fcd34d;
+    --acento-fraco: #201803;
+    --acento-contraste: #000000;
 }
 
 /* =============================================================
@@ -159,6 +207,7 @@ body.pagina-alta {
    ============================================================= */
 
 .cartao {
+    position: relative;
     width: 100%;
     max-width: 520px;
     background: var(--superficie);
@@ -761,6 +810,7 @@ body:not(.tema-neutro) .cartao {
     .celula-seta,
     .principal,
     .pagina-acao,
+    .controle-tema,
     .area {
         transition: none;
     }

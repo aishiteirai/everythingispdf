@@ -73,6 +73,10 @@ ALLOWED_EXTENSIONS = IMAGE_EXTENSIONS | DOCUMENT_EXTENSIONS
 # Rotulos dos tamanhos de pagina que /api/imgtopdf aceita. Montado a partir de
 # imgtopdf.TAMANHOS para o select nao poder oferecer um tamanho que a API
 # recusa -- e para faltar rotulo virar erro no import, nao opcao em branco.
+# Preferencia de tema. "auto" segue o prefers-color-scheme do sistema, que era
+# o unico comportamento antes do controle manual existir.
+TEMAS_VALIDOS = ('auto', 'claro', 'escuro')
+
 ROTULOS_DE_TAMANHO = {
     'image': 'Tamanho da imagem',
     'a4': 'A4',
@@ -82,6 +86,23 @@ TAMANHOS_DE_PAGINA = [
     {'valor': valor, 'rotulo': ROTULOS_DE_TAMANHO[valor]}
     for valor in imgtopdf.TAMANHOS
 ]
+
+
+def tema_escolhido():
+    """Le a preferencia de tema do cookie.
+
+    Whitelist em vez do valor cru: ele vai para dentro de um atributo do
+    <html> e quem controla o cookie e o cliente. O Jinja escapa, mas depender
+    so do escape para um valor de atributo e apostar em vez de validar.
+
+    A preferencia e aplicada no servidor porque aplica-la por JavaScript
+    depois do load exigiria script inline bloqueante no <head> -- proibido
+    aqui para a pagina sobreviver a uma CSP sem unsafe-inline -- e sem ele o
+    navegador pinta o tema errado e troca depois.
+    """
+    escolha = request.cookies.get('tema')
+
+    return escolha if escolha in TEMAS_VALIDOS else 'auto'
 
 
 def get_extension(filename):
@@ -137,7 +158,7 @@ def convert_image(input_path, work_dir):
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('home.html')
+    return render_template('home.html', tema=tema_escolhido())
 
 
 @app.route('/convert', methods=['GET'])
@@ -146,6 +167,7 @@ def pagina_de_conversao():
     # /api/convert realmente aceita.
     return render_template(
         'convert.html',
+        tema=tema_escolhido(),
         extensoes=sorted(ALLOWED_EXTENSIONS),
         max_bytes=MAX_CONTENT_LENGTH,
         max_mb=MAX_CONTENT_LENGTH // (1024 * 1024),
@@ -158,6 +180,7 @@ def pagina_da_galeria():
     # escrito na mao no HTML.
     return render_template(
         'imgtopdf.html',
+        tema=tema_escolhido(),
         extensoes=sorted(IMAGE_EXTENSIONS),
         max_bytes=MAX_CONTENT_LENGTH,
         max_mb=MAX_CONTENT_LENGTH // (1024 * 1024),

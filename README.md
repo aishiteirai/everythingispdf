@@ -175,6 +175,28 @@ runner nativo do Node, sem dependência e sem navegador.
 
 ## Notas de implementação
 
+**Modo noturno em três estados.** O botão no canto do cartão alterna
+`automático → claro → escuro`. Automático segue o `prefers-color-scheme` do
+sistema, que era o único comportamento antes. No escuro o fundo é preto de
+verdade (`#000`) com a superfície do cartão em `#0b0b0d` — a borda é que desenha
+a aresta.
+
+A preferência vive num cookie que o Flask lê para renderizar `data-tema` no
+`<html>`. O caminho comum seria um `<script>` inline bloqueante no `<head>`, mas
+inline é proibido aqui para a página sobreviver a uma CSP sem `unsafe-inline` — e
+sem ele o navegador pinta o tema errado e troca depois. O valor do cookie passa
+por whitelist antes de virar atributo: quem controla o cookie é o cliente, e
+depender só do escape do Jinja para um valor de atributo é apostar em vez de
+validar.
+
+O bloco de tokens escuros aparece duas vezes no CSS, uma no `@media` e outra em
+`:root[data-tema="escuro"]`, porque CSS puro não junta um `@media` com um seletor
+fora dele. Um teste exige que os dois escopos declarem o mesmo mapa
+token → valor, então divergir quebra a suíte em vez de dar temas diferentes
+conforme o usuário escolheu na mão ou herdou do sistema. Outro exige o
+`:not([data-tema="claro"])` no `@media`: sem ele, quem fixa claro recebe escuro
+porque o sistema está escuro.
+
 **Cor por função.** Todo o CSS colorido referencia só `--acento`,
 `--acento-forte`, `--acento-fraco` e `--acento-contraste`. Quem define os
 valores é uma classe no `<body>` (`tema-convert` azul, `tema-imgtopdf` âmbar), e

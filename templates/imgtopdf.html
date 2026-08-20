@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-tema="{{ tema }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +12,7 @@
 <body class="pagina-alta tema-imgtopdf">
 
 <main class="cartao cartao-largo">
+    {% include '_tema.html' %}
     <p class="voltar"><a href="/">&larr; início</a></p>
     <h1>Montar PDF de imagens</h1>
     <p class="subtitulo">
@@ -68,6 +69,8 @@
 
     <p class="rodape"><a href="/apidocs">Documentação da API</a></p>
 </main>
+
+<script type="module" src="{{ url_for('static', filename='js/tema.js') }}"></script>
 
 {# Configuração do backend. Bloco JSON em vez de JavaScript inline: não é
    executado, então sobrevive a uma CSP sem unsafe-inline. #}

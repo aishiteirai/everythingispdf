@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-tema="{{ tema }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,6 +11,7 @@
 
 {# Sem JavaScript de proposito: o hub e so dois links. #}
 <main class="cartao cartao-hub">
+    {% include '_tema.html' %}
     <h1>Everything is PDF</h1>
     <p class="subtitulo">Escolha o que você quer fazer.</p>
 
@@ -49,6 +50,8 @@
 
     <p class="rodape"><a href="/apidocs">Documentação da API</a></p>
 </main>
+
+<script type="module" src="{{ url_for('static', filename='js/tema.js') }}"></script>
 
 </body>
 </html>

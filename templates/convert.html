@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-tema="{{ tema }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +10,7 @@
 <body class="tema-convert">
 
 <main class="cartao">
+    {% include '_tema.html' %}
     <p class="voltar"><a href="/">&larr; início</a></p>
     <h1>Conversor para PDF</h1>
     <p class="subtitulo">Documentos do Office, ODF e imagens. Até {{ max_mb }} MB.</p>
@@ -50,6 +51,8 @@
 
     <p class="rodape"><a href="/apidocs">Documentação da API</a></p>
 </main>
+
+<script type="module" src="{{ url_for('static', filename='js/tema.js') }}"></script>
 
 {# Configuração do backend. Bloco JSON em vez de JavaScript inline: não é
    executado, então sobrevive a uma CSP sem unsafe-inline. #}
