@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Instala dependências
+        run: pip install -r requirements-dev.txt
+
+      # A suíte usa o dublê em tests/bin/libreoffice, então não instala
+      # LibreOffice aqui de propósito -- garante que ela roda sem ele.
+      - name: Testes
+        run: python -m pytest tests/ -q
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build da imagem
+        run: docker build -t everythingispdf .
+
+      - name: Sobe o container
+        run: |
+          docker run -d --name app -p 10000:10000 everythingispdf
+          for i in $(seq 1 60); do
+            if curl -fs http://localhost:10000/health > /dev/null; then
+              echo "app respondendo"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "app nao subiu em 120s"
+          docker logs app
+          exit 1
+
+      # Conversão de verdade, com o LibreOffice da imagem. É o que a suíte
+      # com dublê nao cobre.
+      - name: Converte um DOCX real
+        run: |
+          python -m pip install --quiet python-docx
+          python -c "
+          import docx
+          d = docx.Document()
+          d.add_paragraph('teste de conversao')
+          d.save('amostra.docx')
+          "
+          curl -fs -F 'file=@amostra.docx' \
+            http://localhost:10000/api/convert -o saida.pdf
+          head -c 5 saida.pdf | grep -q '%PDF-' && echo "PDF valido"
+          test -s saida.pdf
+
+      - name: Converte um PNG real
+        run: |
+          python -m pip install --quiet pillow
+          python -c "
+          from PIL import Image
+          Image.new('RGBA', (40, 40), (255, 0, 0, 128)).save('amostra.png')
+          "
+          curl -fs -F 'file=@amostra.png' \
+            http://localhost:10000/api/convert -o imagem.pdf
+          head -c 5 imagem.pdf | grep -q '%PDF-' && echo "PDF valido"
+
+      - name: Verifica que nao sobrou temporario
+        run: |
+          restos=$(docker exec app sh -c 'ls -A /app/temp')
+          if [ -n "$restos" ]; then
+            echo "vazou temporario: $restos"
+            exit 1
+          fi
+          echo "/app/temp vazio"
+
+      - name: Verifica que nao roda como root
+        run: |
+          usuario=$(docker exec app whoami)
+          test "$usuario" != "root" || { echo "rodando como root"; exit 1; }
+          echo "rodando como $usuario"
+
+      - name: Logs do container
+        if: always()
+        run: docker logs app
