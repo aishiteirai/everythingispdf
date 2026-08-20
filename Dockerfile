@@ -1,7 +1,7 @@
-# Usa uma imagem oficial do Python, versão leve (slim)
+# Usa uma imagem oficial do Python, versao leve (slim)
 FROM python:3.10-slim
 
-# Evita que o Python grave arquivos .pyc e força o log no terminal
+# Evita que o Python grave arquivos .pyc e forca o log no terminal
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
@@ -10,18 +10,23 @@ RUN apt-get update && \
     apt-get install -y libreoffice --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-# Define a pasta de trabalho dentro do container
 WORKDIR /app
 
-# Copia as dependências do DOCKER especificamente
-COPY requirements-docker.txt .
-RUN pip install --no-cache-dir -r requirements-docker.txt
+# Instala as dependencias primeiro para aproveitar o cache de camadas
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia o restante do seu código (app.py, app2.py, templates, etc)
-COPY . .
+COPY app.py .
+COPY templates/ ./templates/
 
-# Expõe a porta 10000 (Padrão do Render)
+# O app escreve em temp/ durante a conversao
+RUN mkdir -p /app/temp && \
+    useradd --create-home --shell /usr/sbin/nologin appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Porta padrao do Render
 EXPOSE 10000
 
-# Inicia o servidor apontando para o app2.py
-CMD ["gunicorn", "--bind", "0.0.0.0:10000", "--timeout", "120", "app2:app"]
+# --timeout precisa ser maior que o CONVERSION_TIMEOUT do app (90s)
+CMD ["gunicorn", "--bind", "0.0.0.0:10000", "--timeout", "120", "--workers", "2", "app:app"]

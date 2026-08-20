@@ -77,11 +77,11 @@
 
 <div class="container">
     <h1>Conversor Universal</h1>
-    <p>Converta DOCX, PPTX, JPG e PNG para PDF de forma nativa.</p>
+    <p>Converta documentos do Office, ODF e imagens para PDF.</p>
 
     <form id="uploadForm">
         <div class="file-input-wrapper">
-            <input type="file" id="fileInput" name="file" accept=".docx,.pptx,.jpg,.jpeg,.png" required>
+            <input type="file" id="fileInput" name="file" accept=".docx,.doc,.pptx,.ppt,.odt,.odp,.xlsx,.xls,.jpg,.jpeg,.png" required>
         </div>
         <button type="submit" id="convertBtn">Converter para PDF</button>
     </form>
@@ -104,7 +104,7 @@
         btn.disabled = true;
         btn.innerText = "Convertendo... Aguarde.";
         statusDiv.className = 'loading';
-        statusDiv.innerText = "O Microsoft Office está processando o arquivo em segundo plano. Isso pode levar alguns segundos.";
+        statusDiv.innerText = "O servidor está processando o arquivo. Isso pode levar alguns segundos.";
 
         const formData = new FormData();
         formData.append('file', file);
@@ -139,9 +139,16 @@
                 statusDiv.className = 'success';
                 statusDiv.innerText = "Conversão concluída com sucesso!";
             } else {
-                const errData = await response.json();
+                // Erros do servidor (413, 502) podem vir como HTML, nao JSON
+                let mensagem = "Erro ao converter o arquivo.";
+                try {
+                    const errData = await response.json();
+                    mensagem = errData.error || mensagem;
+                } catch {
+                    mensagem = `Erro ${response.status} ao converter o arquivo.`;
+                }
                 statusDiv.className = 'error';
-                statusDiv.innerText = errData.error || "Erro ao converter o arquivo.";
+                statusDiv.innerText = mensagem;
             }
         } catch (error) {
             statusDiv.className = 'error';
