@@ -30,7 +30,7 @@ def configuracao(pagina):
     """A configuração que o backend injeta na página."""
     casa = re.search(
         r'<script type="application/json" id="config-conversor">(.*?)</script>',
-        pagina, re.S,
+        pagina, re.DOTALL,
     )
     assert casa, 'bloco de configuração ausente na página'
     return json.loads(casa.group(1))
@@ -120,8 +120,11 @@ class TestMensagensDeErro:
     def test_cada_status_da_api_tem_mensagem_propria(self, javascript, status):
         """Toda resposta de erro que /api/convert produz precisa de texto
         próprio, senão o usuário recebe 'erro 429' e não entende nada."""
-        bloco = re.search(r'mensagensDeErro\(maxMb\) \{\s*return \{(.*?)\};', javascript, re.S)
+        bloco = re.search(
+            r'mensagensDeErro\(maxMb\) \{\s*return \{(.*?)\};',
+            javascript, re.DOTALL,
+        )
         assert bloco, 'mapa de mensagens não encontrado'
 
-        assert re.search(rf'^\s*{status}:', bloco.group(1), re.M), \
+        assert re.search(rf'^\s*{status}:', bloco.group(1), re.MULTILINE), \
             f'status {status} sem mensagem dedicada'

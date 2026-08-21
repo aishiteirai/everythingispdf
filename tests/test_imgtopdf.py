@@ -171,7 +171,10 @@ class TestTamanhoDaPagina:
     ):
         r = client.post(
             ROTA,
-            **envio([(imagem(100, 200), 'a.png')], opcoes(1, size='image', margin_mm=50)),
+            **envio(
+                [(imagem(100, 200), 'a.png')],
+                opcoes(1, size='image', margin_mm=50),
+            ),
         )
 
         assert paginas(r.data) == [(48.0, 96.0)]

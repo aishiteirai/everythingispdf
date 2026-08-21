@@ -13,9 +13,8 @@ import io
 import os
 
 import pytest
-from PIL import Image
-
 from conftest import REPO_ROOT
+from PIL import Image
 
 
 def carrega_app(nome, **env):
@@ -62,7 +61,9 @@ def gasta_limite(client, png, vezes, forwarded_for=None):
 
 def test_desligado_ignora_forwarded_for(png):
     """Sem proxy declarado, trocar o X-Forwarded-For nao renova o limite."""
-    modulo = carrega_app('app_sem_proxy', TRUSTED_PROXIES='0', RATE_LIMIT='3 per minute')
+    modulo = carrega_app(
+        'app_sem_proxy', TRUSTED_PROXIES='0', RATE_LIMIT='3 per minute'
+    )
     client = modulo.app.test_client()
 
     gasta_limite(client, png, 3, forwarded_for='1.1.1.1')
@@ -73,7 +74,9 @@ def test_desligado_ignora_forwarded_for(png):
 
 def test_ligado_respeita_forwarded_for(png):
     """Atras de um proxy, cada IP real tem seu proprio balde."""
-    modulo = carrega_app('app_com_proxy', TRUSTED_PROXIES='1', RATE_LIMIT='3 per minute')
+    modulo = carrega_app(
+        'app_com_proxy', TRUSTED_PROXIES='1', RATE_LIMIT='3 per minute'
+    )
     client = modulo.app.test_client()
 
     primeiro = gasta_limite(client, png, 4, forwarded_for='1.1.1.1')
@@ -105,7 +108,9 @@ class TestSemanticaDoProxyFix:
     x_for=N usa o N-ésimo endereço da direita para a esquerda."""
 
     def test_x_for_1_usa_o_endereco_mais_a_direita(self, png):
-        modulo = carrega_app('app_semantica', TRUSTED_PROXIES='1', RATE_LIMIT='2 per minute')
+        modulo = carrega_app(
+            'app_semantica', TRUSTED_PROXIES='1', RATE_LIMIT='2 per minute'
+        )
         client = modulo.app.test_client()
 
         # Mesmo ultimo salto nas duas cadeias: compartilham o balde.
@@ -115,7 +120,9 @@ class TestSemanticaDoProxyFix:
         assert codigos == [429]
 
     def test_x_for_2_usa_o_penultimo(self, png):
-        modulo = carrega_app('app_semantica2', TRUSTED_PROXIES='2', RATE_LIMIT='2 per minute')
+        modulo = carrega_app(
+            'app_semantica2', TRUSTED_PROXIES='2', RATE_LIMIT='2 per minute'
+        )
         client = modulo.app.test_client()
 
         # Agora o que separa e o primeiro endereco, nao o ultimo.

@@ -93,6 +93,37 @@ function quadro(instante) {
     let alguemSeMove = false;
 
     bolinhas.forEach((bolinha) => {
+        if (emRepouso(bolinha)) return;
+
+        Object.assign(bolinha, passo(bolinha, bolinha.caixa, dt));
+        aplica(bolinha);
+
+        if (!emRepouso(bolinha)) alguemSeMove = true;
+    });
+
+    if (alguemSeMove) {
+        requestAnimationFrame(quadro);
+        return;
+    }
+
+    // Loop desliga ao parar: rAF eterno queima bateria no celular.
+    animando = false;
+    grava();
+}
+
+function anima() {
+    if (animando) return;
+
+    animando = true;
+    instanteAnterior = performance.now();
+    requestAnimationFrame(quadro);
+}
+
+/* ----------------------------------------------------------------
+   Arrasto
+   ---------------------------------------------------------------- */
+
+bolinhas.forEach((bolinha) => {
     let inicial = null;
     let amostras = [];
 

@@ -11,14 +11,19 @@
 #
 # Sai com 3 se o app esquecer o -env:UserInstallation. Sem esse argumento,
 # conversoes simultaneas disputam o perfil default do LibreOffice.
+#
+# Com LO_STUB_LOG definido, anota o perfil recebido nesse arquivo. E o que
+# permite ao teste de concorrencia provar que duas conversoes simultaneas
+# receberam perfis diferentes, e nao apenas que o argumento estava presente.
 
 OUTDIR=""
 INPUT=""
+PROFILE=""
 PROFILE_SEEN=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    -env:UserInstallation=*) PROFILE_SEEN=1 ;;
+    -env:UserInstallation=*) PROFILE_SEEN=1; PROFILE="${1#-env:UserInstallation=}" ;;
     --outdir) shift; OUTDIR="$1" ;;
     --headless|--norestore|--convert-to|pdf) ;;
     *) INPUT="$1" ;;
@@ -29,6 +34,12 @@ done
 if [ "$PROFILE_SEEN" != "1" ]; then
   echo "stub: chamada sem -env:UserInstallation" >&2
   exit 3
+fi
+
+# Uma linha curta por chamada: a escrita em modo append cabe num write e nao
+# se mistura com a da outra conversao.
+if [ -n "$LO_STUB_LOG" ]; then
+  printf '%s\n' "$PROFILE" >> "$LO_STUB_LOG"
 fi
 
 case "${LO_STUB_MODE:-ok}" in

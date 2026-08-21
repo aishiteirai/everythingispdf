@@ -212,9 +212,20 @@ RATELIMIT_STORAGE_URI=redis://localhost:6379/0
 
 ```bash
 pip install -r requirements-dev.txt
+ruff check .
 python -m pytest tests/ -q
 node --test tests/js/*.test.mjs
 ```
+
+O `ruff.toml` liga `B` (bugbear) de propósito: é a regra que pega argumento
+mutável como default — a classe de defeito que quebrou a montagem de PDF acima
+de quatro páginas, dentro do próprio Pillow.
+
+`tests/js/sintaxe.test.mjs` importa **todo** módulo de `static/js` e reprova só
+em `SyntaxError`. Existe porque os módulos de entrada — `main.js`,
+`imgtopdf.js`, `bolinhas.js` — não são importados por nenhum outro teste, então
+um erro de sintaxe neles chegaria ao navegador em silêncio. E `node --check` não
+serve para isso: num arquivo ESM genuinamente quebrado ele devolve zero.
 
 A suíte não precisa de LibreOffice instalado: documentos passam por um dublê
 (`tests/bin/libreoffice`) que simula sucesso, falha, saída sem PDF e

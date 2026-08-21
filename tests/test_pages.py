@@ -37,7 +37,7 @@ def galeria(client):
 def config_galeria(galeria):
     casa = re.search(
         r'<script type="application/json" id="config-galeria">(.*?)</script>',
-        galeria, re.S,
+        galeria, re.DOTALL,
     )
     assert casa, 'bloco de configuracao ausente na galeria'
     return json.loads(casa.group(1))
@@ -174,10 +174,10 @@ class TestMensagensDaGaleria:
 
     @pytest.mark.parametrize('status', [400, 413, 415, 429, 500])
     def test_cada_status_tem_mensagem_propria(self, fonte, status):
-        bloco = re.search(r'mensagensDaGaleria\(maxMb\) \{(.*?)\n\}', fonte, re.S)
+        bloco = re.search(r'mensagensDaGaleria\(maxMb\) \{(.*?)\n\}', fonte, re.DOTALL)
         assert bloco, 'mapa de mensagens da galeria nao encontrado'
 
-        assert re.search(rf'^\s*{status}:', bloco.group(1), re.M), \
+        assert re.search(rf'^\s*{status}:', bloco.group(1), re.MULTILINE), \
             f'status {status} sem mensagem dedicada'
 
 

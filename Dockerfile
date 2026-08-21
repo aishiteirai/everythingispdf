@@ -1,5 +1,7 @@
-# Usa uma imagem oficial do Python, versao leve (slim)
-FROM python:3.10-slim
+# Usa uma imagem oficial do Python, versao leve (slim). A 3.10 sai de suporte
+# em outubro de 2026; a versao aqui e a mesma que o CI usa nos testes, e um
+# teste trava as duas juntas.
+FROM python:3.12-slim
 
 # Evita que o Python grave arquivos .pyc e forca o log no terminal
 ENV PYTHONDONTWRITEBYTECODE=1

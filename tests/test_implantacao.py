@@ -30,7 +30,10 @@ class TestDockerfile:
         assert 'HEALTHCHECK' in arquivo('Dockerfile')
 
     def test_o_healthcheck_usa_a_rota_de_saude(self):
-        sonda = [l for l in instrucoes('Dockerfile') if l.startswith('HEALTHCHECK')]
+        sonda = [
+            linha for linha in instrucoes('Dockerfile')
+            if linha.startswith('HEALTHCHECK')
+        ]
 
         assert len(sonda) == 1, f'esperava um HEALTHCHECK, vi {len(sonda)}'
         assert '/health' in sonda[0]
@@ -91,3 +94,31 @@ class TestInterfaceDoServidor:
 
         assert 'app.run(host=HOST' in conteudo
         assert "app.run(host='127.0.0.1'" not in conteudo
+
+
+class TestVersaoDoPython:
+    """A versao usada nos testes e a que vai para a imagem tem de ser a mesma.
+    Elas ja divergiram: o CI rodava 3.10 e a imagem 3.10, mas o
+    desenvolvimento local rodava 3.14 -- e o pin do Pillow nem compilava la."""
+
+    def do_dockerfile(self):
+        casa = re.search(r'FROM python:(\d+\.\d+)-slim', arquivo('Dockerfile'))
+        assert casa, 'FROM do Dockerfile em formato inesperado'
+        return casa.group(1)
+
+    def do_ci(self):
+        casa = re.search(
+            r"python-version:\s*'(\d+\.\d+)'",
+            arquivo(os.path.join('.github', 'workflows', 'ci.yml')),
+        )
+        assert casa, 'python-version do CI em formato inesperado'
+        return casa.group(1)
+
+    def test_o_ci_e_a_imagem_usam_a_mesma_versao(self):
+        assert self.do_ci() == self.do_dockerfile()
+
+    def test_a_versao_ainda_tem_suporte(self):
+        """A 3.10 sai de suporte em outubro de 2026."""
+        maior, menor = (int(parte) for parte in self.do_dockerfile().split('.'))
+
+        assert (maior, menor) >= (3, 12), 'versao do Python perto do fim de suporte'

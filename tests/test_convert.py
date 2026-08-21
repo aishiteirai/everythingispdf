@@ -6,6 +6,8 @@ contrato do app: status HTTP, corpo, e -- em todo caminho, inclusive os de
 erro -- diretorio de trabalho vazio no fim.
 """
 
+import io
+
 import pytest
 
 PDF_MAGIC = b'%PDF-'
@@ -272,3 +274,56 @@ class TestOrientacaoDaImagem:
         r = client.post('/api/convert', **upload(buf.getvalue(), 'grande.png'))
 
         assert r.status_code == 400
+
+
+class TestConversoesSimultaneas:
+    """Cada chamada ao LibreOffice recebe um -env:UserInstallation proprio.
+    E a razao de existir daquele argumento: sem ele duas conversoes
+    concorrentes disputam o perfil default e uma delas falha ou trava. Nada
+    testava isso -- o duble so verificava que o argumento estava presente,
+    nunca que dois valores eram diferentes."""
+
+    def test_duas_ao_mesmo_tempo_usam_perfis_diferentes(
+        self, flask_app, temp_folder, tmp_path, monkeypatch, restos
+    ):
+        from concurrent.futures import ThreadPoolExecutor
+
+        registro = tmp_path / 'perfis.txt'
+        monkeypatch.setenv('LO_STUB_LOG', str(registro))
+
+        def converte(indice):
+            cliente = flask_app.test_client()
+            return cliente.post(
+                '/api/convert',
+                data={'file': (io.BytesIO(b'PK conteudo'), f'doc{indice}.docx')},
+                content_type='multipart/form-data',
+            ).status_code
+
+        with ThreadPoolExecutor(max_workers=2) as piscina:
+            codigos = list(piscina.map(converte, range(2)))
+
+        assert codigos == [200, 200]
+
+        perfis = registro.read_text(encoding='utf-8').split()
+        assert len(perfis) == 2, f'esperava dois perfis, vi {perfis}'
+        assert len(set(perfis)) == 2, f'perfis iguais nas duas conversoes: {perfis}'
+        assert restos() == []
+
+    def test_quatro_ao_mesmo_tempo_nao_se_atropelam(
+        self, flask_app, temp_folder, restos
+    ):
+        from concurrent.futures import ThreadPoolExecutor
+
+        def converte(indice):
+            cliente = flask_app.test_client()
+            return cliente.post(
+                '/api/convert',
+                data={'file': (io.BytesIO(b'PK conteudo'), f'doc{indice}.docx')},
+                content_type='multipart/form-data',
+            ).status_code
+
+        with ThreadPoolExecutor(max_workers=4) as piscina:
+            codigos = list(piscina.map(converte, range(4)))
+
+        assert codigos == [200] * 4
+        assert restos() == []

@@ -13,6 +13,13 @@ from PIL import Image
 import imgtopdf as mod
 
 
+def bytes_de(caminho):
+    """Le o arquivo inteiro. Existe para os testes nao deixarem descritor
+    aberto esperando o coletor de lixo."""
+    with open(caminho, 'rb') as arquivo:
+        return arquivo.read()
+
+
 class TestTamanhoDePagina:
     def test_a4_a_150_dpi(self):
         assert mod.pagina_em_px('a4') == (1240, 1754)
@@ -158,7 +165,7 @@ class TestMontagemDoPdf:
 
         mod.monta_pdf(entradas, opcoes, destino)
 
-        dados = open(destino, 'rb').read()
+        dados = bytes_de(destino)
         assert dados[:5] == b'%PDF-'
         # 150 DPI: 1 px = 72/150 pt.
         assert paginas(dados) == [(48.0, 96.0), (144.0, 48.0), (24.0, 24.0)]
@@ -167,7 +174,9 @@ class TestMontagemDoPdf:
         opcoes = mod.Opcoes(tamanho='image', margem_mm=0, rotacoes=[0])
 
         with pytest.raises(mod.ImagemInvalida):
-            mod.monta_pdf([io.BytesIO(b'nao sou imagem')], opcoes, self.caminho(tmp_path))
+            mod.monta_pdf(
+                [io.BytesIO(b'nao sou imagem')], opcoes, self.caminho(tmp_path)
+            )
 
     def test_pagina_a4_uniformiza_o_tamanho(self, tmp_path, imagem, paginas):
         entradas = [io.BytesIO(imagem(100, 200)), io.BytesIO(imagem(80, 80))]
@@ -176,16 +185,18 @@ class TestMontagemDoPdf:
 
         mod.monta_pdf(entradas, opcoes, destino)
 
-        caixas = paginas(open(destino, 'rb').read())
+        caixas = paginas(bytes_de(destino))
         assert caixas == [(595.2, 841.92), (595.2, 841.92)]
 
-    def test_a4_vira_paisagem_quando_a_imagem_e_paisagem(self, tmp_path, imagem, paginas):
+    def test_a4_vira_paisagem_quando_a_imagem_e_paisagem(
+        self, tmp_path, imagem, paginas
+    ):
         opcoes = mod.Opcoes(tamanho='a4', margem_mm=0, rotacoes=[0])
         destino = self.caminho(tmp_path)
 
         mod.monta_pdf([io.BytesIO(imagem(400, 100))], opcoes, destino)
 
-        assert paginas(open(destino, 'rb').read()) == [(841.92, 595.2)]
+        assert paginas(bytes_de(destino)) == [(841.92, 595.2)]
 
     def test_rotacao_muda_a_orientacao_da_pagina(self, tmp_path, imagem, paginas):
         """Prova que a rotacao acontece no servidor: mesma imagem retrato,
@@ -195,7 +206,7 @@ class TestMontagemDoPdf:
 
         mod.monta_pdf([io.BytesIO(imagem(100, 200))], opcoes, destino)
 
-        assert paginas(open(destino, 'rb').read()) == [(96.0, 48.0)]
+        assert paginas(bytes_de(destino)) == [(96.0, 48.0)]
 
     def test_rotacao_soma_em_cima_do_exif(self, tmp_path, imagem, paginas):
         """Foto de celular chega deitada com Orientation=6. O exif_transpose
@@ -213,7 +224,7 @@ class TestMontagemDoPdf:
         mod.monta_pdf([io.BytesIO(buf.getvalue())], opcoes, destino)
 
         # 200x100 deitada + Orientation=6 = 100x200 em pe.
-        assert paginas(open(destino, 'rb').read()) == [(48.0, 96.0)]
+        assert paginas(bytes_de(destino)) == [(48.0, 96.0)]
 
     def test_alfa_e_achatado(self, tmp_path, imagem, paginas):
         """PDF nao tem canal alfa: RGBA precisa virar RGB ou o save falha."""
@@ -226,7 +237,7 @@ class TestMontagemDoPdf:
             destino,
         )
 
-        assert paginas(open(destino, 'rb').read()) == [(28.8, 28.8)]
+        assert paginas(bytes_de(destino)) == [(28.8, 28.8)]
 
     def test_imagem_gigante_e_recusada(self, tmp_path, imagem, monkeypatch):
         """Guarda contra bomba de descompressao: um PNG pequeno pode declarar
@@ -235,7 +246,9 @@ class TestMontagemDoPdf:
         opcoes = mod.Opcoes(tamanho='image', margem_mm=0, rotacoes=[0])
 
         with pytest.raises(mod.ImagemInvalida):
-            mod.monta_pdf([io.BytesIO(imagem(200, 200))], opcoes, self.caminho(tmp_path))
+            mod.monta_pdf(
+                [io.BytesIO(imagem(200, 200))], opcoes, self.caminho(tmp_path)
+            )
 
 
 class TestLimiteDePaginas:
@@ -256,7 +269,7 @@ class TestLimiteDePaginas:
 
         mod.monta_pdf(entradas, opcoes, destino)
 
-        assert len(paginas(open(destino, 'rb').read())) == quantidade
+        assert len(paginas(bytes_de(destino))) == quantidade
 
     def test_a_ordem_se_mantem_em_muitas_paginas(self, tmp_path, imagem, paginas):
         """Ordem com 3 paginas nao prova ordem com 20: um merge que embaralhe
@@ -272,7 +285,7 @@ class TestLimiteDePaginas:
 
         # 150 DPI: 1 px = 72/150 pt.
         esperado = [(round(largura * 72 / 150, 2), 48.0) for largura in larguras]
-        assert paginas(open(destino, 'rb').read()) == esperado
+        assert paginas(bytes_de(destino)) == esperado
 
     def test_rotacao_por_pagina_em_muitas_paginas(self, tmp_path, imagem, paginas):
         rotacoes = [0, 90] * (mod.MAX_IMAGENS // 2)
@@ -282,7 +295,7 @@ class TestLimiteDePaginas:
 
         mod.monta_pdf(entradas, opcoes, destino)
 
-        caixas = paginas(open(destino, 'rb').read())
+        caixas = paginas(bytes_de(destino))
         esperado = [(48.0, 96.0) if giro == 0 else (96.0, 48.0) for giro in rotacoes]
         assert caixas == esperado
 
@@ -297,4 +310,4 @@ class TestLimiteDePaginas:
 
             mod.monta_pdf(entradas, opcoes, destino)
 
-            assert len(paginas(open(destino, 'rb').read())) == 6, f'rodada {rodada}'
+            assert len(paginas(bytes_de(destino))) == 6, f'rodada {rodada}'

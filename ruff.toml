@@ -1,0 +1,31 @@
+# Largura que o codigo ja usava: nove linhas passavam de 88 e foram ajustadas.
+line-length = 88
+target-version = "py312"
+exclude = ["venv", ".venv"]
+
+[lint]
+select = [
+    "E",    # pycodestyle: erros
+    "W",    # pycodestyle: avisos
+    "F",    # pyflakes: nome nao usado, import morto, f-string sem placeholder
+    "I",    # ordem dos imports
+    "UP",   # sintaxe antiga para a versao alvo
+    "B",    # bugbear: pega, entre outros, argumento mutavel como default --
+            # exatamente a classe de defeito que quebrou a montagem de PDF
+    "SIM",  # simplificacoes
+    "C4",   # compreensoes
+    "PIE",  # sobras desnecessarias
+    "RUF",  # regras do proprio ruff
+    "FURB", # modernizacoes
+]
+
+ignore = [
+    # Sugere f-string no lugar de join. Para a lista de diretivas da CSP, uma
+    # tupla de dez strings com join e mais legivel que uma f-string gigante.
+    "FLY002",
+]
+
+[lint.per-file-ignores]
+# O conftest monta o ambiente antes de importar `app`, que le variaveis no
+# import. A ordem e o ponto, nao um descuido.
+"tests/conftest.py" = ["E402"]

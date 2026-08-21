@@ -29,7 +29,7 @@ os.environ['PATH'] = STUB_BIN + os.pathsep + os.environ.get('PATH', '')
 
 sys.path.insert(0, REPO_ROOT)
 
-import app as appmod  # noqa: E402  (import depois do setup, de proposito)
+import app as appmod
 
 # O rate limit atrapalha os testes de contrato, que disparam varios requests
 # na mesma sessao. Fica desligado por default e e religado pela fixture
@@ -153,7 +153,7 @@ def paginas():
             f'paginas antiga indica volta ao append incremental'
         )
 
-        return [(float(l), float(a)) for l, a in caixas]
+        return [(float(largura), float(altura)) for largura, altura in caixas]
 
     return _paginas
 
