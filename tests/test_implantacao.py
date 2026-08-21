@@ -122,3 +122,80 @@ class TestVersaoDoPython:
         maior, menor = (int(parte) for parte in self.do_dockerfile().split('.'))
 
         assert (maior, menor) >= (3, 12), 'versao do Python perto do fim de suporte'
+
+
+class TestArmazenamentoDoRateLimit:
+    """Com `memory://` cada worker do gunicorn conta sozinho, entao o limite
+    efetivo e RATE_LIMIT x numero de workers. Redis compartilha o contador e
+    faz o teto ser o que a variavel diz."""
+
+    def test_o_cliente_redis_esta_nas_dependencias(self):
+        """O `limits` so entende redis:// se o pacote `redis` existir."""
+        assert 'redis==' in arquivo('requirements.txt')
+
+    def test_o_padrao_continua_em_memoria(self):
+        """`python app.py` tem de subir sem Redis nenhum instalado."""
+        from test_proxy import carrega_app
+
+        modulo = carrega_app('app_memoria')
+
+        assert modulo.RATELIMIT_STORAGE_URI == 'memory://'
+
+    def test_a_variavel_aponta_para_o_redis(self):
+        from test_proxy import carrega_app
+
+        uri = 'redis://redis:6379/0'
+        modulo = carrega_app('app_redis', RATELIMIT_STORAGE_URI=uri)
+
+        assert uri == modulo.RATELIMIT_STORAGE_URI
+
+    def test_queda_do_redis_nao_derruba_o_servico(self):
+        """Rate limit e protecao, nao correcao. Falhar fechado transformaria uma
+        piscada do Redis em indisponibilidade total."""
+        from test_proxy import carrega_app
+
+        modulo = carrega_app('app_fallback')
+
+        assert modulo.limiter._in_memory_fallback_enabled is True
+
+
+class TestComposicao:
+    """O docker-compose e o que faz o Redis existir de fato: sem ele a variavel
+    apontaria para um servico que ninguem sobe."""
+
+    def test_existe(self):
+        assert os.path.exists(os.path.join(RAIZ, 'docker-compose.yml'))
+
+    def composicao(self):
+        import yaml
+
+        return yaml.safe_load(arquivo('docker-compose.yml'))
+
+    def test_declara_o_redis(self):
+        assert 'redis' in self.composicao()['services']
+
+    def test_o_app_aponta_para_o_redis_declarado(self):
+        servicos = self.composicao()['services']
+        ambiente = servicos['app']['environment']
+        texto = ambiente if isinstance(ambiente, str) else '\n'.join(
+            ambiente if isinstance(ambiente, list)
+            else [f'{k}={v}' for k, v in ambiente.items()]
+        )
+
+        assert 'RATELIMIT_STORAGE_URI' in texto
+        assert 'redis://redis:' in texto
+
+    def test_o_app_espera_o_redis_estar_de_pe(self):
+        """Sem depends_on o app sobe antes do Redis aceitar conexao e a
+        primeira requisicao cai no fallback sem motivo."""
+        assert 'redis' in self.composicao()['services']['app']['depends_on']
+
+    def test_o_redis_tem_sonda(self):
+        assert 'healthcheck' in self.composicao()['services']['redis']
+
+    def test_o_redis_nao_fica_exposto_na_maquina(self):
+        """Contador de rate limit nao precisa de porta publicada; o app alcanca
+        pela rede interna da composicao."""
+        redis = self.composicao()['services']['redis']
+
+        assert 'ports' not in redis, 'redis nao deveria publicar porta'

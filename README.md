@@ -26,11 +26,19 @@ O LibreOffice já vem na imagem. É o caminho recomendado — sem Docker você
 precisa instalar o LibreOffice na mão.
 
 ```bash
+docker compose up --build
+```
+
+Abra <http://localhost:10000>. A composição sobe o serviço mais um Redis para o
+contador de rate limit — sem ele o limite efetivo fica multiplicado pelo número
+de workers do gunicorn (ver abaixo).
+
+Só a imagem, sem Redis, também funciona:
+
+```bash
 docker build -t everythingispdf .
 docker run --rm -p 10000:10000 everythingispdf
 ```
-
-Abra <http://localhost:10000>.
 
 ## Rodando local
 
@@ -194,13 +202,28 @@ escapar do limite.
 
 ### Rate limit com mais de um worker
 
-`memory://` conta por processo, então o limite efetivo é `RATE_LIMIT` ×
-número de workers do gunicorn. Para um teto real, aponte
+`memory://` conta por processo, então o limite efetivo é `RATE_LIMIT` × número
+de workers do gunicorn — com os dois workers do `Dockerfile`, o dobro do que a
+variável diz. O `docker-compose.yml` resolve isso apontando
 `RATELIMIT_STORAGE_URI` para um Redis compartilhado:
 
 ```bash
-RATELIMIT_STORAGE_URI=redis://localhost:6379/0
+RATELIMIT_STORAGE_URI=redis://redis:6379/0
 ```
+
+O default segue `memory://` para `python app.py` subir sem depender de nada.
+
+O Redis da composição não publica porta — quem precisa alcançá-lo é o app, pela
+rede interna — e roda sem persistência, com teto de 64 MB e política `allkeys-lru`.
+Contador de rate limit é descartável: perdê-lo custa uma janela de contagem, e
+não vale o risco de o Redis ser o motivo de a máquina encher.
+
+**Queda do Redis não derruba o serviço.** `in_memory_fallback_enabled` faz o
+limite voltar a contar por processo, com um aviso no log, em vez de recusar toda
+requisição. Rate limit é proteção, não correção: falhar fechado transformaria
+uma piscada do contador em indisponibilidade total. Dois passos do CI cobrem as
+duas pontas — que o contador realmente vai para o Redis, e que parar o Redis
+deixa o serviço de pé.
 
 ### Timeouts
 

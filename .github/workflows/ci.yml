@@ -133,6 +133,56 @@ jobs:
           test "$usuario" != "root" || { echo "rodando como root"; exit 1; }
           echo "rodando como $usuario"
 
+      # Prova o contador compartilhado. Com memory:// cada worker do gunicorn
+      # conta sozinho e o limite efetivo dobra; com Redis, quatro requisicoes
+      # num limite de 2 por minuto tem de dar exatamente dois 200 e dois 429.
+      # A checagem do DBSIZE e a parte decisiva: prova que o contador foi para
+      # o Redis, e nao para a memoria do processo.
+      - name: Rate limit compartilhado via Redis
+        run: |
+          docker network create pdfnet
+          docker run -d --name redis --network pdfnet redis:7-alpine
+          docker run -d --name applimite --network pdfnet -p 10001:10000 \
+            -e RATELIMIT_STORAGE_URI=redis://redis:6379/0 \
+            -e "RATE_LIMIT=2 per minute" \
+            everythingispdf
+          for i in $(seq 1 40); do
+            if curl -fs http://localhost:10001/health > /dev/null; then break; fi
+            sleep 2
+          done
+          curl -fs http://localhost:10001/health > /dev/null || {
+            echo "app com redis nao subiu"; docker logs applimite; exit 1; }
+
+          codigos=""
+          for i in 1 2 3 4; do
+            codigos="$codigos $(curl -s -o /dev/null -w '%{http_code}' \
+              -F 'file=@amostra.png' http://localhost:10001/api/convert)"
+          done
+          echo "codigos:$codigos"
+
+          test "$(echo $codigos | tr ' ' '\n' | grep -c 200)" = "2" || {
+            echo "esperava exatamente dois 200"; docker logs applimite; exit 1; }
+          test "$(echo $codigos | tr ' ' '\n' | grep -c 429)" = "2" || {
+            echo "esperava exatamente dois 429"; exit 1; }
+
+          chaves=$(docker exec redis redis-cli DBSIZE | tr -dc '0-9')
+          test "$chaves" -gt 0 || {
+            echo "redis vazio: o contador nao foi para la"; exit 1; }
+          echo "contador no redis ($chaves chaves), limite respeitado entre workers"
+
+      - name: Queda do Redis nao derruba o servico
+        run: |
+          docker stop redis
+          codigo=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:10001/health)
+          test "$codigo" = "200" || {
+            echo "servico caiu junto com o redis (status $codigo)"
+            docker logs applimite; exit 1; }
+          docker logs applimite 2>&1 | grep -qi "falling back to in-memory" || {
+            echo "sem aviso de fallback no log"; docker logs applimite; exit 1; }
+          echo "servico de pe e fallback registrado no log"
+
       - name: Logs do container
         if: always()
-        run: docker logs app
+        run: |
+          docker logs app
+          docker logs applimite 2>/dev/null || true

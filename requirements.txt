@@ -11,4 +11,7 @@ Pillow==12.3.0
 pypdf==6.16.1
 flasgger==0.9.7.1
 flask-limiter==4.1.1
+# Cliente do contador compartilhado de rate limit. O `limits` so entende
+# redis:// se este pacote existir.
+redis==8.1.0
 gunicorn==26.1.0

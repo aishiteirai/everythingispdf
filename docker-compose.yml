@@ -1,0 +1,39 @@
+# Sobe o servico com um Redis para o contador de rate limit.
+#
+# Sem Redis, `memory://` conta por worker do gunicorn e o limite efetivo fica
+# multiplicado pelo numero de workers. O contador compartilhado faz o teto ser
+# o que RATE_LIMIT diz.
+
+services:
+  app:
+    build: .
+    ports:
+      - "10000:10000"
+    environment:
+      RATELIMIT_STORAGE_URI: redis://redis:6379/0
+      # Atras de um proxy reverso, ajuste para a contagem de saltos real.
+      TRUSTED_PROXIES: "0"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    # Contador de rate limit e descartavel: sem persistencia em disco, e com
+    # teto de memoria para o Redis nunca ser o motivo de a maquina travar.
+    command: >
+      redis-server
+      --save ""
+      --appendonly no
+      --maxmemory 64mb
+      --maxmemory-policy allkeys-lru
+    # Sem porta publicada: quem precisa alcancar e o app, pela rede interna da
+    # composicao.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped

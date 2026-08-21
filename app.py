@@ -44,9 +44,10 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 # de requests derruba o servidor.
 RATE_LIMIT = os.environ.get('RATE_LIMIT', '10 per minute;60 per hour')
 
-# memory:// conta por worker do gunicorn, entao o limite efetivo e
-# RATE_LIMIT x numero de workers. Para um teto real, aponte
-# RATELIMIT_STORAGE_URI para um Redis compartilhado.
+# memory:// conta por worker do gunicorn, entao o limite efetivo e RATE_LIMIT
+# x numero de workers. Com um Redis compartilhado o teto passa a ser o que a
+# variavel diz -- e o que o docker-compose.yml monta. O default segue em
+# memoria para `python app.py` subir sem depender de nada.
 RATELIMIT_STORAGE_URI = os.environ.get('RATELIMIT_STORAGE_URI', 'memory://')
 
 limiter = Limiter(
@@ -54,6 +55,17 @@ limiter = Limiter(
     app=app,
     storage_uri=RATELIMIT_STORAGE_URI,
     strategy='fixed-window',
+    # Rate limit e protecao, nao correcao: se o Redis piscar, contar por
+    # processo e melhor que recusar toda requisicao. Falhar fechado
+    # transformaria a queda do contador em indisponibilidade total.
+    in_memory_fallback_enabled=True,
+)
+
+logger.info(
+    'Rate limit %s, contador em %s',
+    RATE_LIMIT,
+    'memoria (por processo)' if RATELIMIT_STORAGE_URI.startswith('memory')
+    else RATELIMIT_STORAGE_URI.split('://')[0],
 )
 
 # Segundos maximos para o LibreOffice converter um arquivo. Precisa ser menor
