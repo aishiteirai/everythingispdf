@@ -67,14 +67,16 @@ class TestHub:
         assert 'href="/convert"' in hub
         assert 'href="/imgtopdf"' in hub
 
-    def test_so_carrega_o_modulo_de_tema(self, hub):
-        """O hub e so dois links mais o botao de tema: nenhum outro script."""
+    def test_carrega_so_os_modulos_que_precisa(self, hub):
+        """O hub e dois links, o botao de tema e o arrasto das bolinhas."""
+        permitidos = ('js/tema.js', 'js/bolinhas.js')
         fontes = re.findall(r'<script[^>]*src="([^"]+)"', hub)
 
-        assert [f for f in fontes if not f.endswith('js/tema.js')] == []
+        assert [f for f in fontes if not f.endswith(permitidos)] == []
 
-    def test_menciona_as_duas_funcoes_em_texto(self, hub):
-        assert 'PDF' in hub
+    def test_nomeia_as_duas_funcoes_em_texto(self, hub):
+        assert 'arquivos para pdf' in hub
+        assert 'imagens para pdf' in hub
 
 
 class TestGaleria:
@@ -196,12 +198,23 @@ TEMAS = {
 
 # (frente, fundo, razao minima). 4.5 para texto, 3.0 para componente grafico
 # -- o que a WCAG 2.1 AA exige de cada um.
+#
+# Sao dois tons por funcao: --acento e a bolinha e as bordas, componente
+# grafico, entao 3:1 basta; --acento-forte carrega texto e vira preenchimento
+# de botao com texto em cima, entao precisa de 4.5:1 nos dois sentidos. A cor
+# da bolinha nao aguenta texto branco -- foi a escolha de manter o tom claro.
 PARES_DE_CONTRASTE = [
     ('--texto', '--fundo', 4.5),
     ('--texto', '--superficie', 4.5),
+    ('--texto', '--superficie-alt', 4.5),
     ('--texto-fraco', '--superficie', 4.5),
-    ('--acento-contraste', '--acento', 4.5),
+    ('--texto-fraco', '--superficie-alt', 4.5),
     ('--acento', '--superficie', 3.0),
+    ('--acento', '--fundo', 3.0),
+    ('--acento-contraste', '--acento', 3.0),
+    ('--acento-forte', '--superficie', 4.5),
+    ('--acento-forte', '--fundo', 4.5),
+    ('--acento-contraste', '--acento-forte', 4.5),
     ('--erro', '--erro-fundo', 4.5),
     ('--sucesso', '--sucesso-fundo', 4.5),
 ]
@@ -525,3 +538,181 @@ class TestControleDeTema:
 
     def test_o_modulo_e_servido(self, client):
         assert client.get('/static/js/tema.js').status_code == 200
+
+
+LIMITE_ARRASTO_PX = 400
+
+
+class TestCabecalhoERodape:
+    @pytest.mark.parametrize('rota', ROTAS)
+    def test_toda_pagina_tem_cabecalho_com_a_marca(self, client, rota):
+        pagina = client.get(rota).get_data(as_text=True)
+
+        assert '<header' in pagina, f'{rota} sem cabecalho'
+        assert 'everything is pdf' in pagina
+
+    @pytest.mark.parametrize('rota', ROTAS)
+    def test_a_marca_leva_ao_inicio(self, client, rota):
+        pagina = client.get(rota).get_data(as_text=True)
+        marca = re.search(r'<a[^>]*class="[^"]*marca[^"]*"[^>]*>', pagina)
+
+        assert marca, f'{rota} sem link da marca'
+        assert 'href="/"' in marca.group(0)
+
+    @pytest.mark.parametrize('rota', ROTAS)
+    def test_toda_pagina_tem_rodape_com_a_documentacao(self, client, rota):
+        pagina = client.get(rota).get_data(as_text=True)
+
+        assert '<footer' in pagina, f'{rota} sem rodape'
+        assert '/apidocs' in pagina
+
+    @pytest.mark.parametrize('rota', ROTAS)
+    def test_o_rodape_nao_promete_pagina_que_nao_existe(self, client, rota):
+        """O mockup trazia Privacy, Terms e Contact apontando para '#'. Link
+        morto e pior que link ausente."""
+        pagina = client.get(rota).get_data(as_text=True)
+
+        assert 'href="#"' not in pagina
+        for morto in ('Privacy Policy', 'Terms of Service'):
+            assert morto not in pagina
+
+
+class TestBolinhas:
+    @pytest.fixture
+    def hub(self, client):
+        return client.get('/').get_data(as_text=True)
+
+    def test_o_hub_tem_duas_bolinhas_indexadas(self, hub):
+        indices = re.findall(r'data-bolinha="(\d+)"', hub)
+
+        assert indices == ['0', '1']
+
+    def test_cada_bolinha_leva_a_sua_funcao(self, hub):
+        assert re.search(r'data-bolinha="0"[^>]*href="/convert"', hub) or \
+            re.search(r'href="/convert"[^>]*data-bolinha="0"', hub)
+        assert re.search(r'data-bolinha="1"[^>]*href="/imgtopdf"', hub) or \
+            re.search(r'href="/imgtopdf"[^>]*data-bolinha="1"', hub)
+
+    def test_cada_bolinha_tem_o_tema_da_sua_funcao(self, hub):
+        bolinhas = re.findall(r'<a[^>]*data-bolinha="\d+"[^>]*>', hub)
+
+        assert len(bolinhas) == 2
+        assert 'tema-convert' in bolinhas[0]
+        assert 'tema-imgtopdf' in bolinhas[1]
+
+    def test_o_hub_carrega_o_modulo_de_arrasto(self, hub):
+        assert re.search(r'<script type="module" src="[^"]*js/bolinhas\.js"', hub)
+
+    @pytest.mark.parametrize('modulo', ['bolinhas.js', 'bolinhas-estado.js'])
+    def test_os_modulos_sao_servidos(self, client, modulo):
+        assert client.get(f'/static/js/{modulo}').status_code == 200
+
+
+class TestPosicaoDasBolinhas:
+    """A posicao vem de cookie e o Flask a renderiza no style do elemento, para
+    a bolinha nascer no lugar em vez de saltar depois que o JavaScript roda.
+    O valor vem do cliente e entra num atributo de estilo, entao o backend
+    converte para inteiro e limita a faixa."""
+
+    def posicoes(self, client, cookie=None):
+        if cookie is not None:
+            client.set_cookie('bolinhas', cookie)
+
+        hub = client.get('/').get_data(as_text=True)
+        estilos = re.findall(r'<a[^>]*data-bolinha="\d+"[^>]*style="([^"]*)"', hub)
+        assert len(estilos) == 2, f'esperava 2 bolinhas com style, vi {len(estilos)}'
+
+        return [
+            tuple(int(v) for v in re.findall(r'(-?\d+)px', estilo))
+            for estilo in estilos
+        ]
+
+    def test_sem_cookie_as_bolinhas_ficam_no_lugar(self, client):
+        assert self.posicoes(client) == [(0, 0), (0, 0)]
+
+    def test_cookie_valido_posiciona_as_duas(self, client):
+        assert self.posicoes(client, '80_-12|-30_40') == [(80, -12), (-30, 40)]
+
+    @pytest.mark.parametrize('cookie', [
+        '', 'abc', '80', '80_12', '80_12|', '1_2|3_4|5_6', '80_12|a_b',
+        '80.5_12|0_0', '80_12_3|0_0', '|', 'NaN_0|0_0',
+        # O formato antigo usava ';' e ',', que o cabecalho HTTP corta.
+        '80,-12;-30,40',
+    ])
+    def test_cookie_malformado_volta_ao_padrao(self, client, cookie):
+        assert self.posicoes(client, cookie) == [(0, 0), (0, 0)]
+
+    @pytest.mark.parametrize('cookie, esperado', [
+        ('99999_0|0_0', (LIMITE_ARRASTO_PX, 0)),
+        ('-99999_0|0_0', (-LIMITE_ARRASTO_PX, 0)),
+        ('0_99999|0_0', (0, LIMITE_ARRASTO_PX)),
+    ])
+    def test_valor_fora_da_faixa_e_limitado(self, client, cookie, esperado):
+        """Sem limite, um cookie adulterado joga a bolinha para fora da tela e
+        o link fica inalcancavel."""
+        assert self.posicoes(client, cookie)[0] == esperado
+
+    def test_cookie_hostil_nao_chega_ao_html(self, client):
+        client.set_cookie('bolinhas', '"><script>alert(1)</script>|0_0')
+
+        hub = client.get('/').get_data(as_text=True)
+
+        assert 'alert(1)' not in hub
+        assert self.posicoes(client) == [(0, 0), (0, 0)]
+
+
+class TestCookieDePosicaoNaRede:
+    """A posicao trafega em cabecalho Cookie, e la o ';' separa cookies e a
+    RFC 6265 tambem exclui ',' '"' espaco e '\\' do valor. Um separador ilegal
+    faz o valor ser truncado antes de chegar ao servidor -- e set_cookie do
+    cliente de teste nao revela isso, porque escreve direto no jar.
+    """
+
+    @pytest.fixture
+    def cliente_cru(self, flask_app):
+        """Cliente que nao gerencia cookies.
+
+        O cliente normal sobrescreve o cabecalho Cookie com o proprio jar, o
+        que esconde justamente o problema que este teste procura: separador
+        que nao sobrevive ao cabecalho HTTP.
+        """
+        return flask_app.test_client(use_cookies=False)
+
+    def posicoes_com_cabecalho(self, cliente_cru, valor):
+        pagina = cliente_cru.get(
+            '/', headers={'Cookie': f'bolinhas={valor}'}
+        ).get_data(as_text=True)
+
+        estilos = re.findall(r'<a[^>]*data-bolinha="\d+"[^>]*style="([^"]*)"', pagina)
+
+        return [
+            tuple(int(v) for v in re.findall(r'(-?\d+)px', estilo))
+            for estilo in estilos
+        ]
+
+    def test_o_valor_sobrevive_ao_cabecalho_http(self, cliente_cru):
+        assert self.posicoes_com_cabecalho(cliente_cru, '80_-12|-30_40') == \
+            [(80, -12), (-30, 40)]
+
+    def test_o_formato_antigo_com_ponto_e_virgula_seria_cortado(self, cliente_cru):
+        """Documenta o bug que motivou a troca de separador: em cabecalho HTTP
+        o ';' encerra o cookie, entao a segunda bolinha nunca chegava."""
+        assert self.posicoes_com_cabecalho(cliente_cru, '80,-12;-30,40') == \
+            [(0, 0), (0, 0)]
+
+    @pytest.mark.parametrize('proibido', [';', ',', '"', ' ', '\\'])
+    def test_o_formato_nao_usa_caractere_proibido_em_cookie(self, proibido):
+        """Se o separador escolhido for um destes, o navegador corta o valor e
+        as bolinhas voltam para a origem a cada carregamento."""
+        exemplo = '80_-12|-30_40'
+
+        assert proibido not in exemplo
+
+    def test_o_javascript_e_o_backend_usam_o_mesmo_formato(self, client):
+        """O formato existe em dois lugares: serializa() no JavaScript e o
+        parser no backend. Divergir faz a posicao ser sempre descartada."""
+        fonte = client.get('/static/js/bolinhas-estado.js').get_data(as_text=True)
+
+        assert client.get('/static/js/bolinhas-estado.js').status_code == 200
+        assert "'|'" in fonte or '"|"' in fonte, 'JavaScript nao usa | como separador'
+        assert '_' in fonte, 'JavaScript nao usa _ entre os eixos'

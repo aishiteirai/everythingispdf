@@ -9,49 +9,53 @@
 </head>
 <body class="tema-neutro">
 
-{# Sem JavaScript de proposito: o hub e so dois links. #}
-<main class="cartao cartao-hub">
-    {% include '_tema.html' %}
-    <h1>Everything is PDF</h1>
-    <p class="subtitulo">Escolha o que você quer fazer.</p>
+{% include '_cabecalho.html' %}
 
-    <div class="celulas">
-        {# Cada celula carrega o tema da sua funcao: os tokens de acento
-           cascateiam para dentro do link. #}
-        <a class="celula tema-convert" href="/convert">
-            <svg class="celula-icone" width="28" height="28" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-                 stroke-linejoin="round" aria-hidden="true">
-                <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
-                <path d="M14 3v5h5"/>
-            </svg>
-            <span class="celula-titulo">Converter um arquivo</span>
-            <span class="celula-descricao">
-                Word, PowerPoint, planilha, ODF ou uma imagem. Um arquivo entra, um PDF sai.
+<main class="tela">
+    {# Cada bolinha carrega o tema da sua funcao: os tokens de acento
+       cascateiam para dentro do link. A posicao vem do servidor, entao ela
+       nasce no lugar em vez de saltar quando o JavaScript roda. #}
+    <div class="bolinhas" id="bolinhas">
+        <a class="bolinha tema-convert" href="/convert" data-bolinha="0"
+           style="--dx: {{ posicoes[0][0] }}px; --dy: {{ posicoes[0][1] }}px">
+            <span class="bolinha-disco">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                     stroke-linejoin="round" aria-hidden="true">
+                    <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+                    <path d="M14 3v5h5"/>
+                    <path d="M9 13h6M9 17h4"/>
+                </svg>
             </span>
-            <span class="celula-seta" aria-hidden="true">&rarr;</span>
+            <span class="bolinha-rotulo">arquivos para pdf</span>
         </a>
 
-        <a class="celula tema-imgtopdf" href="/imgtopdf">
-            <svg class="celula-icone" width="28" height="28" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-                 stroke-linejoin="round" aria-hidden="true">
-                <rect x="3" y="5" width="13" height="13" rx="2"/>
-                <path d="M19 8v9a2 2 0 0 1-2 2H8"/>
-                <path d="M6 14l3-3 3 3 2-2 2 2"/>
-            </svg>
-            <span class="celula-titulo">Montar PDF de imagens</span>
-            <span class="celula-descricao">
-                Várias imagens numa só página por vez: ordene, gire e gere um PDF único.
+        <a class="bolinha tema-imgtopdf" href="/imgtopdf" data-bolinha="1"
+           style="--dx: {{ posicoes[1][0] }}px; --dy: {{ posicoes[1][1] }}px">
+            <span class="bolinha-disco">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                     stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="16" rx="2"/>
+                    <circle cx="8.5" cy="9.5" r="1.6"/>
+                    <path d="M4 17l4.5-4.5 3 3 3-3L20 17"/>
+                </svg>
             </span>
-            <span class="celula-seta" aria-hidden="true">&rarr;</span>
+            <span class="bolinha-rotulo">imagens para pdf</span>
         </a>
     </div>
 
-    <p class="rodape"><a href="/apidocs">Documentação da API</a></p>
+    {# So aparece depois de arrastar: botao que nao faz nada e ruido. #}
+    <button type="button" id="voltar-bolinhas"
+            class="voltar-lugar{% if posicoes == [(0, 0), (0, 0)] %} oculto{% endif %}">
+        voltar ao lugar
+    </button>
 </main>
 
+{% include '_rodape.html' %}
+
 <script type="module" src="{{ url_for('static', filename='js/tema.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/bolinhas.js') }}"></script>
 
 </body>
 </html>

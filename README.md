@@ -197,18 +197,51 @@ conforme o usuário escolheu na mão ou herdou do sistema. Outro exige o
 `:not([data-tema="claro"])` no `@media`: sem ele, quem fixa claro recebe escuro
 porque o sistema está escuro.
 
-**Cor por função.** Todo o CSS colorido referencia só `--acento`,
+**Cor por função, dois tons.** Todo o CSS colorido referencia só `--acento`,
 `--acento-forte`, `--acento-fraco` e `--acento-contraste`. Quem define os
-valores é uma classe no `<body>` (`tema-convert` azul, `tema-imgtopdf` âmbar), e
-no hub cada célula sobrescreve a sua. Assim existe uma folha de estilo e a cor
-entra por variável, em vez de uma cópia das mesmas regras por página.
+valores é uma classe no `<body>` (`tema-convert`, `tema-imgtopdf`), e no hub cada
+bolinha sobrescreve a sua. Assim existe uma folha de estilo e a cor entra por
+variável, em vez de uma cópia das mesmas regras por página.
 
-No tema escuro o acento é claro, então o texto sobre ele é escuro — branco sobre
-âmbar claro dá 2,15:1 e reprova em AA. `tests/test_pages.py` calcula a razão de
-contraste de cada par de tokens nos dois modos e nos três temas, e falha se
-alguma cor reprovar. Outro teste lê os nomes de classe que o JavaScript alterna
-e exige que o CSS os defina: renomear `.oculto` num redesign quebraria a
-interface inteira sem nenhum outro teste falhar.
+São dois tons porque a cor da bolinha foi mantida clara de propósito: `--acento`
+é bolinha, borda e anel de foco, componente gráfico, onde 3:1 basta;
+`--acento-forte` carrega texto e vira preenchimento de botão, onde são
+necessários 4,5:1 nos dois sentidos. O texto sobre os dois vem de
+`--acento-contraste`: branco no claro, preto no escuro, onde o acento é a cor
+clara.
+
+`tests/test_pages.py` calcula a razão de contraste de treze pares de tokens em
+três modos e três temas, e falha se alguma cor reprovar. Outro teste lê os nomes
+de classe que o JavaScript alterna e exige que o CSS os defina: renomear
+`.oculto` num redesign quebraria a interface inteira sem nenhum outro teste
+falhar.
+
+**Bolinhas arrastáveis.** No hub, as duas bolinhas podem ser arrastadas para
+qualquer lugar. Pointer events cobrem mouse e toque num caminho só, e um limiar
+de 6px separa clique de arrasto — sem ele, arrastar acabaria navegando. A
+posição vive num cookie que o Flask lê e renderiza em `--dx` e `--dy` no style
+do elemento, então a bolinha nasce onde foi deixada em vez de saltar quando o
+JavaScript roda. O backend converte para inteiro e limita a faixa: sem limite,
+um cookie adulterado joga a bolinha para fora da tela e o link fica
+inalcançável.
+
+O separador do cookie é `x_y|x_y`, não `x,y;x,y`. Em cabeçalho HTTP o `;`
+encerra o cookie e a RFC 6265 também exclui `,`, `"`, espaço e `\` do valor — com
+`;` a segunda bolinha nunca chegava ao servidor. O `set_cookie` do cliente de
+teste escreve direto no jar e esconde isso, então o teste que cobre o caso usa
+`test_client(use_cookies=False)` e monta o cabeçalho na mão.
+
+Arrastar é enriquecimento: o link continua focável e ativável por teclado, e
+mover a bolinha não muda a ordem de tabulação. Teclado não reposiciona — é
+cosmético, não funcional.
+
+**Sem framework de CSS.** O layout veio de um mockup em Tailwind por CDN. O CDN
+do Tailwind compila CSS no navegador a cada carregamento, é ferramenta de
+desenvolvimento, e tanto ele quanto o Google Fonts são host externo — o que
+quebra a página autocontida e exigiria exceção na CSP. O bloco
+`tailwind.config` era script inline executável, proibido pelo mesmo motivo. Tudo
+virou CSS comum sobre os tokens acima, e os ícones do Material Symbols viraram
+SVG inline: a fonte de ícones traria milhares de glifos para usar meia dúzia.
 
 **Fonte auto-hospedada.** Inter variável em `static/fonts/`, subsets latin
 (48 KB) e latin-ext (85 KB) separados por `unicode-range` — o caso comum paga só

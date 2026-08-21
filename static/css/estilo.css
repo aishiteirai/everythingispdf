@@ -5,6 +5,9 @@
    precisaria de exceção na CSP. O unicode-range faz a latin-ext só baixar
    quando aparece um caractere fora da latin -- num nome de arquivo, por
    exemplo -- então o caso comum paga só a latin.
+
+   Os ícones são SVG inline e não uma fonte de ícones: o Material Symbols
+   traria milhares de glifos para usar meia dúzia.
    ============================================================= */
 
 @font-face {
@@ -35,19 +38,23 @@
    ============================================================= */
 
 :root {
-    --fundo: #f6f7f9;
+    --fundo: #f4f3ee;
     --superficie: #ffffff;
-    --borda: #e4e7ec;
-    --borda-forte: #c9cfd8;
-    --texto: #101827;
-    --texto-fraco: #5b6472;
-    --erro: #b42318;
-    --erro-fundo: #fef3f2;
-    --sucesso: #067647;
-    --sucesso-fundo: #ecfdf3;
-    --sombra: 0 1px 2px rgba(16, 24, 40, .04), 0 12px 32px rgba(16, 24, 40, .07);
-    --raio: 14px;
-    --raio-pequeno: 10px;
+    --superficie-alt: #faf9f4;
+    --borda: #e3e3de;
+    --borda-forte: #c3c8bb;
+    --texto: #2b3a2a;
+    --texto-fraco: #4f564a;
+    --erro: #ba1a1a;
+    --erro-fundo: #ffdad6;
+    --sucesso: #1f6b3f;
+    --sucesso-fundo: #dcf2e3;
+    --sombra: 0 4px 24px rgba(43, 58, 42, .06);
+    --sombra-forte: 0 16px 48px rgba(43, 58, 42, .10);
+
+    --raio: 20px;
+    --raio-pequeno: 12px;
+    --largura-maxima: 1100px;
 }
 
 /* -------------------------------------------------------------
@@ -66,110 +73,115 @@
     :root:not([data-tema="claro"]) {
         --fundo: #000000;
         --superficie: #0b0b0d;
+        --superficie-alt: #111213;
         --borda: #23242a;
         --borda-forte: #3a3c44;
         --texto: #f2f3f5;
-        --texto-fraco: #9ba0a8;
-        --erro: #ff9d92;
+        --texto-fraco: #a6aba1;
+        --erro: #ffb4ab;
         --erro-fundo: #2a1413;
-        --sucesso: #6ee7a8;
+        --sucesso: #8fd9ac;
         --sucesso-fundo: #0d2016;
-        --sombra: 0 0 0 1px rgba(255, 255, 255, .02), 0 12px 32px rgba(0, 0, 0, .6);
+        --sombra: 0 0 0 1px rgba(255, 255, 255, .04), 0 4px 24px rgba(0, 0, 0, .6);
+        --sombra-forte: 0 0 0 1px rgba(255, 255, 255, .07), 0 16px 48px rgba(0, 0, 0, .7);
     }
 }
 
 :root[data-tema="escuro"] {
     --fundo: #000000;
     --superficie: #0b0b0d;
+    --superficie-alt: #111213;
     --borda: #23242a;
     --borda-forte: #3a3c44;
     --texto: #f2f3f5;
-    --texto-fraco: #9ba0a8;
-    --erro: #ff9d92;
+    --texto-fraco: #a6aba1;
+    --erro: #ffb4ab;
     --erro-fundo: #2a1413;
-    --sucesso: #6ee7a8;
+    --sucesso: #8fd9ac;
     --sucesso-fundo: #0d2016;
-    --sombra: 0 0 0 1px rgba(255, 255, 255, .02), 0 12px 32px rgba(0, 0, 0, .6);
+    --sombra: 0 0 0 1px rgba(255, 255, 255, .04), 0 4px 24px rgba(0, 0, 0, .6);
+    --sombra-forte: 0 0 0 1px rgba(255, 255, 255, .07), 0 16px 48px rgba(0, 0, 0, .7);
 }
 
 /* =============================================================
    Acento por funcao
 
-   Toda regra colorida abaixo usa so estes quatro tokens, entao a folha e uma
-   e a cor entra por variavel: o <body> escolhe o tema, e no hub cada celula
-   sobrescreve o seu. Sem isso cada pagina precisaria de uma copia das mesmas
-   regras.
+   Dois tons, porque a cor da bolinha foi mantida clara de proposito:
 
-   No escuro o acento e claro, entao o texto sobre ele e escuro -- branco
-   sobre ambar claro da 2,15:1 e reprova em AA. O teste calcula a razao de
-   contraste de cada par nos tres modos e nos tres temas.
+   --acento        bolinha, borda, anel de foco. Componente grafico, 3:1.
+   --acento-forte  texto e preenchimento de botao com texto em cima. 4.5:1
+                   nos dois sentidos.
+
+   O texto sobre os dois vem de --acento-contraste: branco no claro, preto no
+   escuro, onde o acento e a cor clara. O teste calcula cada par nos tres
+   modos e nos tres temas.
    ============================================================= */
 
 :root,
 .tema-neutro {
-    --acento: #344054;
-    --acento-forte: #1d2939;
-    --acento-fraco: #f2f4f7;
+    --acento: #737b70;
+    --acento-forte: #43493e;
+    --acento-fraco: #efeee9;
     --acento-contraste: #ffffff;
 }
 
 .tema-convert {
-    --acento: #2563eb;
-    --acento-forte: #1d4ed8;
-    --acento-fraco: #eff4ff;
+    --acento: #6790a6;
+    --acento-forte: #4d7083;
+    --acento-fraco: #eaf1f5;
     --acento-contraste: #ffffff;
 }
 
 .tema-imgtopdf {
-    --acento: #b45309;
-    --acento-forte: #92400e;
-    --acento-fraco: #fff7e6;
+    --acento: #678d58;
+    --acento-forte: #527146;
+    --acento-fraco: #edf3ea;
     --acento-contraste: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
     :root:not([data-tema="claro"]),
     :root:not([data-tema="claro"]) .tema-neutro {
-        --acento: #cdd5e0;
-        --acento-forte: #e6ebf2;
-        --acento-fraco: #15161a;
+        --acento: #b9c0b4;
+        --acento-forte: #d3d9ce;
+        --acento-fraco: #16171a;
         --acento-contraste: #000000;
     }
 
     :root:not([data-tema="claro"]) .tema-convert {
-        --acento: #6b95ff;
-        --acento-forte: #8fb0ff;
-        --acento-fraco: #101a30;
+        --acento: #7ea1b4;
+        --acento-forte: #92afbf;
+        --acento-fraco: #0e1a20;
         --acento-contraste: #000000;
     }
 
     :root:not([data-tema="claro"]) .tema-imgtopdf {
-        --acento: #fbbf24;
-        --acento-forte: #fcd34d;
-        --acento-fraco: #201803;
+        --acento: #8fb181;
+        --acento-forte: #a0bc94;
+        --acento-fraco: #101a0d;
         --acento-contraste: #000000;
     }
 }
 
 :root[data-tema="escuro"],
 :root[data-tema="escuro"] .tema-neutro {
-    --acento: #cdd5e0;
-    --acento-forte: #e6ebf2;
-    --acento-fraco: #15161a;
+    --acento: #b9c0b4;
+    --acento-forte: #d3d9ce;
+    --acento-fraco: #16171a;
     --acento-contraste: #000000;
 }
 
 :root[data-tema="escuro"] .tema-convert {
-    --acento: #6b95ff;
-    --acento-forte: #8fb0ff;
-    --acento-fraco: #101a30;
+    --acento: #7ea1b4;
+    --acento-forte: #92afbf;
+    --acento-fraco: #0e1a20;
     --acento-contraste: #000000;
 }
 
 :root[data-tema="escuro"] .tema-imgtopdf {
-    --acento: #fbbf24;
-    --acento-forte: #fcd34d;
-    --acento-fraco: #201803;
+    --acento: #8fb181;
+    --acento-forte: #a0bc94;
+    --acento-fraco: #101a0d;
     --acento-contraste: #000000;
 }
 
@@ -185,31 +197,300 @@ body {
     margin: 0;
     min-height: 100vh;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 20px;
+    flex-direction: column;
     background: var(--fundo);
     color: var(--texto);
     font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-    font-size: 15px;
-    line-height: 1.55;
+    font-size: 16px;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
 }
 
-/* A galeria cresce para baixo; centralizar verticalmente estrangularia a
-   página. */
-body.pagina-alta {
-    align-items: flex-start;
+/* Faixa de conteudo: mesma largura e mesmas margens no cabecalho, no corpo e
+   no rodape, para as tres partes alinharem. */
+.faixa {
+    width: 100%;
+    max-width: var(--largura-maxima);
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+@media (min-width: 768px) {
+    .faixa {
+        padding: 0 64px;
+    }
 }
 
 /* =============================================================
-   Cartão
+   Cabecalho
+   ============================================================= */
+
+.topo {
+    width: 100%;
+    background: var(--superficie-alt);
+}
+
+.topo .faixa {
+    height: 88px;
+}
+
+.marca {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: var(--texto);
+    text-decoration: none;
+}
+
+.marca:hover {
+    color: var(--acento-forte);
+}
+
+.marca:focus-visible {
+    outline: 2px solid var(--acento);
+    outline-offset: 4px;
+    border-radius: 6px;
+}
+
+/* =============================================================
+   Corpo
+   ============================================================= */
+
+.tela {
+    flex: 1;
+    width: 100%;
+    max-width: var(--largura-maxima);
+    margin: 0 auto;
+    padding: 64px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+}
+
+@media (min-width: 768px) {
+    .tela {
+        padding: 80px 64px;
+    }
+}
+
+/* A galeria cresce para baixo; centralizar verticalmente estrangularia a
+   pagina. */
+body.pagina-alta .tela {
+    justify-content: flex-start;
+}
+
+/* =============================================================
+   Rodape
+   ============================================================= */
+
+.pe {
+    width: 100%;
+    margin-top: auto;
+    background: var(--superficie-alt);
+}
+
+.pe .faixa {
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 36px;
+    padding-bottom: 36px;
+}
+
+@media (min-width: 768px) {
+    .pe .faixa {
+        flex-direction: row;
+    }
+}
+
+.etiqueta {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--texto-fraco);
+    text-decoration: none;
+}
+
+a.etiqueta:hover {
+    color: var(--acento-forte);
+}
+
+a.etiqueta:focus-visible {
+    outline: 2px solid var(--acento);
+    outline-offset: 4px;
+    border-radius: 4px;
+}
+
+/* =============================================================
+   Controle de tema
+
+   Os tres icones existem no HTML e o CSS mostra o do estado atual: assim o
+   icone certo aparece na primeira pintura, sem esperar JavaScript.
+   ============================================================= */
+
+.controle-tema {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--borda);
+    border-radius: 9999px;
+    background: var(--superficie);
+    color: var(--texto-fraco);
+    cursor: pointer;
+    transition: color .15s, border-color .15s, background-color .15s;
+}
+
+.controle-tema:hover {
+    border-color: var(--acento);
+    background: var(--acento-fraco);
+    color: var(--acento-forte);
+}
+
+.controle-tema:focus-visible {
+    outline: 2px solid var(--acento);
+    outline-offset: 3px;
+}
+
+.icone-tema {
+    display: none;
+    grid-area: 1 / 1;
+}
+
+:root[data-tema="auto"] .icone-auto,
+:root[data-tema="claro"] .icone-claro,
+:root[data-tema="escuro"] .icone-escuro {
+    display: block;
+}
+
+/* Sem atributo -- HTML servido por outra rota, ou atributo removido -- o
+   estado real e o automatico. */
+:root:not([data-tema]) .icone-auto {
+    display: block;
+}
+
+/* =============================================================
+   Bolinhas do hub
+
+   O deslocamento vem em --dx e --dy, renderizados pelo servidor a partir do
+   cookie: assim a bolinha nasce onde foi deixada, em vez de saltar do lugar
+   padrao quando o JavaScript roda.
+   ============================================================= */
+
+.bolinhas {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 48px;
+    width: 100%;
+    max-width: 720px;
+    justify-items: center;
+}
+
+@media (min-width: 768px) {
+    .bolinhas {
+        grid-template-columns: 1fr 1fr;
+        gap: 48px 64px;
+    }
+}
+
+.bolinha {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: var(--texto);
+    text-decoration: none;
+    transform: translate(var(--dx, 0px), var(--dy, 0px));
+    /* Sem isso o navegador rola a pagina em vez de entregar o arrasto. */
+    touch-action: none;
+    cursor: grab;
+}
+
+.bolinha-disco {
+    width: 96px;
+    height: 96px;
+    display: grid;
+    place-items: center;
+    border-radius: 9999px;
+    background: var(--acento);
+    color: var(--acento-contraste);
+    box-shadow: var(--sombra);
+    transition: box-shadow .3s, transform .3s;
+}
+
+.bolinha:hover .bolinha-disco {
+    box-shadow: var(--sombra-forte);
+    transform: translateY(-4px);
+}
+
+.bolinha:focus-visible {
+    outline: none;
+}
+
+.bolinha:focus-visible .bolinha-disco {
+    outline: 2px solid var(--acento-forte);
+    outline-offset: 4px;
+}
+
+.bolinha-rotulo {
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: -.01em;
+    text-align: center;
+}
+
+/* Enquanto arrasta, a bolinha segue o ponteiro sem transicao -- interpolar
+   deixaria o movimento borrachudo -- e passa por cima da outra. */
+.bolinha.arrastando {
+    cursor: grabbing;
+    z-index: 2;
+}
+
+.bolinha.arrastando .bolinha-disco {
+    transition: none;
+    box-shadow: var(--sombra-forte);
+    transform: none;
+}
+
+.voltar-lugar {
+    padding: 9px 16px;
+    border: 1px solid var(--borda);
+    border-radius: 9999px;
+    background: var(--superficie);
+    color: var(--texto-fraco);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.voltar-lugar:hover {
+    border-color: var(--acento);
+    color: var(--acento-forte);
+}
+
+.voltar-lugar:focus-visible {
+    outline: 2px solid var(--acento);
+    outline-offset: 3px;
+}
+
+/* =============================================================
+   Cartao das paginas internas
    ============================================================= */
 
 .cartao {
-    position: relative;
     width: 100%;
-    max-width: 520px;
+    max-width: 560px;
     background: var(--superficie);
     border: 1px solid var(--borda);
     border-radius: var(--raio);
@@ -217,139 +498,55 @@ body.pagina-alta {
     padding: 32px;
 }
 
-.cartao-hub {
-    max-width: 640px;
+@media (min-width: 768px) {
+    .cartao {
+        padding: 40px;
+    }
 }
 
 .cartao-largo {
     max-width: 900px;
 }
 
-/* Faixa da cor da função. O hub não leva: lá as duas cores convivem, e uma
-   faixa única daria a impressão de que o site inteiro tem um só assunto. */
-body:not(.tema-neutro) .cartao {
-    border-top: 3px solid var(--acento);
+/* Selo da funcao: a mesma bolinha do hub, menor, para a pagina interna dizer
+   de qual funcao ela e sem explicar por texto. */
+.selo {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 20px;
+    border-radius: 9999px;
+    background: var(--acento);
+    color: var(--acento-contraste);
 }
 
 .cartao h1 {
     margin: 0 0 8px;
-    font-size: 30px;
-    font-weight: 700;
-    letter-spacing: -.021em;
-    line-height: 1.15;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -.02em;
+    line-height: 1.2;
+}
+
+@media (min-width: 768px) {
+    .cartao h1 {
+        font-size: 40px;
+    }
 }
 
 .subtitulo {
     margin: 0 0 28px;
     color: var(--texto-fraco);
-    font-size: 15px;
+    font-size: 18px;
+    line-height: 1.6;
     max-width: 46ch;
 }
 
-.voltar {
-    margin: 0 0 14px;
-    font-size: 13px;
-    font-weight: 500;
-}
-
-.voltar a {
-    color: var(--texto-fraco);
-    text-decoration: none;
-}
-
-.voltar a:hover {
-    color: var(--acento);
-}
-
-.voltar a:focus-visible {
-    outline: 2px solid var(--acento);
-    outline-offset: 3px;
-    border-radius: 4px;
-}
-
 /* =============================================================
-   Hub: as duas funções do site
-   ============================================================= */
+   Area de soltar
 
-.celulas {
-    display: grid;
-    gap: 14px;
-}
-
-@media (min-width: 560px) {
-    .celulas {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-.celula {
-    position: relative;
-    display: block;
-    border: 1px solid var(--borda);
-    border-radius: var(--raio);
-    padding: 20px;
-    color: inherit;
-    text-decoration: none;
-    background: var(--superficie);
-    transition: border-color .18s, background-color .18s, transform .18s;
-}
-
-.celula:hover {
-    border-color: var(--acento);
-    background: var(--acento-fraco);
-    transform: translateY(-2px);
-}
-
-.celula:focus-visible {
-    outline: 2px solid var(--acento);
-    outline-offset: 3px;
-}
-
-/* Chip da cor da função em volta do ícone. */
-.celula-icone {
-    display: block;
-    margin-bottom: 14px;
-    padding: 9px;
-    box-sizing: content-box;
-    border-radius: var(--raio-pequeno);
-    background: var(--acento-fraco);
-    color: var(--acento);
-}
-
-.celula:hover .celula-icone {
-    background: var(--acento);
-    color: var(--acento-contraste);
-}
-
-.celula-titulo {
-    display: block;
-    font-weight: 600;
-    font-size: 16px;
-    margin-bottom: 4px;
-}
-
-.celula-descricao {
-    display: block;
-    color: var(--texto-fraco);
-    font-size: 13.5px;
-}
-
-.celula-seta {
-    display: block;
-    margin-top: 14px;
-    color: var(--acento);
-    font-weight: 600;
-    transition: transform .18s;
-}
-
-.celula:hover .celula-seta {
-    transform: translateX(4px);
-}
-
-/* =============================================================
-   Área de soltar
-
-   É um <label>: clique e teclado funcionam pelo input nativo, sem
+   E um <label>: clique e teclado funcionam pelo input nativo, sem
    JavaScript no meio.
    ============================================================= */
 
@@ -357,7 +554,7 @@ body:not(.tema-neutro) .cartao {
     display: block;
     border: 1.5px dashed var(--borda-forte);
     border-radius: var(--raio);
-    padding: 34px 20px;
+    padding: 36px 20px;
     text-align: center;
     cursor: pointer;
     background: transparent;
@@ -381,7 +578,7 @@ body:not(.tema-neutro) .cartao {
     background: var(--acento-fraco);
 }
 
-/* Fora da tela em vez de display:none, para continuar focável. */
+/* Fora da tela em vez de display:none, para continuar focavel. */
 .area input[type="file"] {
     position: absolute;
     width: 1px;
@@ -393,7 +590,7 @@ body:not(.tema-neutro) .cartao {
 .area-icone {
     display: block;
     margin: 0 auto 12px;
-    color: var(--acento);
+    color: var(--acento-forte);
 }
 
 .area-titulo {
@@ -405,7 +602,7 @@ body:not(.tema-neutro) .cartao {
     display: block;
     margin-top: 5px;
     color: var(--texto-fraco);
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .formatos {
@@ -417,7 +614,7 @@ body:not(.tema-neutro) .cartao {
 }
 
 /* =============================================================
-   Arquivo escolhido (página de conversão)
+   Arquivo escolhido (pagina de conversao)
    ============================================================= */
 
 .selecionado {
@@ -439,7 +636,7 @@ body:not(.tema-neutro) .cartao {
 
 .selecionado-nome {
     font-weight: 600;
-    font-size: 14px;
+    font-size: 15px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -447,17 +644,17 @@ body:not(.tema-neutro) .cartao {
 
 .selecionado-meta {
     color: var(--texto-fraco);
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .remover {
     flex-shrink: 0;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     display: grid;
     place-items: center;
     border: 1px solid var(--borda);
-    border-radius: 8px;
+    border-radius: 9999px;
     background: transparent;
     color: var(--texto-fraco);
     cursor: pointer;
@@ -477,10 +674,10 @@ body:not(.tema-neutro) .cartao {
 }
 
 /* =============================================================
-   Galeria de páginas
+   Galeria de paginas
 
-   <ol> de propósito: a ordem visual É a ordem das páginas do PDF, e o leitor
-   de tela anuncia a posição.
+   <ol> de proposito: a ordem visual E a ordem das paginas do PDF, e o leitor
+   de tela anuncia a posicao.
    ============================================================= */
 
 .grade {
@@ -495,7 +692,7 @@ body:not(.tema-neutro) .cartao {
 .pagina {
     position: relative;
     border: 1px solid var(--borda);
-    border-radius: var(--raio);
+    border-radius: var(--raio-pequeno);
     padding: 10px;
     background: var(--superficie);
     transition: border-color .18s;
@@ -516,8 +713,8 @@ body:not(.tema-neutro) .cartao {
     z-index: 1;
     min-width: 22px;
     padding: 2px 6px;
-    border-radius: 7px;
-    background: var(--acento);
+    border-radius: 9999px;
+    background: var(--acento-forte);
     color: var(--acento-contraste);
     font-size: 11px;
     font-weight: 600;
@@ -525,14 +722,14 @@ body:not(.tema-neutro) .cartao {
     text-align: center;
 }
 
-/* Caixa quadrada: com object-fit: contain, girar 90° cabe sem recalcular
-   layout e sem cortar a imagem. */
+/* Caixa quadrada: com object-fit: contain, girar 90 graus cabe sem
+   recalcular layout e sem cortar a imagem. */
 .pagina-caixa {
     display: grid;
     place-items: center;
     aspect-ratio: 1;
     overflow: hidden;
-    border-radius: var(--raio-pequeno);
+    border-radius: 8px;
     background: var(--fundo);
 }
 
@@ -565,7 +762,7 @@ body:not(.tema-neutro) .cartao {
     display: grid;
     place-items: center;
     border: none;
-    border-radius: 7px;
+    border-radius: 8px;
     background: transparent;
     color: var(--texto-fraco);
     font-family: inherit;
@@ -577,7 +774,7 @@ body:not(.tema-neutro) .cartao {
 
 .pagina-acao:hover:not(:disabled) {
     background: var(--acento-fraco);
-    color: var(--acento);
+    color: var(--acento-forte);
 }
 
 .pagina-acao:focus-visible {
@@ -590,14 +787,14 @@ body:not(.tema-neutro) .cartao {
     cursor: not-allowed;
 }
 
-/* Remover é destrutivo, então foge do acento da função. */
+/* Remover e destrutivo, entao foge do acento da funcao. */
 .pagina-acao[data-acao="remove"]:hover:not(:disabled) {
     background: var(--erro-fundo);
     color: var(--erro);
 }
 
 /* =============================================================
-   Opções da página
+   Opcoes da pagina
    ============================================================= */
 
 .opcoes {
@@ -607,10 +804,10 @@ body:not(.tema-neutro) .cartao {
     margin: 18px 0 0;
     padding: 16px 18px;
     border: 1px solid var(--borda);
-    border-radius: var(--raio);
+    border-radius: var(--raio-pequeno);
 }
 
-/* Em linha só quando há largura para isso: empilhado, o fieldset não quebra
+/* Em linha so quando ha largura para isso: empilhado, o fieldset nao quebra
    feio no celular. */
 @media (min-width: 640px) {
     .opcoes {
@@ -627,14 +824,14 @@ body:not(.tema-neutro) .cartao {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: .08em;
 }
 
 .opcao {
     display: flex;
     align-items: center;
     gap: 9px;
-    font-size: 13.5px;
+    font-size: 14px;
 }
 
 .opcao label {
@@ -650,7 +847,7 @@ body:not(.tema-neutro) .cartao {
     background: var(--superficie);
     color: var(--texto);
     font-family: inherit;
-    font-size: 13.5px;
+    font-size: 14px;
 }
 
 .opcao input[type="number"] {
@@ -664,33 +861,33 @@ body:not(.tema-neutro) .cartao {
     border-color: var(--acento);
 }
 
-/* Margem não tem efeito quando a página herda o tamanho da imagem. */
+/* Margem nao tem efeito quando a pagina herda o tamanho da imagem. */
 .opcao input:disabled {
     opacity: .45;
     cursor: not-allowed;
 }
 
 /* =============================================================
-   Botão
+   Botao
    ============================================================= */
 
 .principal {
     width: 100%;
     margin-top: 20px;
-    padding: 13px 20px;
+    padding: 14px 20px;
     border: none;
-    border-radius: var(--raio-pequeno);
-    background: var(--acento);
+    border-radius: 9999px;
+    background: var(--acento-forte);
     color: var(--acento-contraste);
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     font-family: inherit;
     cursor: pointer;
-    transition: background-color .18s, transform .12s;
+    transition: opacity .18s, transform .12s;
 }
 
 .principal:hover:not(:disabled) {
-    background: var(--acento-forte);
+    opacity: .88;
 }
 
 .principal:active:not(:disabled) {
@@ -714,7 +911,7 @@ body:not(.tema-neutro) .cartao {
 .barra {
     margin-top: 18px;
     height: 6px;
-    border-radius: 3px;
+    border-radius: 9999px;
     background: var(--borda);
     overflow: hidden;
 }
@@ -722,12 +919,12 @@ body:not(.tema-neutro) .cartao {
 .barra-preenchimento {
     height: 100%;
     width: 0;
-    border-radius: 3px;
-    background: var(--acento);
+    border-radius: 9999px;
+    background: var(--acento-forte);
     transition: width .15s linear;
 }
 
-/* O trabalho do servidor não tem progresso mensurável: ele não reporta. */
+/* O trabalho do servidor nao tem progresso mensuravel: ele nao reporta. */
 .barra.indeterminada .barra-preenchimento {
     width: 35%;
     animation: desliza 1.1s ease-in-out infinite;
@@ -750,7 +947,7 @@ body:not(.tema-neutro) .cartao {
     margin-top: 18px;
     padding: 12px 14px;
     border-radius: var(--raio-pequeno);
-    font-size: 13.5px;
+    font-size: 14px;
 }
 
 .recado.erro {
@@ -769,25 +966,8 @@ body:not(.tema-neutro) .cartao {
 }
 
 /* =============================================================
-   Rodapé e utilitários
+   Utilitarios
    ============================================================= */
-
-.rodape {
-    margin-top: 26px;
-    padding-top: 18px;
-    border-top: 1px solid var(--borda);
-    text-align: center;
-    font-size: 12px;
-    color: var(--texto-fraco);
-}
-
-.rodape a {
-    color: var(--texto-fraco);
-}
-
-.rodape a:hover {
-    color: var(--acento);
-}
 
 .oculto {
     display: none !important;
@@ -806,8 +986,7 @@ body:not(.tema-neutro) .cartao {
 
     .barra-preenchimento,
     .pagina-imagem,
-    .celula,
-    .celula-seta,
+    .bolinha-disco,
     .principal,
     .pagina-acao,
     .controle-tema,
@@ -815,11 +994,7 @@ body:not(.tema-neutro) .cartao {
         transition: none;
     }
 
-    .celula:hover {
-        transform: none;
-    }
-
-    .celula:hover .celula-seta {
+    .bolinha:hover .bolinha-disco {
         transform: none;
     }
 
