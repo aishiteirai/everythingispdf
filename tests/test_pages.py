@@ -69,7 +69,7 @@ class TestHub:
 
     def test_carrega_so_os_modulos_que_precisa(self, hub):
         """O hub e dois links, o botao de tema e o arrasto das bolinhas."""
-        permitidos = ('js/tema.js', 'js/bolinhas.js')
+        permitidos = ('js/tema.js', 'js/dots.js')
         fontes = re.findall(r'<script[^>]*src="([^"]+)"', hub)
 
         assert [f for f in fontes if not f.endswith(permitidos)] == []
@@ -318,9 +318,9 @@ class TestClassesQueOJavaScriptLiga:
     só não pinta nada."""
 
     MODULOS = (
-        'main.js', 'interface.js', 'feedback.js',
+        'convert.js', 'convert-ui.js', 'feedback.js',
         'imgtopdf.js', 'gallery-ui.js',
-        'bolinhas.js', 'arraste.js',
+        'dots.js', 'drag.js',
     )
 
     @pytest.fixture
@@ -435,9 +435,9 @@ class TestBolinhas:
         assert 'tema-imgtopdf' in bolinhas[1]
 
     def test_o_hub_carrega_o_modulo_de_arrasto(self, hub):
-        assert re.search(r'<script type="module" src="[^"]*js/bolinhas\.js"', hub)
+        assert re.search(r'<script type="module" src="[^"]*js/dots\.js"', hub)
 
-    @pytest.mark.parametrize('modulo', ['bolinhas.js', 'bolinhas-estado.js'])
+    @pytest.mark.parametrize('modulo', ['dots.js', 'dots-state.js'])
     def test_os_modulos_sao_servidos(self, client, modulo):
         assert client.get(f'/static/js/{modulo}').status_code == 200
 
@@ -545,9 +545,9 @@ class TestCookieDePosicaoNaRede:
     def test_o_javascript_e_o_backend_usam_o_mesmo_formato(self, client):
         """O formato existe em dois lugares: serializa() no JavaScript e o
         parser no backend. Divergir faz a posicao ser sempre descartada."""
-        fonte = client.get('/static/js/bolinhas-estado.js').get_data(as_text=True)
+        fonte = client.get('/static/js/dots-state.js').get_data(as_text=True)
 
-        assert client.get('/static/js/bolinhas-estado.js').status_code == 200
+        assert client.get('/static/js/dots-state.js').status_code == 200
         assert "'|'" in fonte or '"|"' in fonte, 'JavaScript nao usa | como separador'
         assert '_' in fonte, 'JavaScript nao usa _ entre os eixos'
 
@@ -607,20 +607,20 @@ class TestArrasteUnificado:
     duas implementacoes, e a da galeria usava drag-and-drop HTML5, que nao
     dispara em toque -- reordenar arrastando nao funcionava no celular."""
 
-    MODULOS_QUE_ARRASTAM = ('bolinhas.js', 'gallery-ui.js')
+    MODULOS_QUE_ARRASTAM = ('dots.js', 'gallery-ui.js')
 
     def fonte(self, client, modulo):
         resposta = client.get(f'/static/js/{modulo}')
         assert resposta.status_code == 200, f'{modulo} nao e servido'
         return resposta.get_data(as_text=True)
 
-    @pytest.mark.parametrize('modulo', ['arraste.js', 'arraste-estado.js'])
+    @pytest.mark.parametrize('modulo', ['drag.js', 'drag-state.js'])
     def test_os_modulos_de_arraste_sao_servidos(self, client, modulo):
         assert client.get(f'/static/js/{modulo}').status_code == 200
 
     @pytest.mark.parametrize('modulo', MODULOS_QUE_ARRASTAM)
     def test_os_dois_usam_o_modulo_compartilhado(self, client, modulo):
-        assert "from './arraste.js'" in self.fonte(client, modulo)
+        assert "from './drag.js'" in self.fonte(client, modulo)
 
     @pytest.mark.parametrize('modulo', MODULOS_QUE_ARRASTAM)
     def test_ninguem_registra_drag_and_drop_html5(self, client, modulo):
@@ -649,4 +649,35 @@ class TestArrasteUnificado:
 
     def test_o_hub_nao_espera(self, client):
         """No hub arrastar e a interacao principal: esperar pareceria travado."""
-        assert 'esperaNoToqueMs' not in self.fonte(client, 'bolinhas.js')
+        assert 'esperaNoToqueMs' not in self.fonte(client, 'dots.js')
+
+
+class TestFavicon:
+    """Sem favicon todo navegador pede /favicon.ico em toda visita e leva 404."""
+
+    @pytest.mark.parametrize('rota', ROTAS)
+    def test_toda_pagina_declara_o_icone(self, client, rota):
+        pagina = client.get(rota).get_data(as_text=True)
+
+        assert re.search(r'<link[^>]*rel="icon"[^>]*>', pagina), f'{rota} sem icone'
+
+    def test_o_icone_e_servido(self, client):
+        assert client.get('/static/favicon.svg').status_code == 200
+
+    def test_o_icone_e_local(self, client):
+        """Host externo quebraria a pagina autocontida e a CSP."""
+        pagina = client.get('/').get_data(as_text=True)
+        icone = re.search(r'<link[^>]*rel="icon"[^>]*href="([^"]+)"', pagina)
+
+        assert icone, 'icone sem href'
+        assert '//' not in icone.group(1)
+
+    def test_o_icone_traz_as_duas_cores_das_funcoes(self, client, css_do_site):
+        """O icone e a assinatura do produto: as duas bolinhas. Cores fora dos
+        tokens sairiam de sincronia com o site na primeira mudanca."""
+        svg = client.get('/static/favicon.svg').get_data(as_text=True)
+        tokens_convert = tokens(css_do_site, 'tema-convert')
+        tokens_imagens = tokens(css_do_site, 'tema-imgtopdf')
+
+        assert tokens_convert['--acento'] in svg.lower()
+        assert tokens_imagens['--acento'] in svg.lower()

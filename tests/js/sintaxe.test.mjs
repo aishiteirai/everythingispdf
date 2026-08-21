@@ -1,7 +1,7 @@
 /**
  * Todo módulo de `static/js` precisa parsear.
  *
- * Os módulos de entrada — main.js, imgtopdf.js, bolinhas.js — não são
+ * Os módulos de entrada — convert.js, imgtopdf.js, dots.js — não são
  * importados por nenhum outro teste, então um erro de sintaxe neles passaria
  * batido e a página quebraria em silêncio no navegador.
  *

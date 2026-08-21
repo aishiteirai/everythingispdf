@@ -39,7 +39,7 @@ def configuracao(pagina):
 @pytest.fixture
 def javascript(client):
     """Todos os módulos concatenados, para asserções sobre o conjunto."""
-    modulos = ['main.js', 'formato.js', 'envio.js', 'interface.js']
+    modulos = ['convert.js', 'format.js', 'convert-send.js', 'convert-ui.js']
     partes = []
     for modulo in modulos:
         resposta = client.get(f'/static/js/{modulo}')
@@ -81,16 +81,16 @@ class TestLimiteDeTamanho:
 class TestArquivosEstaticos:
     @pytest.mark.parametrize('caminho', [
         '/static/css/estilo.css',
-        '/static/js/main.js',
-        '/static/js/formato.js',
-        '/static/js/envio.js',
-        '/static/js/interface.js',
+        '/static/js/convert.js',
+        '/static/js/format.js',
+        '/static/js/convert-send.js',
+        '/static/js/convert-ui.js',
     ])
     def test_sao_servidos(self, client, caminho):
         assert client.get(caminho).status_code == 200
 
     def test_a_pagina_carrega_o_javascript_como_modulo(self, pagina):
-        assert re.search(r'<script type="module" src="[^"]*js/main\.js"', pagina)
+        assert re.search(r'<script type="module" src="[^"]*js/convert\.js"', pagina)
 
     def test_todo_import_do_javascript_resolve(self, client, javascript):
         """Um import apontando para arquivo inexistente quebra a página em

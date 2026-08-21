@@ -219,14 +219,14 @@ layout. O byte original nunca é tocado no cliente.
 
 `gallery.js` sem DOM é o que torna reordenar e girar testáveis sem navegador.
 
-### Reuso de `formato.js` e `envio.js`
+### Reuso de `format.js` e `convert-send.js`
 
 `problemaCom` continua validando um arquivo (extensão, vazio, tamanho). Entra
 `problemaComConjunto(itens, config)` para o teto de 20 imagens e a soma de bytes
 — o limite do servidor é do request inteiro, não por arquivo, então a checagem
 tem que ser do conjunto.
 
-`mensagensDeErro` de `envio.js` passa a ser exportada e estendida com o 400 de
+`mensagensDeErro` de `convert-send.js` passa a ser exportada e estendida com o 400 de
 payload inválido, para o usuário não receber "erro 400" sem explicação.
 
 ### Configuração injetada
@@ -338,7 +338,7 @@ sai do array; `gira` acumula em módulo 360; `remove` revoga a URL do objeto;
 - Misturar documentos e imagens na mesma galeria.
 - Reordenar por arrasto em telas de toque (os botões cobrem esse caso).
 - Comprimir imagem no navegador antes de subir.
-- Renomear `formato.js`, `envio.js`, `interface.js` e `main.js` para inglês.
-  Fica a assimetria de `envio.js` ao lado de `gallery.js`; se for para
+- Renomear `format.js`, `convert-send.js`, `convert-ui.js` e `convert.js` para inglês.
+  Fica a assimetria de `convert-send.js` ao lado de `gallery.js`; se for para
   padronizar, é um commit separado e anterior a este trabalho.
 - Reordenar ou girar páginas de um PDF já existente.

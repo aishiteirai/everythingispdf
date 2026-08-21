@@ -2,7 +2,7 @@
  * Amarra a galeria: lê a configuração, valida, mantém o estado, envia.
  */
 
-import { problemaCom, problemaComConjunto } from './formato.js';
+import { problemaCom, problemaComConjunto } from './format.js';
 import { criaGaleria } from './gallery.js';
 import { criaInterfaceDaGaleria } from './gallery-ui.js';
 import { enviaGaleria } from './gallery-send.js';

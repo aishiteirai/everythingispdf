@@ -2,7 +2,7 @@
  * Transporte: fala com /api/imgtopdf. Sem DOM.
  */
 
-import { mensagemDoErro, nomeDoDownload } from './envio.js';
+import { mensagemDoErro, nomeDoDownload } from './convert-send.js';
 
 const NOME_PADRAO = 'imagens.pdf';
 

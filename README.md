@@ -222,8 +222,8 @@ mutável como default — a classe de defeito que quebrou a montagem de PDF acim
 de quatro páginas, dentro do próprio Pillow.
 
 `tests/js/sintaxe.test.mjs` importa **todo** módulo de `static/js` e reprova só
-em `SyntaxError`. Existe porque os módulos de entrada — `main.js`,
-`imgtopdf.js`, `bolinhas.js` — não são importados por nenhum outro teste, então
+em `SyntaxError`. Existe porque os módulos de entrada — `convert.js`,
+`imgtopdf.js`, `dots.js` — não são importados por nenhum outro teste, então
 um erro de sintaxe neles chegaria ao navegador em silêncio. E `node --check` não
 serve para isso: num arquivo ESM genuinamente quebrado ele devolve zero.
 
@@ -294,7 +294,7 @@ de classe que o JavaScript alterna e exige que o CSS os defina: renomear
 falhar.
 
 **Um módulo de arrasto, não dois.** As duas dinâmicas — mover as bolinhas do
-hub e reordenar as miniaturas da galeria — usam `static/js/arraste.js`. Antes
+hub e reordenar as miniaturas da galeria — usam `static/js/drag.js`. Antes
 eram duas implementações, e a da galeria usava drag-and-drop HTML5, que **não
 dispara em tela de toque**: no celular só os botões reordenavam.
 
@@ -306,7 +306,7 @@ interação principal e a página não rola.
 
 Cancelar a rolagem é feito com `touchmove` e `passive: false`, e não com
 `touch-action: none` no CSS: o CSS teria de valer antes do gesto começar, e aí a
-lista nunca rolaria. A decisão de quando começar mora em `arraste-estado.js`,
+lista nunca rolaria. A decisão de quando começar mora em `drag-state.js`,
 que não toca DOM e tem doze testes no Node.
 
 **Bolinhas com física.** No hub, as duas bolinhas são arrastáveis e podem ser
@@ -354,11 +354,21 @@ Arrastar é enriquecimento: o link continua focável e ativável por teclado, e
 mover a bolinha não muda a ordem de tabulação. Teclado não reposiciona — é
 cosmético, não funcional.
 
-`static/js/bolinhas-estado.js` não toca DOM, então rebote, atrito, repouso e
+`static/js/dots-state.js` não toca DOM, então rebote, atrito, repouso e
 limiar de arrasto são testados no runner do Node. Um dos testes simula a
 trajetória inteira em 60Hz e em 120Hz e exige que a distância percorrida seja a
 mesma; outro exige que a bolinha convirja para o repouso em menos de 600
 quadros, o que trava o risco de alguém mexer no atrito e o loop virar eterno.
+
+**Nomes de arquivo em inglês, identificadores em português.** A regra vale para
+a superfície pública — rotas, caminhos de API, chaves de JSON e nomes de
+arquivo — enquanto os identificadores internos e o texto de tela ficam em
+português. Os módulos que sobraram do começo do projeto foram renomeados para
+seguir isso: `format.js`, `convert.js`, `convert-ui.js`, `convert-send.js`,
+`dots.js`, `dots-state.js`, `drag.js`, `drag-state.js`.
+
+O nome do cookie de posição continua `bolinhas`: renomeá-lo zeraria a posição
+salva de quem já usou o site, em troca de nada funcional.
 
 **Sem framework de CSS.** O layout veio de um mockup em Tailwind por CDN. O CDN
 do Tailwind compila CSS no navegador a cada carregamento, é ferramenta de

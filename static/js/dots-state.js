@@ -1,7 +1,7 @@
 /**
  * Física das bolinhas: arremesso, rebote e repouso.
  *
- * A decisão de quando um ponteiro vira arrasto mora em `arraste-estado.js`,
+ * A decisão de quando um ponteiro vira arrasto mora em `drag-state.js`,
  * compartilhada com a galeria.
  *
  * Sem DOM e sem cookie de propósito — é o que torna a física verificável no

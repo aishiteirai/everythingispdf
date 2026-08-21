@@ -16,7 +16,7 @@ import {
     decideInicio,
     limiarDe,
     virouArrasto,
-} from '../../static/js/arraste-estado.js';
+} from '../../static/js/drag-state.js';
 
 const mouse = (extra) => ({ tipo: 'mouse', dx: 0, dy: 0, decorridoMs: 0, ...extra });
 const toque = (extra) => ({

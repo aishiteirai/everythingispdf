@@ -10,7 +10,7 @@
  * mover a bolinha não muda a ordem de tabulação.
  */
 
-import { tornaArrastavel } from './arraste.js';
+import { tornaArrastavel } from './drag.js';
 import {
     VELOCIDADE_DE_REPOUSO,
     emRepouso,
@@ -19,7 +19,7 @@ import {
     passo,
     serializa,
     velocidadeDoArremesso,
-} from './bolinhas-estado.js';
+} from './dots-state.js';
 
 const UM_ANO_EM_SEGUNDOS = 60 * 60 * 24 * 365;
 

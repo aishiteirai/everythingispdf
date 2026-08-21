@@ -2,7 +2,7 @@
  * Tudo que toca o DOM na página de conversão. Nada de rede, nada de validação.
  */
 
-import { formataTamanho } from './formato.js';
+import { formataTamanho } from './format.js';
 import { criaFeedback } from './feedback.js';
 
 const ELEMENTOS = {

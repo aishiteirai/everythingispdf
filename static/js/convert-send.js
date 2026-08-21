@@ -2,7 +2,7 @@
  * Transporte: fala com /api/convert. Sem DOM.
  */
 
-import { semExtensao } from './formato.js';
+import { semExtensao } from './format.js';
 
 /**
  * Uma mensagem por status que a API produz. Sem isso o usuário recebe

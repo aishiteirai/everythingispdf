@@ -2,14 +2,14 @@
  * Fiação de arrasto por ponteiro, compartilhada pelas duas dinâmicas do site.
  *
  * Pointer Events cobrem mouse, caneta e toque num caminho só. A decisão de
- * quando um ponteiro pressionado vira arrasto está em `arraste-estado.js`, que
+ * quando um ponteiro pressionado vira arrasto está em `drag-state.js`, que
  * não toca DOM e tem teste.
  *
  * Antes existiam duas implementações: as bolinhas usavam Pointer Events e a
  * galeria usava drag-and-drop HTML5, que não dispara em toque.
  */
 
-import { ESPERA_NO_TOQUE_MS, decideInicio } from './arraste-estado.js';
+import { ESPERA_NO_TOQUE_MS, decideInicio } from './drag-state.js';
 
 export { ESPERA_NO_TOQUE_MS };
 

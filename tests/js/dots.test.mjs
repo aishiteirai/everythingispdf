@@ -1,7 +1,7 @@
 /**
  * Estado e física das bolinhas. `node --test tests/js/`, sem dependência.
  *
- * bolinhas-estado.js não toca DOM: rebote, atrito e repouso são verificáveis
+ * dots-state.js não toca DOM: rebote, atrito e repouso são verificáveis
  * aqui, sem navegador. É o único lugar onde a física é testada.
  */
 
@@ -22,7 +22,7 @@ import {
     passo,
     serializa,
     velocidadeDoArremesso,
-} from '../../static/js/bolinhas-estado.js';
+} from '../../static/js/dots-state.js';
 
 const CAIXA = { minX: -100, maxX: 100, minY: -80, maxY: 80 };
 const rapido = (extra) => ({ x: 0, y: 0, vx: 0, vy: 0, ...extra });

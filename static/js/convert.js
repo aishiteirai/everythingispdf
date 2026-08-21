@@ -2,9 +2,9 @@
  * Amarra o formulário: lê a configuração, valida, envia, mostra o resultado.
  */
 
-import { problemaCom } from './formato.js';
-import { envia } from './envio.js';
-import { criaInterface } from './interface.js';
+import { problemaCom } from './format.js';
+import { envia } from './convert-send.js';
+import { criaInterface } from './convert-ui.js';
 
 // Vem do backend num bloco <script type="application/json">, então o
 // formulário não pode divergir do que /api/convert aceita. Bloco JSON em vez

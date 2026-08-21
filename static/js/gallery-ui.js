@@ -6,7 +6,7 @@
  * cada render.
  */
 
-import { ESPERA_NO_TOQUE_MS, tornaArrastavel } from './arraste.js';
+import { ESPERA_NO_TOQUE_MS, tornaArrastavel } from './drag.js';
 import { criaFeedback } from './feedback.js';
 import { focoDepoisDe } from './gallery.js';
 
