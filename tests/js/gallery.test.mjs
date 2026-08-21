@@ -165,3 +165,80 @@ test('itens devolve copia: mexer no retorno nao mexe no estado', () => {
 
     assert.equal(galeria.total(), 2);
 });
+
+/* ----------------------------------------------------------------
+   Foco depois de uma ação
+
+   A grade é redesenhada inteira a cada ação, então o botão clicado é
+   destruído e o foco do teclado se perde — quem usa teclado ou leitor de
+   tela volta ao topo a cada rotação. `focoDepoisDe` decide para onde o foco
+   vai, e é lógica pura sobre a lista antes e depois.
+   ---------------------------------------------------------------- */
+
+import { focoDepoisDe } from '../../static/js/gallery.js';
+
+const lista = (...ids) => ids.map((id) => ({ id }));
+
+test('girar mantem o foco no mesmo botao', () => {
+    const itens = lista(1, 2, 3);
+
+    assert.deepEqual(focoDepoisDe('giraDireita', 2, itens, itens), {
+        id: 2, acao: 'giraDireita',
+    });
+});
+
+test('mover no meio mantem o foco no mesmo botao', () => {
+    const antes = lista(1, 2, 3, 4);
+    const depois = lista(1, 3, 2, 4);
+
+    assert.deepEqual(focoDepoisDe('moveFrente', 2, antes, depois), {
+        id: 2, acao: 'moveFrente',
+    });
+});
+
+test('mover para o fim passa o foco ao botao oposto', () => {
+    // O botao clicado fica desabilitado no extremo: manter o foco nele
+    // deixaria o teclado preso num controle inerte.
+    const antes = lista(1, 2, 3);
+    const depois = lista(1, 3, 2);
+
+    assert.deepEqual(focoDepoisDe('moveFrente', 2, antes, depois), {
+        id: 2, acao: 'moveTras',
+    });
+});
+
+test('mover para o inicio passa o foco ao botao oposto', () => {
+    const antes = lista(1, 2, 3);
+    const depois = lista(2, 1, 3);
+
+    assert.deepEqual(focoDepoisDe('moveTras', 2, antes, depois), {
+        id: 2, acao: 'moveFrente',
+    });
+});
+
+test('remover foca uma acao nao destrutiva do item que tomou o lugar', () => {
+    // Focar o proprio remover deixaria uma sequencia de Enter apagando tudo.
+    const antes = lista(1, 2, 3, 4);
+    const depois = lista(1, 3, 4);
+
+    assert.deepEqual(focoDepoisDe('remove', 2, antes, depois), {
+        id: 3, acao: 'giraEsquerda',
+    });
+});
+
+test('remover o ultimo foca o novo ultimo', () => {
+    const antes = lista(1, 2, 3);
+    const depois = lista(1, 2);
+
+    assert.deepEqual(focoDepoisDe('remove', 3, antes, depois), {
+        id: 2, acao: 'giraEsquerda',
+    });
+});
+
+test('remover o unico item nao tem onde focar', () => {
+    assert.equal(focoDepoisDe('remove', 1, lista(1), []), null);
+});
+
+test('id que nao existe mais e nao foi substituido nao foca nada', () => {
+    assert.equal(focoDepoisDe('giraDireita', 9, lista(1, 2), lista(1, 2)), null);
+});

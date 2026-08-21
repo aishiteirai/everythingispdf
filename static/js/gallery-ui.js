@@ -7,6 +7,7 @@
  */
 
 import { criaFeedback } from './feedback.js';
+import { focoDepoisDe } from './gallery.js';
 
 const ELEMENTOS = {
     formulario: 'formulario',
@@ -97,6 +98,21 @@ const idDoAlvo = (alvo) => {
     return cartaoDoAlvo ? Number(cartaoDoAlvo.dataset.id) : null;
 };
 
+/**
+ * Devolve o foco ao destino calculado. Sem destino -- a galeria ficou vazia --
+ * manda para o campo de arquivo: e a proxima coisa que o usuario vai fazer, e
+ * o :focus-within da area de soltar deixa o foco visivel.
+ */
+function devolveFoco(el, destino) {
+    if (!destino) {
+        el.entrada.focus();
+        return;
+    }
+
+    const seletor = `[data-id="${destino.id}"] [data-acao="${destino.acao}"]`;
+    el.grade.querySelector(seletor)?.focus();
+}
+
 export function criaInterfaceDaGaleria(acoes) {
     const el = Object.fromEntries(
         Object.entries(ELEMENTOS).map(([chave, id]) => [chave, document.getElementById(id)])
@@ -108,12 +124,21 @@ export function criaInterfaceDaGaleria(acoes) {
         recado: el.recado,
     });
 
+    // A grade e redesenhada inteira a cada acao, o que destroi o botao
+    // clicado. Guardar qual foi permite devolver o foco depois do redesenho,
+    // em vez de largar o teclado no topo da pagina.
+    let ultimaAcao = null;
+    let itensDesenhados = [];
+
     el.grade.addEventListener('click', (evento) => {
         const alvo = evento.target.closest('[data-acao]');
         if (!alvo) return;
 
         const id = idDoAlvo(alvo);
-        if (id !== null) acoes[alvo.dataset.acao]?.(id);
+        if (id === null) return;
+
+        ultimaAcao = { id, acao: alvo.dataset.acao };
+        acoes[alvo.dataset.acao]?.(id);
     });
 
     let arrastado = null;
@@ -152,6 +177,15 @@ export function criaInterfaceDaGaleria(acoes) {
             el.grade.classList.toggle('oculto', itens.length === 0);
             el.opcoes.classList.toggle('oculto', itens.length === 0);
             el.entrada.value = '';
+
+            if (ultimaAcao) {
+                devolveFoco(el, focoDepoisDe(
+                    ultimaAcao.acao, ultimaAcao.id, itensDesenhados, itens
+                ));
+                ultimaAcao = null;
+            }
+
+            itensDesenhados = itens;
         },
 
         /** A margem não tem efeito quando a página herda o tamanho da imagem. */

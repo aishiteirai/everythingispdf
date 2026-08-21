@@ -9,7 +9,6 @@ from flask import Flask, jsonify, render_template, request, send_file
 from flasgger import Swagger
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from PIL import Image
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
 
@@ -175,15 +174,6 @@ def convert_with_libreoffice(input_path, work_dir):
     raise RuntimeError('LibreOffice terminou sem gerar PDF.')
 
 
-def convert_image(input_path, work_dir):
-    output_path = os.path.join(work_dir, 'output.pdf')
-    with Image.open(input_path) as image:
-        if image.mode in ('RGBA', 'P', 'LA'):
-            image = image.convert('RGB')
-        image.save(output_path, 'PDF', resolution=100.0)
-    return output_path
-
-
 @app.route('/', methods=['GET'])
 def index():
     return render_template('home.html', posicoes=posicoes_das_bolinhas())
@@ -239,7 +229,7 @@ def convert_file():
       200:
         description: Arquivo PDF gerado com sucesso.
       400:
-        description: Erro no envio.
+        description: Erro no envio, ou imagem que nao pode ser lida.
       413:
         description: Arquivo maior que o limite permitido.
       415:
@@ -267,12 +257,21 @@ def convert_file():
     os.makedirs(work_dir, exist_ok=True)
 
     try:
-        input_path = os.path.join(work_dir, filename)
-        file.save(input_path)
-
         if extensao in IMAGE_EXTENSIONS:
-            output_path = convert_image(input_path, work_dir)
+            # Mesmo pipeline de /api/imgtopdf: um PDF de uma pagina. Ter duas
+            # implementacoes fazia a mesma foto sair diferente em cada rota --
+            # esta ignorava a orientacao do EXIF e gravava a 100 DPI.
+            #
+            # A imagem e lida do stream, entao o nome enviado nao toca o disco.
+            output_path = os.path.join(work_dir, 'saida.pdf')
+            imgtopdf.monta_pdf(
+                [file.stream],
+                imgtopdf.Opcoes(tamanho='image', margem_mm=0, rotacoes=[0]),
+                output_path,
+            )
         else:
+            input_path = os.path.join(work_dir, filename)
+            file.save(input_path)
             output_path = convert_with_libreoffice(input_path, work_dir)
 
         # Le o PDF em memoria antes de apagar o diretorio. O limite de upload
@@ -288,6 +287,10 @@ def convert_file():
             as_attachment=True,
             download_name=nome_download,
         )
+
+    except imgtopdf.ImagemInvalida as exc:
+        logger.info('Imagem recusada em %s: %s', filename, exc)
+        return jsonify({'error': str(exc)}), 400
 
     except subprocess.TimeoutExpired:
         logger.warning('Conversao excedeu %ss: %s', CONVERSION_TIMEOUT, filename)

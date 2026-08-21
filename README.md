@@ -58,14 +58,23 @@ curl -F 'file=@relatorio.docx' http://localhost:10000/api/convert -o saida.pdf
 | Status | Significado |
 |---|---|
 | `200` | PDF no corpo da resposta |
-| `400` | Campo `file` ausente ou nome vazio |
+| `400` | Campo `file` ausente, nome vazio, ou imagem que não pode ser lida |
 | `413` | Arquivo acima de 32 MB |
 | `415` | Extensão não suportada |
 | `429` | Rate limit excedido |
-| `500` | Falha na conversão |
+| `500` | Falha na conversão do documento (LibreOffice) |
 | `504` | Conversão passou do tempo limite |
 
 Erros vêm como JSON: `{"error": "..."}`.
+
+Imagem ilegível dá `400` e não `500`: no caminho de imagem o Pillow é o único
+executor, então bytes que ele não abre são entrada inválida do cliente. `500`
+fica para falha do LibreOffice, que é do servidor.
+
+Imagens neste endpoint passam pelo mesmo pipeline de `/api/imgtopdf`: a
+orientação do EXIF é corrigida, a página é gravada a 150 DPI e o lado maior é
+limitado a 2200 px. Antes eram 100 DPI, sem limite e sem EXIF — a mesma foto de
+celular saía deitada aqui e em pé lá.
 
 ### `POST /api/imgtopdf`
 
@@ -282,6 +291,23 @@ era infinita, o que tem CVE própria (`CVE-2026-42310`).
 
 Com o `pypdf` o `PdfParser` do Pillow deixa de ser usado: o Pillow só escreve, e
 quem lê PDF é o pypdf.
+
+**Um pipeline de imagem, não dois.** `/api/convert` e `/api/imgtopdf` usam a
+mesma função para transformar imagem em página. Existiam duas
+implementações, e elas discordavam: uma corrigia a orientação do EXIF e a outra
+não, uma gravava a 150 DPI e a outra a 100. A mesma foto saía diferente em cada
+rota. Um teste envia a mesma foto deitada nos dois endpoints e exige o mesmo
+`MediaBox`, então divergir de novo quebra a suíte.
+
+**Foco preservado na galeria.** A grade é redesenhada inteira a cada ação, o que
+destrói o botão clicado — sem tratamento, quem usa teclado ou leitor de tela
+volta ao topo da página a cada rotação. `focoDepoisDe` em
+`static/js/gallery.js` decide o destino a partir da lista antes e depois: mantém
+o mesmo botão quando ele ainda existe, passa para o botão oposto quando o
+clicado fica desabilitado num extremo, e depois de remover foca uma ação **não
+destrutiva** do item que tomou o lugar — focar o próprio remover deixaria uma
+sequência de Enter apagando a galeria inteira. É lógica pura sobre a lista,
+então tem teste no runner do Node.
 
 **Rotação sem reamostragem.** Só múltiplos de 90 são aceitos, então a rotação
 usa `transpose` em vez de `rotate`: sai exata, sem interpolação e sem canto

@@ -29,10 +29,14 @@ class TestImagem:
 
         assert restos() == []
 
-    def test_png_invalido_da_500(self, client, upload, restos):
+    def test_png_invalido_da_400(self, client, upload, restos):
+        """Era 500. No caminho de imagem o Pillow e o unico executor, entao
+        bytes que ele nao abre sao entrada invalida do cliente, nao falha do
+        servidor. 500 continua para falha do LibreOffice, que e do servidor."""
         r = client.post('/api/convert', **upload(b'nao sou um png', 'falso.png'))
 
-        assert r.status_code == 500
+        assert r.status_code == 400
+        assert r.is_json
         assert restos() == []
 
 
@@ -214,3 +218,57 @@ class TestRateLimit:
         codigos = [client.get('/health').status_code for _ in range(30)]
 
         assert set(codigos) == {200}
+
+
+class TestOrientacaoDaImagem:
+    """Foto de celular chega deitada com a orientacao no EXIF. Ignorar isso faz
+    o PDF sair virado."""
+
+    @pytest.fixture
+    def foto_deitada(self):
+        """JPEG 200x100 com Orientation=6: deve ser exibido como 100x200."""
+        import io
+
+        from PIL import Image
+
+        buf = io.BytesIO()
+        exif = Image.Exif()
+        exif[274] = 6
+        Image.new('RGB', (200, 100), (30, 120, 90)).save(buf, 'JPEG', exif=exif)
+
+        return buf.getvalue()
+
+    def test_respeita_a_orientacao_do_exif(self, client, upload, foto_deitada, paginas):
+        r = client.post('/api/convert', **upload(foto_deitada, 'foto.jpg'))
+
+        assert r.status_code == 200
+        largura, altura = paginas(r.data)[0]
+        assert altura > largura, 'pagina saiu deitada: EXIF ignorado'
+
+    def test_os_dois_endpoints_concordam_sobre_a_mesma_foto(
+        self, client, upload, envio, opcoes, foto_deitada, paginas
+    ):
+        """Converter uma imagem sozinha e montar um PDF de uma imagem sao o
+        mesmo trabalho. Resultados diferentes para o mesmo arquivo sao um bug,
+        nao uma escolha."""
+        um = client.post('/api/convert', **upload(foto_deitada, 'foto.jpg'))
+        outro = client.post(
+            '/api/imgtopdf', **envio([(foto_deitada, 'foto.jpg')], opcoes(1))
+        )
+
+        assert paginas(um.data) == paginas(outro.data)
+
+    def test_imagem_gigante_e_recusada(self, client, upload, monkeypatch):
+        """A guarda contra bomba de descompressao tem que valer nos dois
+        endpoints, nao so no de imagens."""
+        import io
+
+        from PIL import Image
+
+        monkeypatch.setattr(Image, 'MAX_IMAGE_PIXELS', 100)
+        buf = io.BytesIO()
+        Image.new('RGB', (200, 200)).save(buf, 'PNG')
+
+        r = client.post('/api/convert', **upload(buf.getvalue(), 'grande.png'))
+
+        assert r.status_code == 400

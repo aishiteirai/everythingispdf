@@ -102,3 +102,45 @@ export function criaGaleria({ maxImagens, urls = URLS_DO_NAVEGADOR }) {
         },
     };
 }
+
+/**
+ * Para onde vai o foco depois de uma ação redesenhar a grade.
+ *
+ * A grade é redesenhada inteira a cada ação, então o botão clicado é destruído
+ * e o foco do teclado se perde — quem usa teclado ou leitor de tela volta ao
+ * topo a cada rotação. Esta função decide o destino a partir da lista antes e
+ * depois; quem aplica é `gallery-ui.js`.
+ *
+ * Devolve `{ id, acao }`, ou `null` quando não há destino sensato.
+ */
+
+const OPOSTO = { moveTras: 'moveFrente', moveFrente: 'moveTras' };
+
+/** Primeira ação da fileira, e não destrutiva. */
+const ACAO_NEUTRA = 'giraEsquerda';
+
+export function focoDepoisDe(acao, id, antes, depois) {
+    const posicaoDepois = depois.findIndex((item) => item.id === id);
+
+    if (posicaoDepois !== -1) {
+        // Nos extremos o botão clicado fica desabilitado: manter o foco nele
+        // deixaria o teclado preso num controle inerte.
+        const virouInerte =
+            (acao === 'moveTras' && posicaoDepois === 0) ||
+            (acao === 'moveFrente' && posicaoDepois === depois.length - 1);
+
+        return { id, acao: virouInerte ? OPOSTO[acao] : acao };
+    }
+
+    if (depois.length === 0) return null;
+
+    // O item saiu da lista. Foca quem tomou o lugar dele, na mesma posição
+    // visual, numa ação que não apaga nada: focar o próprio remover deixaria
+    // uma sequência de Enter apagando a galeria inteira.
+    const posicaoAntes = antes.findIndex((item) => item.id === id);
+    if (posicaoAntes === -1) return null;
+
+    const substituto = depois[Math.min(posicaoAntes, depois.length - 1)];
+
+    return { id: substituto.id, acao: ACAO_NEUTRA };
+}
