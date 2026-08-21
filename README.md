@@ -109,7 +109,8 @@ entrada inválida do cliente, não falha do servidor.
 - `GET /imgtopdf` — montador de PDF de imagens (adicionar sem substituir,
   reordenar por botão ou arrasto, girar, escolher tamanho de página e margem)
 - `GET /health` — `{"status": "ok"}`
-- `GET /apidocs` — Swagger UI
+- `GET /apidocs` — Swagger UI. Não há link para ela na interface: a API é
+  acessada por URL
 
 ## Configuração
 
@@ -175,28 +176,6 @@ runner nativo do Node, sem dependência e sem navegador.
 
 ## Notas de implementação
 
-**Modo noturno em três estados.** O botão no canto do cartão alterna
-`automático → claro → escuro`. Automático segue o `prefers-color-scheme` do
-sistema, que era o único comportamento antes. No escuro o fundo é preto de
-verdade (`#000`) com a superfície do cartão em `#0b0b0d` — a borda é que desenha
-a aresta.
-
-A preferência vive num cookie que o Flask lê para renderizar `data-tema` no
-`<html>`. O caminho comum seria um `<script>` inline bloqueante no `<head>`, mas
-inline é proibido aqui para a página sobreviver a uma CSP sem `unsafe-inline` — e
-sem ele o navegador pinta o tema errado e troca depois. O valor do cookie passa
-por whitelist antes de virar atributo: quem controla o cookie é o cliente, e
-depender só do escape do Jinja para um valor de atributo é apostar em vez de
-validar.
-
-O bloco de tokens escuros aparece duas vezes no CSS, uma no `@media` e outra em
-`:root[data-tema="escuro"]`, porque CSS puro não junta um `@media` com um seletor
-fora dele. Um teste exige que os dois escopos declarem o mesmo mapa
-token → valor, então divergir quebra a suíte em vez de dar temas diferentes
-conforme o usuário escolheu na mão ou herdou do sistema. Outro exige o
-`:not([data-tema="claro"])` no `@media`: sem ele, quem fixa claro recebe escuro
-porque o sistema está escuro.
-
 **Cor por função, dois tons.** Todo o CSS colorido referencia só `--acento`,
 `--acento-forte`, `--acento-fraco` e `--acento-contraste`. Quem define os
 valores é uma classe no `<body>` (`tema-convert`, `tema-imgtopdf`), e no hub cada
@@ -216,14 +195,38 @@ de classe que o JavaScript alterna e exige que o CSS os defina: renomear
 `.oculto` num redesign quebraria a interface inteira sem nenhum outro teste
 falhar.
 
-**Bolinhas arrastáveis.** No hub, as duas bolinhas podem ser arrastadas para
-qualquer lugar. Pointer events cobrem mouse e toque num caminho só, e um limiar
-de 6px separa clique de arrasto — sem ele, arrastar acabaria navegando. A
-posição vive num cookie que o Flask lê e renderiza em `--dx` e `--dy` no style
-do elemento, então a bolinha nasce onde foi deixada em vez de saltar quando o
-JavaScript roda. O backend converte para inteiro e limita a faixa: sem limite,
-um cookie adulterado joga a bolinha para fora da tela e o link fica
-inalcançável.
+**Bolinhas com física.** No hub, as duas bolinhas são arrastáveis e podem ser
+arremessadas: ao soltar com movimento elas saem com velocidade, rebatem nas
+paredes da tela e vão perdendo energia até parar. Atrito de 0,94 por quadro de
+referência, restituição de 0,7 na parede, e repouso abaixo de 0,05 px/ms — aí o
+`requestAnimationFrame` desliga, porque loop eterno queima bateria no celular.
+
+O atrito é elevado a `dt / QUADRO_MS`, então depende do tempo e não da taxa de
+quadros: sem isso a bolinha andaria bem menos numa tela de 120Hz que numa de
+60Hz. O intervalo entre quadros tem teto de 48ms, senão uma aba que voltou do
+segundo plano daria um salto de tela inteira.
+
+A velocidade do arremesso vem da média das amostras dos últimos 80ms, não do
+último par de pontos: um tremor no fim do arrasto daria arremesso torto, e
+arrastar, parar com o dedo na tela e soltar tem que largar a bolinha parada.
+
+Pointer events cobrem mouse e toque num caminho só, com limiar de arrasto de
+6px no ponteiro fino e 12px no toque — dedo treme mais que mouse, e com o mesmo
+limiar tocar para navegar viraria arrasto e o link nunca abriria no celular.
+
+A caixa é o `<main>`, medida com `getBoundingClientRect` e recalculada no
+`resize`: ao girar o celular a posição é reenquadrada, senão uma posição salva
+numa tela larga deixaria a bolinha fora da tela estreita e o link inalcançável.
+A posição de repouso vive num cookie que o Flask lê e renderiza em `--dx` e
+`--dy` no style do elemento, então a bolinha nasce onde ficou em vez de saltar
+quando o JavaScript roda. O backend converte para inteiro e limita a faixa como
+rede de segurança.
+
+Sob `prefers-reduced-motion` não há inércia: soltar deixa a bolinha onde o dedo
+soltou.
+
+As duas bolinhas não colidem entre si — colisão elástica entre círculos é bem
+mais código e mais teste para um encontro que quase não acontece.
 
 O separador do cookie é `x_y|x_y`, não `x,y;x,y`. Em cabeçalho HTTP o `;`
 encerra o cookie e a RFC 6265 também exclui `,`, `"`, espaço e `\` do valor — com
@@ -234,6 +237,12 @@ teste escreve direto no jar e esconde isso, então o teste que cobre o caso usa
 Arrastar é enriquecimento: o link continua focável e ativável por teclado, e
 mover a bolinha não muda a ordem de tabulação. Teclado não reposiciona — é
 cosmético, não funcional.
+
+`static/js/bolinhas-estado.js` não toca DOM, então rebote, atrito, repouso e
+limiar de arrasto são testados no runner do Node. Um dos testes simula a
+trajetória inteira em 60Hz e em 120Hz e exige que a distância percorrida seja a
+mesma; outro exige que a bolinha convirja para o repouso em menos de 600
+quadros, o que trava o risco de alguém mexer no atrito e o loop virar eterno.
 
 **Sem framework de CSS.** O layout veio de um mockup em Tailwind por CDN. O CDN
 do Tailwind compila CSS no navegador a cada carregamento, é ferramenta de

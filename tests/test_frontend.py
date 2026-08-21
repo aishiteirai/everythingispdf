@@ -107,9 +107,6 @@ class TestEstrutura:
     def test_campo_tem_o_nome_que_a_api_espera(self, pagina):
         assert 'name="file"' in pagina
 
-    def test_aponta_para_a_documentacao_da_api(self, pagina):
-        assert '/apidocs' in pagina
-
     def test_volta_para_o_inicio(self, pagina):
         assert 'href="/"' in pagina
 

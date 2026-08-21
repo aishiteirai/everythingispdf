@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-tema="{{ tema }}">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -58,9 +58,7 @@
 </section>
 </main>
 
-{% include '_rodape.html' %}
 
-<script type="module" src="{{ url_for('static', filename='js/tema.js') }}"></script>
 
 {# Configuração do backend. Bloco JSON em vez de JavaScript inline: não é
    executado, então sobrevive a uma CSP sem unsafe-inline. #}

@@ -49,6 +49,10 @@
     --erro-fundo: #ffdad6;
     --sucesso: #1f6b3f;
     --sucesso-fundo: #dcf2e3;
+
+    /* Vermelho da marca. Em token, e nao cor solta na regra, para o teste de
+       contraste alcancar: 6,13:1 sobre a faixa clara. */
+    --marca: #ba1a1a;
     --sombra: 0 4px 24px rgba(43, 58, 42, .06);
     --sombra-forte: 0 16px 48px rgba(43, 58, 42, .10);
 
@@ -57,51 +61,7 @@
     --largura-maxima: 1100px;
 }
 
-/* -------------------------------------------------------------
-   Modo noturno
 
-   Tres estados: data-tema="auto" segue o sistema, "claro" e "escuro" fixam.
-   O :not([data-tema="claro"]) existe para quem escolheu claro na mao nao
-   receber escuro por causa do sistema.
-
-   O bloco escuro aparece duas vezes porque CSS puro nao junta um @media com
-   um seletor fora dele. tests/test_pages.py exige que os dois escopos
-   declarem o mesmo mapa token -> valor, entao divergir quebra o teste.
-   ------------------------------------------------------------- */
-
-@media (prefers-color-scheme: dark) {
-    :root:not([data-tema="claro"]) {
-        --fundo: #000000;
-        --superficie: #0b0b0d;
-        --superficie-alt: #111213;
-        --borda: #23242a;
-        --borda-forte: #3a3c44;
-        --texto: #f2f3f5;
-        --texto-fraco: #a6aba1;
-        --erro: #ffb4ab;
-        --erro-fundo: #2a1413;
-        --sucesso: #8fd9ac;
-        --sucesso-fundo: #0d2016;
-        --sombra: 0 0 0 1px rgba(255, 255, 255, .04), 0 4px 24px rgba(0, 0, 0, .6);
-        --sombra-forte: 0 0 0 1px rgba(255, 255, 255, .07), 0 16px 48px rgba(0, 0, 0, .7);
-    }
-}
-
-:root[data-tema="escuro"] {
-    --fundo: #000000;
-    --superficie: #0b0b0d;
-    --superficie-alt: #111213;
-    --borda: #23242a;
-    --borda-forte: #3a3c44;
-    --texto: #f2f3f5;
-    --texto-fraco: #a6aba1;
-    --erro: #ffb4ab;
-    --erro-fundo: #2a1413;
-    --sucesso: #8fd9ac;
-    --sucesso-fundo: #0d2016;
-    --sombra: 0 0 0 1px rgba(255, 255, 255, .04), 0 4px 24px rgba(0, 0, 0, .6);
-    --sombra-forte: 0 0 0 1px rgba(255, 255, 255, .07), 0 16px 48px rgba(0, 0, 0, .7);
-}
 
 /* =============================================================
    Acento por funcao
@@ -112,9 +72,8 @@
    --acento-forte  texto e preenchimento de botao com texto em cima. 4.5:1
                    nos dois sentidos.
 
-   O texto sobre os dois vem de --acento-contraste: branco no claro, preto no
-   escuro, onde o acento e a cor clara. O teste calcula cada par nos tres
-   modos e nos tres temas.
+   O texto sobre os dois vem de --acento-contraste. O teste calcula cada par
+   nos tres temas.
    ============================================================= */
 
 :root,
@@ -139,51 +98,7 @@
     --acento-contraste: #ffffff;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root:not([data-tema="claro"]),
-    :root:not([data-tema="claro"]) .tema-neutro {
-        --acento: #b9c0b4;
-        --acento-forte: #d3d9ce;
-        --acento-fraco: #16171a;
-        --acento-contraste: #000000;
-    }
 
-    :root:not([data-tema="claro"]) .tema-convert {
-        --acento: #7ea1b4;
-        --acento-forte: #92afbf;
-        --acento-fraco: #0e1a20;
-        --acento-contraste: #000000;
-    }
-
-    :root:not([data-tema="claro"]) .tema-imgtopdf {
-        --acento: #8fb181;
-        --acento-forte: #a0bc94;
-        --acento-fraco: #101a0d;
-        --acento-contraste: #000000;
-    }
-}
-
-:root[data-tema="escuro"],
-:root[data-tema="escuro"] .tema-neutro {
-    --acento: #b9c0b4;
-    --acento-forte: #d3d9ce;
-    --acento-fraco: #16171a;
-    --acento-contraste: #000000;
-}
-
-:root[data-tema="escuro"] .tema-convert {
-    --acento: #7ea1b4;
-    --acento-forte: #92afbf;
-    --acento-fraco: #0e1a20;
-    --acento-contraste: #000000;
-}
-
-:root[data-tema="escuro"] .tema-imgtopdf {
-    --acento: #8fb181;
-    --acento-forte: #a0bc94;
-    --acento-fraco: #101a0d;
-    --acento-contraste: #000000;
-}
 
 /* =============================================================
    Base
@@ -239,15 +154,21 @@ body {
 }
 
 .marca {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 700;
     letter-spacing: -.01em;
-    color: var(--texto);
+    color: var(--marca);
     text-decoration: none;
 }
 
+@media (min-width: 768px) {
+    .marca {
+        font-size: 26px;
+    }
+}
+
 .marca:hover {
-    color: var(--acento-forte);
+    opacity: .8;
 }
 
 .marca:focus-visible {
@@ -283,97 +204,6 @@ body {
    pagina. */
 body.pagina-alta .tela {
     justify-content: flex-start;
-}
-
-/* =============================================================
-   Rodape
-   ============================================================= */
-
-.pe {
-    width: 100%;
-    margin-top: auto;
-    background: var(--superficie-alt);
-}
-
-.pe .faixa {
-    flex-direction: column;
-    gap: 16px;
-    padding-top: 36px;
-    padding-bottom: 36px;
-}
-
-@media (min-width: 768px) {
-    .pe .faixa {
-        flex-direction: row;
-    }
-}
-
-.etiqueta {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--texto-fraco);
-    text-decoration: none;
-}
-
-a.etiqueta:hover {
-    color: var(--acento-forte);
-}
-
-a.etiqueta:focus-visible {
-    outline: 2px solid var(--acento);
-    outline-offset: 4px;
-    border-radius: 4px;
-}
-
-/* =============================================================
-   Controle de tema
-
-   Os tres icones existem no HTML e o CSS mostra o do estado atual: assim o
-   icone certo aparece na primeira pintura, sem esperar JavaScript.
-   ============================================================= */
-
-.controle-tema {
-    flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    display: grid;
-    place-items: center;
-    border: 1px solid var(--borda);
-    border-radius: 9999px;
-    background: var(--superficie);
-    color: var(--texto-fraco);
-    cursor: pointer;
-    transition: color .15s, border-color .15s, background-color .15s;
-}
-
-.controle-tema:hover {
-    border-color: var(--acento);
-    background: var(--acento-fraco);
-    color: var(--acento-forte);
-}
-
-.controle-tema:focus-visible {
-    outline: 2px solid var(--acento);
-    outline-offset: 3px;
-}
-
-.icone-tema {
-    display: none;
-    grid-area: 1 / 1;
-}
-
-:root[data-tema="auto"] .icone-auto,
-:root[data-tema="claro"] .icone-claro,
-:root[data-tema="escuro"] .icone-escuro {
-    display: block;
-}
-
-/* Sem atributo -- HTML servido por outra rota, ou atributo removido -- o
-   estado real e o automatico. */
-:root:not([data-tema]) .icone-auto {
-    display: block;
 }
 
 /* =============================================================
@@ -460,52 +290,28 @@ a.etiqueta:focus-visible {
     transform: none;
 }
 
-.voltar-lugar {
-    padding: 9px 16px;
-    border: 1px solid var(--borda);
-    border-radius: 9999px;
-    background: var(--superficie);
-    color: var(--texto-fraco);
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    cursor: pointer;
-}
-
-.voltar-lugar:hover {
-    border-color: var(--acento);
-    color: var(--acento-forte);
-}
-
-.voltar-lugar:focus-visible {
-    outline: 2px solid var(--acento);
-    outline-offset: 3px;
-}
-
 /* =============================================================
    Cartao das paginas internas
    ============================================================= */
 
 .cartao {
     width: 100%;
-    max-width: 560px;
+    max-width: 440px;
     background: var(--superficie);
     border: 1px solid var(--borda);
     border-radius: var(--raio);
     box-shadow: var(--sombra);
-    padding: 32px;
+    padding: 22px;
 }
 
 @media (min-width: 768px) {
     .cartao {
-        padding: 40px;
+        padding: 28px;
     }
 }
 
 .cartao-largo {
-    max-width: 900px;
+    max-width: 720px;
 }
 
 /* Selo da funcao: a mesma bolinha do hub, menor, para a pagina interna dizer
@@ -513,17 +319,17 @@ a.etiqueta:focus-visible {
 .selo {
     display: grid;
     place-items: center;
-    width: 52px;
-    height: 52px;
-    margin-bottom: 20px;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 14px;
     border-radius: 9999px;
     background: var(--acento);
     color: var(--acento-contraste);
 }
 
 .cartao h1 {
-    margin: 0 0 8px;
-    font-size: 32px;
+    margin: 0 0 6px;
+    font-size: 24px;
     font-weight: 600;
     letter-spacing: -.02em;
     line-height: 1.2;
@@ -531,14 +337,14 @@ a.etiqueta:focus-visible {
 
 @media (min-width: 768px) {
     .cartao h1 {
-        font-size: 40px;
+        font-size: 28px;
     }
 }
 
 .subtitulo {
-    margin: 0 0 28px;
+    margin: 0 0 20px;
     color: var(--texto-fraco);
-    font-size: 18px;
+    font-size: 15px;
     line-height: 1.6;
     max-width: 46ch;
 }
@@ -682,7 +488,7 @@ a.etiqueta:focus-visible {
 
 .grade {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
     gap: 14px;
     margin: 18px 0 0;
     padding: 0;
@@ -989,7 +795,6 @@ a.etiqueta:focus-visible {
     .bolinha-disco,
     .principal,
     .pagina-acao,
-    .controle-tema,
     .area {
         transition: none;
     }

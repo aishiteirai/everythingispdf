@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-tema="{{ tema }}">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -45,16 +45,9 @@
         </a>
     </div>
 
-    {# So aparece depois de arrastar: botao que nao faz nada e ruido. #}
-    <button type="button" id="voltar-bolinhas"
-            class="voltar-lugar{% if posicoes == [(0, 0), (0, 0)] %} oculto{% endif %}">
-        voltar ao lugar
-    </button>
 </main>
 
-{% include '_rodape.html' %}
 
-<script type="module" src="{{ url_for('static', filename='js/tema.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/bolinhas.js') }}"></script>
 
 </body>
