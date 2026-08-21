@@ -9,10 +9,12 @@ As funcoes deste modulo nao conhecem Flask nem HTTP -- geometria, rotacao e
 validacao ficam testaveis sem subir a aplicacao.
 """
 
+import io
 import json
 from dataclasses import dataclass
 
 from PIL import Image, ImageOps
+from pypdf import PdfWriter
 
 # Densidade de composicao e do PDF. Define o tamanho em pixels das paginas de
 # tamanho fixo e, por consequencia, o MediaBox: px / DPI * 72 pontos.
@@ -249,20 +251,46 @@ def _monta_pagina(entrada, rotacao, opcoes):
 def monta_pdf(entradas, opcoes, caminho_saida):
     """Grava o PDF com uma pagina por entrada, na ordem recebida.
 
-    Escreve pagina por pagina com `append=True` e libera cada imagem antes de
-    abrir a proxima. Montar tudo de uma vez com `append_images` manteria todas
-    as imagens transformadas em memoria ao mesmo tempo -- o PdfImagePlugin
-    materializa a lista antes de escrever -- e 20 paginas em tamanho original
-    passariam de 500 MB. Assim o pico nao escala com a contagem de paginas.
+    Cada imagem vira um PDF de uma pagina em memoria e e liberada antes de
+    abrir a proxima, entao o pico nao guarda mais de uma imagem decodificada.
+    O que acumula sao bytes de PDF ja comprimidos, ordens de grandeza menores.
+
+    Duas alternativas foram descartadas:
+
+    `save(append_images=[...])` manteria todas as imagens transformadas em
+    memoria ao mesmo tempo -- o PdfImagePlugin materializa a lista antes de
+    escrever, entao nem generator ajuda -- e 20 paginas em tamanho original
+    passariam de 500 MB.
+
+    `save(append=True)`, que era a implementacao anterior, relia o PDF inteiro
+    a cada pagina (custo quadratico na contagem) e batia num defeito do
+    PdfParser do Pillow: `processed_offsets` e um argumento mutavel com default
+    de lista, entao os offsets de cada releitura se acumulam e a quinta pagina
+    dispara um falso "trailer loop found". A cadeia de /Prev do arquivo estava
+    correta -- o laco era do parser, nao do PDF.
     """
-    for indice, entrada in enumerate(entradas):
-        pagina = _monta_pagina(entrada, opcoes.rotacoes[indice], opcoes)
-        try:
-            pagina.save(
-                caminho_saida,
-                'PDF',
-                resolution=float(DPI_PAGINA),
-                append=indice > 0,
-            )
-        finally:
-            pagina.close()
+    escritor = PdfWriter()
+
+    # Os buffers ficam vivos ate a escrita: nao dependemos de o pypdf ter
+    # copiado tudo no append.
+    paginas = []
+
+    try:
+        for indice, entrada in enumerate(entradas):
+            imagem = _monta_pagina(entrada, opcoes.rotacoes[indice], opcoes)
+            buffer = io.BytesIO()
+            try:
+                imagem.save(buffer, 'PDF', resolution=float(DPI_PAGINA))
+            finally:
+                imagem.close()
+
+            buffer.seek(0)
+            paginas.append(buffer)
+            escritor.append(buffer)
+
+        with open(caminho_saida, 'wb') as saida:
+            escritor.write(saida)
+    finally:
+        escritor.close()
+        for buffer in paginas:
+            buffer.close()

@@ -22,6 +22,15 @@ jobs:
 
       # A suíte usa o dublê em tests/bin/libreoffice, então não instala
       # LibreOffice aqui de propósito -- garante que ela roda sem ele.
+      # Werkzeug parseia o multipart do upload e o gunicorn recebe a
+      # requisicao: sao os dois componentes que este servico nao pode deixar
+      # envelhecer. Se uma CVE nova aparecer sem correcao disponivel, o escape
+      # e `--ignore-vuln GHSA-xxxx` com o motivo no commit.
+      - name: Auditoria de dependencias
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt
+
       - name: Testes
         run: python -m pytest tests/ -q
 

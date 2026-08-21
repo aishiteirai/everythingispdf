@@ -236,3 +236,65 @@ class TestMontagemDoPdf:
 
         with pytest.raises(mod.ImagemInvalida):
             mod.monta_pdf([io.BytesIO(imagem(200, 200))], opcoes, self.caminho(tmp_path))
+
+
+class TestLimiteDePaginas:
+    """A API anuncia 20 imagens. Nenhum teste chegava perto disso: o maior
+    montava 3, e o smoke do CI monta 2. Foi por ai que passou um defeito que
+    so aparece a partir da quinta pagina."""
+
+    def caminho(self, tmp_path):
+        return str(tmp_path / 'saida.pdf')
+
+    @pytest.mark.parametrize('quantidade', [4, 5, 10, mod.MAX_IMAGENS])
+    def test_monta_o_maximo_de_paginas_anunciado(
+        self, tmp_path, imagem, paginas, quantidade
+    ):
+        entradas = [io.BytesIO(imagem(120, 90)) for _ in range(quantidade)]
+        opcoes = mod.Opcoes(tamanho='image', margem_mm=0, rotacoes=[0] * quantidade)
+        destino = self.caminho(tmp_path)
+
+        mod.monta_pdf(entradas, opcoes, destino)
+
+        assert len(paginas(open(destino, 'rb').read())) == quantidade
+
+    def test_a_ordem_se_mantem_em_muitas_paginas(self, tmp_path, imagem, paginas):
+        """Ordem com 3 paginas nao prova ordem com 20: um merge que embaralhe
+        no meio passaria no teste pequeno."""
+        larguras = [100 + 10 * indice for indice in range(mod.MAX_IMAGENS)]
+        entradas = [io.BytesIO(imagem(largura, 100)) for largura in larguras]
+        opcoes = mod.Opcoes(
+            tamanho='image', margem_mm=0, rotacoes=[0] * mod.MAX_IMAGENS
+        )
+        destino = self.caminho(tmp_path)
+
+        mod.monta_pdf(entradas, opcoes, destino)
+
+        # 150 DPI: 1 px = 72/150 pt.
+        esperado = [(round(largura * 72 / 150, 2), 48.0) for largura in larguras]
+        assert paginas(open(destino, 'rb').read()) == esperado
+
+    def test_rotacao_por_pagina_em_muitas_paginas(self, tmp_path, imagem, paginas):
+        rotacoes = [0, 90] * (mod.MAX_IMAGENS // 2)
+        entradas = [io.BytesIO(imagem(100, 200)) for _ in rotacoes]
+        opcoes = mod.Opcoes(tamanho='image', margem_mm=0, rotacoes=rotacoes)
+        destino = self.caminho(tmp_path)
+
+        mod.monta_pdf(entradas, opcoes, destino)
+
+        caixas = paginas(open(destino, 'rb').read())
+        esperado = [(48.0, 96.0) if giro == 0 else (96.0, 48.0) for giro in rotacoes]
+        assert caixas == esperado
+
+    def test_muitos_pdfs_seguidos_no_mesmo_processo(self, tmp_path, imagem, paginas):
+        """Um worker do gunicorn atende milhares de requisicoes sem reiniciar.
+        Estado que sobrevive entre montagens nao pode fazer a decima falhar."""
+        opcoes = mod.Opcoes(tamanho='image', margem_mm=0, rotacoes=[0] * 6)
+
+        for rodada in range(10):
+            destino = str(tmp_path / f'rodada{rodada}.pdf')
+            entradas = [io.BytesIO(imagem(120, 90)) for _ in range(6)]
+
+            mod.monta_pdf(entradas, opcoes, destino)
+
+            assert len(paginas(open(destino, 'rb').read())) == 6, f'rodada {rodada}'

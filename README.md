@@ -262,17 +262,26 @@ PDF é lido em memória e o diretório é removido num `finally` — sucesso, er
 e timeout. Antes o cleanup vivia num `@after_this_request` registrado só no
 caminho de sucesso, então toda exceção deixava arquivo para trás.
 
-**PDF montado página por página.** `Image.save(caminho, 'PDF', append=True)`
-grava uma página por vez e cada imagem é liberada antes da próxima. Montar de
-uma vez com `append_images` manteria todas as imagens transformadas em memória
-ao mesmo tempo — o `PdfImagePlugin` do Pillow materializa a lista antes de
-escrever, então nem generator ajuda — e 20 páginas em tamanho original
-passariam de 500 MB. Assim o pico não escala com a contagem de páginas, e
-nenhuma biblioteca de PDF entra no `requirements.txt`.
+**PDF montado página por página.** Cada imagem vira um PDF de uma página em
+memória e é liberada antes da próxima; o `pypdf` junta tudo no fim. O pico
+guarda uma imagem decodificada mais bytes de PDF já comprimidos, e o custo é
+linear: ~0,07s por página, independente da contagem.
 
-O efeito colateral é que o append é incremental: gerações antigas da árvore de
-páginas ficam no arquivo, então `/MediaBox` aparece repetido. O `/Count` da
-última geração é o número de páginas que vale.
+Duas alternativas foram descartadas. `save(append_images=[...])` manteria todas
+as imagens transformadas em memória ao mesmo tempo — o `PdfImagePlugin` do
+Pillow materializa a lista antes de escrever, então nem generator ajuda — e 20
+páginas em tamanho original passariam de 500 MB.
+
+`save(append=True)` foi a primeira implementação e tinha dois problemas. Relia o
+PDF inteiro a cada página, custo quadrático na contagem. E batia num defeito do
+`PdfParser` do Pillow: `processed_offsets` é um argumento mutável com default de
+lista, então os offsets de cada releitura se acumulam e a **quinta** página
+dispara um falso `trailer loop found`. A cadeia de `/Prev` do arquivo estava
+correta — o laço era do parser. No Pillow 10.4 não havia a guarda e a recursão
+era infinita, o que tem CVE própria (`CVE-2026-42310`).
+
+Com o `pypdf` o `PdfParser` do Pillow deixa de ser usado: o Pillow só escreve, e
+quem lê PDF é o pypdf.
 
 **Rotação sem reamostragem.** Só múltiplos de 90 são aceitos, então a rotação
 usa `transpose` em vez de `rotate`: sai exata, sem interpolação e sem canto

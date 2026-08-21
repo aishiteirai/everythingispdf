@@ -129,12 +129,12 @@ def imagem():
 
 @pytest.fixture
 def paginas():
-    """Dimensoes em pontos de cada pagina do PDF, na ordem final.
+    """Dimensoes em pontos de cada pagina do PDF, na ordem do arquivo.
 
-    O PDF e montado com append incremental, entao cada geracao reescreve a
-    arvore de paginas e as anteriores continuam no arquivo: um PDF de 3
-    paginas tem 6 MediaBox gravados (1 + 2 + 3). O /Count da ultima geracao
-    diz quantas paginas valem, e sao as ultimas -- por isso a fatia no fim.
+    Exige exatamente um MediaBox por pagina. A implementacao anterior montava
+    o PDF com append incremental, o que deixava as arvores de paginas antigas
+    no arquivo -- um PDF de 3 paginas tinha 6 MediaBox gravados. Voltar para
+    aquele caminho quebra esta asercao em vez de passar silenciosamente.
     """
     import re
 
@@ -148,9 +148,12 @@ def paginas():
         caixas = re.findall(
             rb'/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]', dados
         )
-        assert len(caixas) >= total, 'menos MediaBox que paginas'
+        assert len(caixas) == total, (
+            f'{len(caixas)} MediaBox para {total} paginas -- sobra de arvore de '
+            f'paginas antiga indica volta ao append incremental'
+        )
 
-        return [(float(l), float(a)) for l, a in caixas[-total:]]
+        return [(float(l), float(a)) for l, a in caixas]
 
     return _paginas
 
