@@ -239,6 +239,22 @@ de classe que o JavaScript alterna e exige que o CSS os defina: renomear
 `.oculto` num redesign quebraria a interface inteira sem nenhum outro teste
 falhar.
 
+**Um módulo de arrasto, não dois.** As duas dinâmicas — mover as bolinhas do
+hub e reordenar as miniaturas da galeria — usam `static/js/arraste.js`. Antes
+eram duas implementações, e a da galeria usava drag-and-drop HTML5, que **não
+dispara em tela de toque**: no celular só os botões reordenavam.
+
+A parte difícil de unificar é que na galeria a página rola, então deslizar o
+dedo num cartão é ambíguo entre reordenar e rolar. A galeria resolve exigindo
+que o dedo **segure 300ms** antes de o arrasto começar; se ele desliza antes
+disso, é rolagem e não interferimos. O hub não espera, porque ali arrastar é a
+interação principal e a página não rola.
+
+Cancelar a rolagem é feito com `touchmove` e `passive: false`, e não com
+`touch-action: none` no CSS: o CSS teria de valer antes do gesto começar, e aí a
+lista nunca rolaria. A decisão de quando começar mora em `arraste-estado.js`,
+que não toca DOM e tem doze testes no Node.
+
 **Bolinhas com física.** No hub, as duas bolinhas são arrastáveis e podem ser
 arremessadas: ao soltar com movimento elas saem com velocidade, rebatem nas
 paredes da tela e vão perdendo energia até parar. Atrito de 0,94 por quadro de
@@ -259,7 +275,9 @@ Pointer events cobrem mouse e toque num caminho só, com limiar de arrasto de
 limiar tocar para navegar viraria arrasto e o link nunca abriria no celular.
 
 A caixa é o `<main>`, medida com `getBoundingClientRect` e recalculada no
-`resize`: ao girar o celular a posição é reenquadrada, senão uma posição salva
+`resize` — no máximo uma vez por quadro, porque `resize` dispara continuamente
+enquanto se arrasta a janela e cada medição força recálculo de layout. A tela é
+medida uma vez por passada, não uma vez por bolinha: ao girar o celular a posição é reenquadrada, senão uma posição salva
 numa tela larga deixaria a bolinha fora da tela estreita e o link inalcançável.
 A posição de repouso vive num cookie que o Flask lê e renderiza em `--dx` e
 `--dy` no style do elemento, então a bolinha nasce onde ficou em vez de saltar

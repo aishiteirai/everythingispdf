@@ -320,6 +320,7 @@ class TestClassesQueOJavaScriptLiga:
     MODULOS = (
         'main.js', 'interface.js', 'feedback.js',
         'imgtopdf.js', 'gallery-ui.js',
+        'bolinhas.js', 'arraste.js',
     )
 
     @pytest.fixture
@@ -599,3 +600,53 @@ class TestMarca:
         valores = tokens(css_do_site, 'tema-neutro')
 
         assert valores['--marca'] == '#ba1a1a'
+
+
+class TestArrasteUnificado:
+    """As duas dinamicas do site usam o mesmo modulo de arrasto. Antes eram
+    duas implementacoes, e a da galeria usava drag-and-drop HTML5, que nao
+    dispara em toque -- reordenar arrastando nao funcionava no celular."""
+
+    MODULOS_QUE_ARRASTAM = ('bolinhas.js', 'gallery-ui.js')
+
+    def fonte(self, client, modulo):
+        resposta = client.get(f'/static/js/{modulo}')
+        assert resposta.status_code == 200, f'{modulo} nao e servido'
+        return resposta.get_data(as_text=True)
+
+    @pytest.mark.parametrize('modulo', ['arraste.js', 'arraste-estado.js'])
+    def test_os_modulos_de_arraste_sao_servidos(self, client, modulo):
+        assert client.get(f'/static/js/{modulo}').status_code == 200
+
+    @pytest.mark.parametrize('modulo', MODULOS_QUE_ARRASTAM)
+    def test_os_dois_usam_o_modulo_compartilhado(self, client, modulo):
+        assert "from './arraste.js'" in self.fonte(client, modulo)
+
+    @pytest.mark.parametrize('modulo', MODULOS_QUE_ARRASTAM)
+    def test_ninguem_registra_drag_and_drop_html5(self, client, modulo):
+        """dragstart e dragover nao disparam em tela de toque. O unico uso
+        legitimo e preventDefault no dragstart, para o navegador nao comecar o
+        proprio arrasto de link ou imagem -- e isso mora no modulo
+        compartilhado."""
+        fonte = self.fonte(client, modulo)
+
+        for evento in ('dragover', 'drop', 'dragend', 'dragstart'):
+            assert f"'{evento}'" not in fonte, f'{modulo} ainda escuta {evento}'
+
+    @pytest.mark.parametrize('modulo', MODULOS_QUE_ARRASTAM)
+    def test_ninguem_repete_a_fiacao_de_ponteiro(self, client, modulo):
+        """pointerdown e pointermove ficam num lugar so."""
+        fonte = self.fonte(client, modulo)
+
+        for evento in ('pointerdown', 'pointermove', 'pointercancel'):
+            assert f"'{evento}'" not in fonte, f'{modulo} refaz a fiacao de {evento}'
+
+    def test_a_galeria_espera_o_toque_ser_segurado(self, client):
+        """Na galeria a pagina rola, entao deslizar o dedo num cartao e ambiguo
+        entre reordenar e rolar. Segurar desfaz a ambiguidade sem tirar a
+        rolagem."""
+        assert 'esperaNoToqueMs' in self.fonte(client, 'gallery-ui.js')
+
+    def test_o_hub_nao_espera(self, client):
+        """No hub arrastar e a interacao principal: esperar pareceria travado."""
+        assert 'esperaNoToqueMs' not in self.fonte(client, 'bolinhas.js')

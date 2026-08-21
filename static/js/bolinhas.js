@@ -10,16 +10,15 @@
  * mover a bolinha não muda a ordem de tabulação.
  */
 
+import { tornaArrastavel } from './arraste.js';
 import {
     VELOCIDADE_DE_REPOUSO,
     emRepouso,
     limitaNaCaixa,
-    limiarDe,
     move,
     passo,
     serializa,
     velocidadeDoArremesso,
-    virouArrasto,
 } from './bolinhas-estado.js';
 
 const UM_ANO_EM_SEGUNDOS = 60 * 60 * 24 * 365;
@@ -54,8 +53,8 @@ function aplica(bolinha) {
  * zero: numa tela mais estreita que a bolinha, o cálculo se inverteria e ela
  * ficaria presa fora do lugar.
  */
-function mede(bolinha) {
-    const tela = caixaDaTela.getBoundingClientRect();
+function mede(bolinha, telaMedida = null) {
+    const tela = telaMedida ?? caixaDaTela.getBoundingClientRect();
     const atual = bolinha.elemento.getBoundingClientRect();
     const origemEsquerda = atual.left - bolinha.x;
     const origemTopo = atual.top - bolinha.y;
@@ -94,128 +93,53 @@ function quadro(instante) {
     let alguemSeMove = false;
 
     bolinhas.forEach((bolinha) => {
-        if (emRepouso(bolinha)) return;
-
-        Object.assign(bolinha, passo(bolinha, bolinha.caixa, dt));
-        aplica(bolinha);
-
-        if (!emRepouso(bolinha)) alguemSeMove = true;
-    });
-
-    if (alguemSeMove) {
-        requestAnimationFrame(quadro);
-        return;
-    }
-
-    // Loop desliga ao parar: rAF eterno queima bateria no celular.
-    animando = false;
-    grava();
-}
-
-function anima() {
-    if (animando) return;
-
-    animando = true;
-    instanteAnterior = performance.now();
-    requestAnimationFrame(quadro);
-}
-
-/* ----------------------------------------------------------------
-   Arrasto
-   ---------------------------------------------------------------- */
-
-bolinhas.forEach((bolinha) => {
-    const elemento = bolinha.elemento;
-
-    let partida = null;
     let inicial = null;
     let amostras = [];
-    let arrastou = false;
 
-    // Ancora e nativamente arrastavel: sem isso o navegador comeca o proprio
-    // drag de link e o nosso nunca recebe pointermove.
-    elemento.addEventListener('dragstart', (evento) => evento.preventDefault());
+    // Aqui o arrasto comeca no primeiro movimento, sem exigir que o dedo
+    // segure: no hub arrastar e a interacao principal e a pagina nao rola,
+    // entao a espera que a galeria precisa pareceria travamento.
+    tornaArrastavel(bolinha.elemento, {
+        aoComecar: ({ evento }) => {
+            // Pegar a bolinha no ar a para.
+            bolinha.vx = 0;
+            bolinha.vy = 0;
+            bolinha.caixa = mede(bolinha);
 
-    elemento.addEventListener('pointerdown', (evento) => {
-        if (evento.button !== 0) return;
+            inicial = { x: bolinha.x, y: bolinha.y };
+            amostras = [{ x: bolinha.x, y: bolinha.y, t: evento.timeStamp }];
+        },
 
-        // Pegar a bolinha no ar a para.
-        bolinha.vx = 0;
-        bolinha.vy = 0;
-        bolinha.caixa = mede(bolinha);
+        aoMover: ({ dx, dy, evento }) => {
+            const alvo = limitaNaCaixa(move(inicial, { x: dx, y: dy }), bolinha.caixa);
+            bolinha.x = alvo.x;
+            bolinha.y = alvo.y;
+            aplica(bolinha);
 
-        partida = { x: evento.clientX, y: evento.clientY };
-        inicial = { x: bolinha.x, y: bolinha.y };
-        amostras = [{ x: bolinha.x, y: bolinha.y, t: evento.timeStamp }];
-        arrastou = false;
+            amostras.push({ x: alvo.x, y: alvo.y, t: evento.timeStamp });
+            if (amostras.length > AMOSTRAS_MAXIMAS) amostras.shift();
+        },
 
-        elemento.setPointerCapture(evento.pointerId);
-    });
+        aoSoltar: ({ cancelado }) => {
+            if (cancelado) return;
 
-    elemento.addEventListener('pointermove', (evento) => {
-        if (!partida) return;
+            // Quem pediu menos movimento recebe a bolinha onde soltou, sem
+            // inercia.
+            if (semMovimento.matches) {
+                grava();
+                return;
+            }
 
-        const deslocamento = {
-            x: evento.clientX - partida.x,
-            y: evento.clientY - partida.y,
-        };
+            const { vx, vy } = velocidadeDoArremesso(amostras);
+            if (Math.hypot(vx, vy) < VELOCIDADE_DE_REPOUSO) {
+                grava();
+                return;
+            }
 
-        if (!arrastou) {
-            const limiar = limiarDe(evento.pointerType);
-            if (!virouArrasto(deslocamento.x, deslocamento.y, limiar)) return;
-
-            arrastou = true;
-            elemento.classList.add('arrastando');
-        }
-
-        const alvo = limitaNaCaixa(move(inicial, deslocamento), bolinha.caixa);
-        bolinha.x = alvo.x;
-        bolinha.y = alvo.y;
-        aplica(bolinha);
-
-        amostras.push({ x: alvo.x, y: alvo.y, t: evento.timeStamp });
-        if (amostras.length > AMOSTRAS_MAXIMAS) amostras.shift();
-    });
-
-    function solta() {
-        if (!partida) return;
-
-        partida = null;
-        elemento.classList.remove('arrastando');
-        if (!arrastou) return;
-
-        // Quem pediu menos movimento recebe a bolinha onde soltou, sem
-        // inercia.
-        if (semMovimento.matches) {
-            grava();
-            return;
-        }
-
-        const { vx, vy } = velocidadeDoArremesso(amostras);
-        if (Math.hypot(vx, vy) < VELOCIDADE_DE_REPOUSO) {
-            grava();
-            return;
-        }
-
-        bolinha.vx = vx;
-        bolinha.vy = vy;
-        anima();
-    }
-
-    elemento.addEventListener('pointerup', solta);
-
-    elemento.addEventListener('pointercancel', () => {
-        partida = null;
-        elemento.classList.remove('arrastando');
-    });
-
-    // O clique vem depois do pointerup. Se houve arrasto, navegar seria o
-    // oposto do que o usuario pediu.
-    elemento.addEventListener('click', (evento) => {
-        if (!arrastou) return;
-
-        evento.preventDefault();
-        arrastou = false;
+            bolinha.vx = vx;
+            bolinha.vy = vy;
+            anima();
+        },
     });
 });
 
@@ -226,8 +150,12 @@ bolinhas.forEach((bolinha) => {
 function reenquadra() {
     let mudou = false;
 
+    // Uma medicao da tela para as duas bolinhas: getBoundingClientRect forca
+    // recalculo de layout, e nao ha motivo para pagar isso duas vezes.
+    const tela = caixaDaTela.getBoundingClientRect();
+
     bolinhas.forEach((bolinha) => {
-        bolinha.caixa = mede(bolinha);
+        bolinha.caixa = mede(bolinha, tela);
         const dentro = limitaNaCaixa(bolinha, bolinha.caixa);
 
         if (dentro.x !== bolinha.x || dentro.y !== bolinha.y) {
@@ -241,8 +169,27 @@ function reenquadra() {
     if (mudou) grava();
 }
 
+/**
+ * Reenquadra no maximo uma vez por quadro.
+ *
+ * `resize` dispara continuamente enquanto se arrasta a janela ou se gira o
+ * aparelho, e cada passada forca recalculo de layout. Sem o freio, dezenas de
+ * medicoes por segundo para um resultado que so importa no fim.
+ */
+let reenquadramentoPendente = false;
+
+function agendaReenquadramento() {
+    if (reenquadramentoPendente) return;
+
+    reenquadramentoPendente = true;
+    requestAnimationFrame(() => {
+        reenquadramentoPendente = false;
+        reenquadra();
+    });
+}
+
 // Girar o celular ou redimensionar a janela muda a caixa. Sem reenquadrar, uma
 // posicao salva numa tela larga deixa a bolinha fora da tela estreita e o link
 // inalcancavel.
-window.addEventListener('resize', reenquadra);
+window.addEventListener('resize', agendaReenquadramento);
 reenquadra();

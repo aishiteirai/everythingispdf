@@ -6,6 +6,7 @@
  * cada render.
  */
 
+import { ESPERA_NO_TOQUE_MS, tornaArrastavel } from './arraste.js';
 import { criaFeedback } from './feedback.js';
 import { focoDepoisDe } from './gallery.js';
 
@@ -54,7 +55,6 @@ function botao({ acao, simbolo, titulo }, desabilitado) {
 function cartao(item, indice, total) {
     const li = document.createElement('li');
     li.className = 'pagina';
-    li.draggable = true;
     li.dataset.id = String(item.id);
 
     const numero = document.createElement('span');
@@ -141,27 +141,49 @@ export function criaInterfaceDaGaleria(acoes) {
         acoes[alvo.dataset.acao]?.(id);
     });
 
-    let arrastado = null;
+    /**
+     * Reordenar arrastando. Antes usava drag-and-drop HTML5, que nao dispara
+     * em toque -- no celular so os botoes funcionavam.
+     *
+     * No toque o arrasto so comeca depois de segurar: a pagina da galeria
+     * rola, e deslizar o dedo num cartao e ambiguo entre reordenar e rolar.
+     */
+    function ligaArraste(li, id) {
+        let alvo = null;
 
-    el.grade.addEventListener('dragstart', (evento) => {
-        arrastado = idDoAlvo(evento.target);
-    });
+        const marca = (novo) => {
+            if (novo === alvo) return;
+            alvo?.classList.remove('alvo');
+            alvo = novo;
+            alvo?.classList.add('alvo');
+        };
 
-    el.grade.addEventListener('dragover', (evento) => {
-        // Sem isso o navegador recusa o drop.
-        if (arrastado !== null) evento.preventDefault();
-    });
+        tornaArrastavel(li, {
+            esperaNoToqueMs: ESPERA_NO_TOQUE_MS,
+            // Ponteiro que desce num botao de acao aciona o botao, nao arrasta
+            // o cartao.
+            ignorar: '[data-acao]',
 
-    el.grade.addEventListener('drop', (evento) => {
-        evento.preventDefault();
-        const destino = idDoAlvo(evento.target);
-        if (arrastado !== null && destino !== null) acoes.reordena(arrastado, destino);
-        arrastado = null;
-    });
+            aoMover: ({ dx, dy, evento }) => {
+                li.style.transform = `translate(${dx}px, ${dy}px)`;
 
-    el.grade.addEventListener('dragend', () => {
-        arrastado = null;
-    });
+                // O cartao arrastado tem pointer-events: none pelo CSS, entao
+                // o que esta embaixo do dedo e o alvo de verdade.
+                const sob = document.elementFromPoint(evento.clientX, evento.clientY);
+                const cartaoSob = sob?.closest?.('[data-id]') ?? null;
+                marca(cartaoSob === li ? null : cartaoSob);
+            },
+
+            aoSoltar: ({ cancelado }) => {
+                li.style.transform = '';
+                const destino = alvo;
+                marca(null);
+
+                if (cancelado || !destino) return;
+                acoes.reordena?.(id, Number(destino.dataset.id));
+            },
+        });
+    }
 
     return {
         el,
@@ -172,7 +194,11 @@ export function criaInterfaceDaGaleria(acoes) {
 
         desenha(itens) {
             el.grade.replaceChildren(
-                ...itens.map((item, indice) => cartao(item, indice, itens.length))
+                ...itens.map((item, indice) => {
+                    const li = cartao(item, indice, itens.length);
+                    ligaArraste(li, item.id);
+                    return li;
+                })
             );
             el.grade.classList.toggle('oculto', itens.length === 0);
             el.opcoes.classList.toggle('oculto', itens.length === 0);

@@ -508,8 +508,25 @@ body.pagina-alta .tela {
     border-color: var(--borda-forte);
 }
 
-.pagina[draggable="true"] {
+.pagina {
     cursor: grab;
+}
+
+/* Enquanto arrasta, o cartao sai do teste de acerto: assim o que esta embaixo
+   do dedo e o alvo de verdade, e nao o proprio cartao arrastado. touch-action
+   fecha a rolagem so durante o arrasto. */
+.pagina.arrastando {
+    cursor: grabbing;
+    z-index: 2;
+    pointer-events: none;
+    touch-action: none;
+    box-shadow: var(--sombra-forte);
+}
+
+/* Cartao sob o dedo: e para onde a pagina arrastada vai. */
+.pagina.alvo {
+    border-color: var(--acento);
+    background: var(--acento-fraco);
 }
 
 .pagina-numero {

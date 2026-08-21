@@ -1,5 +1,8 @@
 /**
- * Estado e física das bolinhas: arrasto, arremesso, rebote e repouso.
+ * Física das bolinhas: arremesso, rebote e repouso.
+ *
+ * A decisão de quando um ponteiro vira arrasto mora em `arraste-estado.js`,
+ * compartilhada com a galeria.
  *
  * Sem DOM e sem cookie de propósito — é o que torna a física verificável no
  * runner do Node, sem navegador (ver tests/js/bolinhas.test.mjs).
@@ -14,15 +17,6 @@
  * real de cada tela é a caixa medida em tempo de execução.
  */
 export const LIMITE_PX = 400;
-
-/** Quanto o ponteiro precisa andar para deixar de ser clique e virar arrasto. */
-export const LIMIAR_DE_ARRASTO_PX = 6;
-
-/**
- * Dedo treme mais que mouse. Com o mesmo limiar dos dois, tocar para navegar
- * viraria arrasto e o link nunca abriria no celular.
- */
-export const LIMIAR_DE_ARRASTO_TOQUE_PX = 12;
 
 /** Quadro de referência a 60Hz, em milissegundos. */
 export const QUADRO_MS = 1000 / 60;
@@ -41,16 +35,6 @@ export const JANELA_DE_ARREMESSO_MS = 80;
 
 export function limita(valor, limite = LIMITE_PX) {
     return Math.max(-limite, Math.min(limite, Math.round(valor)));
-}
-
-export function limiarDe(tipoDePonteiro) {
-    return tipoDePonteiro === 'touch'
-        ? LIMIAR_DE_ARRASTO_TOQUE_PX
-        : LIMIAR_DE_ARRASTO_PX;
-}
-
-export function virouArrasto(dx, dy, limiar = LIMIAR_DE_ARRASTO_PX) {
-    return Math.hypot(dx, dy) > limiar;
 }
 
 /** Nova posição a partir da inicial mais o deslocamento, já limitada. */

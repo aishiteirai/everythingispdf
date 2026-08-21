@@ -10,8 +10,6 @@ import { test } from 'node:test';
 
 import {
     ATRITO,
-    LIMIAR_DE_ARRASTO_PX,
-    LIMIAR_DE_ARRASTO_TOQUE_PX,
     LIMITE_PX,
     QUADRO_MS,
     RESTITUICAO,
@@ -19,13 +17,11 @@ import {
     emRepouso,
     limita,
     limitaNaCaixa,
-    limiarDe,
     move,
     naOrigem,
     passo,
     serializa,
     velocidadeDoArremesso,
-    virouArrasto,
 } from '../../static/js/bolinhas-estado.js';
 
 const CAIXA = { minX: -100, maxX: 100, minY: -80, maxY: 80 };
@@ -46,33 +42,6 @@ test('limita arredonda para inteiro', () => {
     // duas bolinhas voltariam para a origem.
     assert.equal(limita(12.4), 12);
     assert.equal(limita(12.6), 13);
-});
-
-test('movimento menor que o limiar ainda e clique', () => {
-    assert.equal(virouArrasto(0, 0), false);
-    assert.equal(virouArrasto(3, 3), false);
-});
-
-test('movimento acima do limiar e arrasto', () => {
-    assert.equal(virouArrasto(LIMIAR_DE_ARRASTO_PX + 1, 0), true);
-});
-
-test('o limiar mede a distancia, nao cada eixo', () => {
-    assert.equal(virouArrasto(5, 5), true);
-});
-
-test('toque tem limiar maior que ponteiro fino', () => {
-    // Dedo treme mais que mouse: com o mesmo limiar, tocar para navegar
-    // viraria arrasto e o link nunca abriria.
-    assert.ok(LIMIAR_DE_ARRASTO_TOQUE_PX > LIMIAR_DE_ARRASTO_PX);
-    assert.equal(limiarDe('touch'), LIMIAR_DE_ARRASTO_TOQUE_PX);
-    assert.equal(limiarDe('mouse'), LIMIAR_DE_ARRASTO_PX);
-    assert.equal(limiarDe(undefined), LIMIAR_DE_ARRASTO_PX);
-});
-
-test('toque de 8px ainda navega, arrasto de 8px no mouse nao', () => {
-    assert.equal(virouArrasto(8, 0, limiarDe('touch')), false);
-    assert.equal(virouArrasto(8, 0, limiarDe('mouse')), true);
 });
 
 test('move soma o deslocamento a posicao inicial', () => {
