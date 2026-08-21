@@ -61,3 +61,33 @@ class TestLicenca:
         assert os.path.exists(caminho)
         with open(caminho, encoding='utf-8') as aberto:
             assert 'SIL Open Font License' in aberto.read()
+
+
+class TestInterfaceDoServidor:
+    """O servidor de desenvolvimento escuta em loopback por padrao. Abrir para
+    a rede e opcional e explicito: um servidor de desenvolvimento na LAN aceita
+    upload de qualquer um no wifi."""
+
+    def carrega(self, nome, **env):
+        from test_proxy import carrega_app
+
+        return carrega_app(nome, **env)
+
+    def test_o_padrao_e_loopback(self):
+        modulo = self.carrega('app_host_padrao')
+
+        assert modulo.HOST == '127.0.0.1'
+
+    def test_a_variavel_de_ambiente_abre_para_a_rede(self):
+        """HOST=0.0.0.0 e o que permite testar no celular pela mesma rede."""
+        modulo = self.carrega('app_host_aberto', HOST='0.0.0.0')
+
+        assert modulo.HOST == '0.0.0.0'
+
+    def test_o_run_usa_a_constante_e_nao_um_literal(self):
+        """Se o app.run continuar com o endereco escrito na mao, a variavel
+        nao serve para nada."""
+        conteudo = arquivo('app.py')
+
+        assert 'app.run(host=HOST' in conteudo
+        assert "app.run(host='127.0.0.1'" not in conteudo

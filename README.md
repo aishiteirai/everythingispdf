@@ -45,6 +45,48 @@ python app.py                 # http://127.0.0.1:5000
 O servidor de desenvolvimento escuta só em `127.0.0.1`. Produção roda por
 gunicorn (ver `Dockerfile`).
 
+### Testando num celular na mesma rede
+
+O arrasto por toque e a física das bolinhas só se verificam num aparelho de
+verdade. Para alcançar o servidor pelo celular:
+
+```bash
+HOST=0.0.0.0 python app.py
+```
+
+Depois abra `http://<ip-da-maquina>:5000` no celular. Não precisa de HTTPS —
+nada aqui exige contexto seguro.
+
+**Com o servidor no WSL2 há um passo a mais.** Em modo NAT, que é o padrão, o
+WSL fica numa sub-rede própria e o celular não alcança nem com `0.0.0.0`. No
+Windows 11 build 22621 ou mais novo, a saída limpa é ativar rede espelhada —
+criar `%UserProfile%\.wslconfig` com:
+
+```ini
+[wsl2]
+networkingMode=mirrored
+```
+
+e depois `wsl --shutdown`. A partir daí o WSL compartilha a pilha de rede do
+Windows e o endereço da LAN funciona direto.
+
+Sem rede espelhada, a alternativa é redirecionar a porta no Windows, num
+PowerShell como administrador:
+
+```powershell
+netsh interface portproxy add v4tov4 listenport=5000 listenaddress=0.0.0.0 `
+  connectport=5000 connectaddress=<ip-do-wsl>
+New-NetFirewallRule -DisplayName "everythingispdf dev" -Direction Inbound `
+  -LocalPort 5000 -Protocol TCP -Action Allow
+```
+
+O IP do WSL muda a cada reinício, então o redirecionamento precisa ser refeito.
+Rodar por Docker Desktop evita o problema: a publicação de porta passa pelo
+Windows e a LAN funciona sem redirecionar nada.
+
+**Lembre que isso expõe um servidor de desenvolvimento na sua rede.** Qualquer
+aparelho no wifi pode enviar arquivos para ele enquanto estiver de pé.
+
 ## API
 
 ### `POST /api/convert`
@@ -128,6 +170,7 @@ Tudo por variável de ambiente.
 | Variável | Default | Para quê |
 |---|---|---|
 | `PORT` | `5000` | Porta do servidor de desenvolvimento |
+| `HOST` | `127.0.0.1` | Interface do servidor de desenvolvimento |
 | `TEMP_FOLDER` | `./temp` | Diretório de trabalho das conversões |
 | `CONVERSION_TIMEOUT` | `90` | Segundos até abortar o LibreOffice |
 | `RATE_LIMIT` | `10 per minute;60 per hour` | Limite por IP nos dois endpoints |

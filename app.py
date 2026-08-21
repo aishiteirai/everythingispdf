@@ -60,6 +60,13 @@ limiter = Limiter(
 # que o --timeout do gunicorn, senao o worker morre antes do subprocesso.
 CONVERSION_TIMEOUT = int(os.environ.get('CONVERSION_TIMEOUT', '90'))
 
+# Interface do servidor de desenvolvimento. Loopback por padrao de proposito:
+# um servidor de desenvolvimento aberto na rede aceita upload de qualquer um no
+# wifi, sem os limites que a imagem de producao aplica. HOST=0.0.0.0 abre para
+# a rede local quando se quer testar num celular. Producao roda por gunicorn,
+# que recebe a interface na linha de comando e nao le esta variavel.
+HOST = os.environ.get('HOST', '127.0.0.1')
+
 TEMP_FOLDER = os.path.abspath(
     os.environ.get('TEMP_FOLDER') or os.path.join(os.getcwd(), 'temp')
 )
@@ -458,4 +465,4 @@ def limite_excedido(_error):
 if __name__ == '__main__':
     # Servidor de desenvolvimento. Producao roda por gunicorn (ver Dockerfile).
     port = int(os.environ.get('PORT', '5000'))
-    app.run(host='127.0.0.1', port=port)
+    app.run(host=HOST, port=port)
