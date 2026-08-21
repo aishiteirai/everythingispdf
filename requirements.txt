@@ -5,7 +5,9 @@ Werkzeug==3.1.8
 Jinja2==3.1.6
 MarkupSafe==3.0.3
 itsdangerous==2.2.0
-click==8.1.8
+# 8.1.8 e anteriores tem PYSEC-2026-2132 (injecao de comando); corrigido em
+# 8.3.3. O pip-audit do CI pegou isso.
+click==8.4.2
 blinker==1.9.0
 Pillow==12.3.0
 pypdf==6.16.1

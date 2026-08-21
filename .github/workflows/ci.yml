@@ -173,13 +173,21 @@ jobs:
       - name: Queda do Redis nao derruba o servico
         run: |
           docker stop redis
-          codigo=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:10001/health)
+          # /health nao tem rate limit, entao nao toca o armazenamento e nao
+          # revelaria nada -- foi assim que a primeira versao deste passo
+          # falhou. A prova tem de passar por um endpoint limitado.
+          #
+          # O contador em memoria comeca vazio, entao a primeira conversao
+          # depois da queda e permitida: 200 prova que degradou em vez de
+          # recusar.
+          codigo=$(curl -s -o /dev/null -w '%{http_code}' \
+            -F 'file=@amostra.png' http://localhost:10001/api/convert)
           test "$codigo" = "200" || {
-            echo "servico caiu junto com o redis (status $codigo)"
+            echo "conversao falhou com o redis parado (status $codigo)"
             docker logs applimite; exit 1; }
           docker logs applimite 2>&1 | grep -qi "falling back to in-memory" || {
             echo "sem aviso de fallback no log"; docker logs applimite; exit 1; }
-          echo "servico de pe e fallback registrado no log"
+          echo "conversao ok com o redis parado, fallback registrado no log"
 
       - name: Logs do container
         if: always()
