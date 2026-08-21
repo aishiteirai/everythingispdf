@@ -89,58 +89,15 @@ def test_default_e_desligado():
     assert modulo.TRUSTED_PROXIES == 0
 
 
-class TestRotaDeDiagnostico:
-    """A rota existe só para calibrar TRUSTED_PROXIES e não pode aparecer em
-    produção sem DEBUG_PROXY."""
+class TestRotaDeDiagnosticoRemovida:
+    """A rota /debug/proxy existiu para calibrar TRUSTED_PROXIES e foi
+    removida depois disso. Nao pode voltar nem com DEBUG_PROXY definido."""
 
-    def test_ausente_por_padrao(self):
-        modulo = carrega_app('app_sem_debug')
+    def test_ausente_mesmo_com_debug_proxy(self):
+        modulo = carrega_app('app_debug_removido', DEBUG_PROXY='1')
         client = modulo.app.test_client()
 
         assert client.get('/debug/proxy').status_code == 404
-
-    def test_presente_com_debug_proxy(self):
-        modulo = carrega_app('app_com_debug', DEBUG_PROXY='1')
-        client = modulo.app.test_client()
-
-        assert client.get('/debug/proxy').status_code == 200
-
-    def test_deduz_a_contagem_de_saltos_pelo_cf_connecting_ip(self):
-        """Com o IP real do cliente na segunda posição da direita, a resposta
-        precisa recomendar TRUSTED_PROXIES=2."""
-        modulo = carrega_app('app_debug_cadeia', DEBUG_PROXY='1')
-        client = modulo.app.test_client()
-
-        r = client.get('/debug/proxy', headers={
-            'X-Forwarded-For': '203.0.113.7, 198.51.100.9',
-            'CF-Connecting-IP': '203.0.113.7',
-        })
-        dados = r.get_json()
-
-        assert dados['cadeia'] == ['203.0.113.7', '198.51.100.9']
-        assert dados['candidatos_por_trusted_proxies'] == {
-            '1': '198.51.100.9',
-            '2': '203.0.113.7',
-        }
-        assert dados['trusted_proxies_recomendado'] == 2
-
-    def test_sem_cf_connecting_ip_nao_arrisca_palpite(self):
-        modulo = carrega_app('app_debug_sem_cf', DEBUG_PROXY='1')
-        client = modulo.app.test_client()
-
-        r = client.get('/debug/proxy', headers={
-            'X-Forwarded-For': '203.0.113.7, 198.51.100.9',
-        })
-
-        assert r.get_json()['trusted_proxies_recomendado'] is None
-
-    def test_nao_e_limitada_por_rate_limit(self):
-        modulo = carrega_app('app_debug_limite', DEBUG_PROXY='1', RATE_LIMIT='2 per minute')
-        client = modulo.app.test_client()
-
-        codigos = [client.get('/debug/proxy').status_code for _ in range(6)]
-
-        assert set(codigos) == {200}
 
 
 class TestSemanticaDoProxyFix:

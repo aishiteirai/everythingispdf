@@ -33,5 +33,11 @@ ENV HOME=/home/appuser
 # Porta padrao do Render
 EXPOSE 10000
 
+# A imagem slim nao tem curl, entao a sonda usa o proprio Python. start-period
+# cobre a subida do gunicorn; sem HEALTHCHECK o orquestrador nao sabe da rota
+# /health e um container travado segue marcado como saudavel.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:10000/health', timeout=4)" 
+
 # --timeout precisa ser maior que o CONVERSION_TIMEOUT do app (90s)
 CMD ["gunicorn", "--bind", "0.0.0.0:10000", "--timeout", "120", "--workers", "2", "app:app"]

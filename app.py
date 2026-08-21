@@ -75,6 +75,35 @@ ALLOWED_EXTENSIONS = IMAGE_EXTENSIONS | DOCUMENT_EXTENSIONS
 # Quantas bolinhas o hub tem e quanto elas podem se afastar do lugar de
 # origem. O limite existe porque a posicao vem de cookie: sem ele um valor
 # adulterado joga a bolinha para fora da tela e o link fica inalcancavel.
+# Cabecalhos de seguranca. O frontend foi construido para viver sem
+# 'unsafe-inline' em script -- a configuracao vai num bloco
+# application/json que o navegador nao executa, as fontes sao
+# auto-hospedadas e nao ha CDN -- entao a politica estrita nao quebra nada.
+#
+# style-src aceita 'unsafe-inline' porque o servidor renderiza a posicao das
+# bolinhas em style="--dx: ...", que e atributo inline. Estilo inline nao e
+# vetor da mesma classe que script inline, e a excecao para no estilo.
+#
+# img-src precisa de blob: porque as miniaturas da galeria vem de
+# URL.createObjectURL.
+POLITICA_DE_SEGURANCA = '; '.join((
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' blob:",
+    "font-src 'self'",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+))
+
+# O flasgger serve o Swagger UI com script inline e Google Fonts de host
+# externo: a politica estrita quebraria a documentacao. A excecao e so para
+# estes prefixos, e vale so para a CSP -- os outros cabecalhos continuam.
+CAMINHOS_SEM_CSP = ('/apidocs', '/flasgger_static')
+
 QUANTIDADE_DE_BOLINHAS = 2
 LIMITE_ARRASTO_PX = 400
 
@@ -397,50 +426,20 @@ def imagens_para_pdf():
         shutil.rmtree(work_dir, ignore_errors=True)
 
 
-# Rota temporaria para calibrar TRUSTED_PROXIES. Só e registrada quando
-# DEBUG_PROXY esta definido, entao nao existe em producao por padrao. Remova
-# junto com este comentario depois de descobrir a contagem de saltos.
-if os.environ.get('DEBUG_PROXY'):
+@app.after_request
+def cabecalhos_de_seguranca(resposta):
+    """Aplica os cabecalhos de seguranca em toda resposta.
 
-    @app.route('/debug/proxy', methods=['GET'])
-    @limiter.exempt
-    def debug_proxy():
-        cadeia = [
-            parte.strip()
-            for parte in request.headers.get('X-Forwarded-For', '').split(',')
-            if parte.strip()
-        ]
-        cf = request.headers.get('CF-Connecting-IP')
+    setdefault e nao atribuicao: se algum dia uma rota precisar de politica
+    propria, ela define antes e este gancho respeita.
+    """
+    resposta.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    resposta.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
 
-        # ProxyFix com x_for=N le o N-esimo endereco da direita para a
-        # esquerda (werkzeug usa values[-N]). Cada chave abaixo e o valor que
-        # TRUSTED_PROXIES=N produziria como chave do rate limit.
-        candidatos = {str(n): cadeia[-n] for n in range(1, len(cadeia) + 1)}
+    if not request.path.startswith(CAMINHOS_SEM_CSP):
+        resposta.headers.setdefault('Content-Security-Policy', POLITICA_DE_SEGURANCA)
 
-        # A Cloudflare informa o IP real do cliente em CF-Connecting-IP. Achar
-        # esse IP na cadeia da direto a contagem de saltos a confiar.
-        recomendado = None
-        if cf:
-            recomendado = next(
-                (int(n) for n, ip in candidatos.items() if ip == cf), None
-            )
-
-        return jsonify({
-            'remote_addr': request.remote_addr,
-            'chave_do_rate_limit_agora': get_remote_address(),
-            'x_forwarded_for': request.headers.get('X-Forwarded-For'),
-            'cadeia': cadeia,
-            'cf_connecting_ip': cf,
-            'x_forwarded_proto': request.headers.get('X-Forwarded-Proto'),
-            'candidatos_por_trusted_proxies': candidatos,
-            'trusted_proxies_atual': TRUSTED_PROXIES,
-            'trusted_proxies_recomendado': recomendado,
-            'como_ler': (
-                'trusted_proxies_recomendado e o valor a usar. Se vier null, '
-                'compare os candidatos com o seu IP publico e use a chave '
-                'cujo valor bate.'
-            ),
-        })
+    return resposta
 
 
 @app.errorhandler(413)

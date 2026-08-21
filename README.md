@@ -134,6 +134,10 @@ Tudo por variável de ambiente.
 | `RATELIMIT_STORAGE_URI` | `memory://` | Onde guardar os contadores |
 | `TRUSTED_PROXIES` | `0` | Quantos proxies reversos confiar |
 
+A rota `/debug/proxy`, que existia atrás de `DEBUG_PROXY` para calibrar
+`TRUSTED_PROXIES`, foi removida depois de servir ao propósito. Um teste garante
+que ela não volta nem com a variável definida.
+
 ### Atrás de um proxy reverso
 
 Com `TRUSTED_PROXIES=0` o rate limit usa o IP da conexão. Atrás de um proxy
@@ -182,6 +186,37 @@ expressão regular.
 `static/js/gallery.js` não toca DOM nem rede, então o estado da galeria
 (reordenar, girar, teto de imagens, revogar URL de objeto) é testado pelo
 runner nativo do Node, sem dependência e sem navegador.
+
+## Cabeçalhos de segurança
+
+Toda resposta leva `X-Content-Type-Options: nosniff` e
+`Referrer-Policy: strict-origin-when-cross-origin`. As páginas do site levam
+também uma CSP estrita:
+
+```
+default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';
+img-src 'self' blob:; font-src 'self'; connect-src 'self';
+object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+```
+
+`script-src 'self'` sem `unsafe-inline` nem `unsafe-eval` é a parte que importa,
+e o frontend foi construído para isso: a configuração vai num bloco
+`application/json` que o navegador não executa, as fontes são auto-hospedadas e
+não há CDN.
+
+Duas frouxidões, com motivo:
+
+- **`style-src` aceita `'unsafe-inline'`** porque o servidor renderiza a posição
+  das bolinhas em `style="--dx: …"`, que é atributo inline. Sem isso elas nascem
+  todas na origem. Estilo inline não é vetor da mesma classe que script inline —
+  a exceção para no estilo.
+- **`img-src` aceita `blob:`** porque as miniaturas da galeria vêm de
+  `URL.createObjectURL`. Sem isso a galeria fica sem preview nenhum.
+
+`/apidocs` e `/flasgger_static` ficam **isentos da CSP**: o Swagger UI usa script
+inline e busca Google Fonts de host externo, então a política estrita quebraria a
+documentação. A isenção é só da CSP — os outros cabeçalhos continuam — e um teste
+garante que ela não vaza para as páginas do site.
 
 ## Notas de implementação
 
