@@ -1,7 +1,7 @@
 """Testes das paginas servidas: hub, conversor e galeria.
 
 O que vale para as tres -- pagina autocontida, sem JavaScript inline
-executavel, CSS referenciado, tema escuro -- e parametrizado aqui, em vez de
+executavel, CSS referenciado, so tema claro -- e parametrizado aqui, em vez de
 copiado em tres arquivos. O que e especifico de cada uma fica na sua classe.
 """
 
@@ -189,8 +189,8 @@ class TestModulosDaGaleria:
 
 class TestMovimentoReduzido:
     def test_o_css_respeita_movimento_reduzido(self, client):
-        """A fisica das bolinhas anima; quem pediu menos movimento nao pode
-        receber inercia."""
+        """Ladrilhos giram e a prensa bate; quem pediu menos movimento recebe
+        so a troca de estado."""
         css = client.get('/static/css/estilo.css').get_data(as_text=True)
 
         assert 'prefers-reduced-motion: reduce' in css
@@ -326,6 +326,11 @@ class TestPaleta:
         pagina = client.get(rota).get_data(as_text=True)
 
         assert '<meta name="color-scheme" content="light">' in pagina
+
+    def test_nada_e_arredondado(self, css_do_site):
+        """Cantos retos sao parte da linguagem: um border-radius solto num
+        componente novo desfaz o brutalismo sem nenhum outro teste notar."""
+        assert re.findall(r'border-radius:(?!\s*0\s*;)[^;]+', css_do_site) == []
 
     def test_a_fonte_cobre_o_peso_900(self, css_do_site):
         """Os titulos sao Inter 900. Sem o peso no @font-face o navegador

@@ -55,8 +55,9 @@ gunicorn (ver `Dockerfile`).
 
 ### Testando num celular na mesma rede
 
-O arrasto por toque e a física das bolinhas só se verificam num aparelho de
-verdade. Para alcançar o servidor pelo celular:
+O banner que gira com o dedo, a cena da prensa e a fita da galeria (rolar
+com o dedo, segurar para reordenar) só se verificam num aparelho de verdade.
+Para alcançar o servidor pelo celular:
 
 ```bash
 HOST=0.0.0.0 python app.py
@@ -246,7 +247,7 @@ de quatro páginas, dentro do próprio Pillow.
 
 `tests/js/sintaxe.test.mjs` importa **todo** módulo de `static/js` e reprova só
 em `SyntaxError`. Existe porque os módulos de entrada — `convert.js`,
-`imgtopdf.js`, `dots.js` — não são importados por nenhum outro teste, então
+`imgtopdf.js`, `banner.js` — não são importados por nenhum outro teste, então
 um erro de sintaxe neles chegaria ao navegador em silêncio. E `node --check` não
 serve para isso: num arquivo ESM genuinamente quebrado ele devolve zero.
 
@@ -261,8 +262,10 @@ então imagens de tamanhos diferentes tornam ordem e rotação verificáveis por
 expressão regular.
 
 `static/js/gallery.js` não toca DOM nem rede, então o estado da galeria
-(reordenar, girar, teto de imagens, revogar URL de objeto) é testado pelo
-runner nativo do Node, sem dependência e sem navegador.
+(reordenar, girar, selecionar, teto de imagens, revogar URL de objeto, a
+proporção e a margem da folha) é testado pelo runner nativo do Node, sem
+dependência e sem navegador. O mesmo vale para `tiles.js` (sorteio dos
+ladrilhos, onda, persiana) e `press-state.js` (estados da conversão).
 
 ## Cabeçalhos de segurança
 
@@ -283,10 +286,10 @@ não há CDN.
 
 Duas frouxidões, com motivo:
 
-- **`style-src` aceita `'unsafe-inline'`** porque o servidor renderiza a posição
-  das bolinhas em `style="--dx: …"`, que é atributo inline. Sem isso elas nascem
-  todas na origem. Estilo inline não é vetor da mesma classe que script inline —
-  a exceção para no estilo.
+- **`style-src` aceita `'unsafe-inline'`** porque os ladrilhos são SVG gerado
+  com `style="transform: rotate(…)"`, e a folha da galeria recebe proporção e
+  margem em variáveis CSS no `style`. Sem isso nada gira. Estilo inline não é
+  vetor da mesma classe que script inline — a exceção para no estilo.
 - **`img-src` aceita `blob:`** porque as miniaturas da galeria vêm de
   `URL.createObjectURL`. Sem isso a galeria fica sem preview nenhum.
 
@@ -297,101 +300,72 @@ garante que ela não vaza para as páginas do site.
 
 ## Notas de implementação
 
-**Cor por função, dois tons.** Todo o CSS colorido referencia só `--acento`,
-`--acento-forte`, `--acento-fraco` e `--acento-contraste`. Quem define os
-valores é uma classe no `<body>` (`tema-convert`, `tema-imgtopdf`), e no hub cada
-bolinha sobrescreve a sua. Assim existe uma folha de estilo e a cor entra por
-variável, em vez de uma cópia das mesmas regras por página.
+**Uma paleta, brutalismo com formas Bauhaus.** Creme, tinta e as três
+primárias chapadas, em tokens no `:root` de `estilo.css`. O amarelo nunca
+carrega texto: é cor de forma e de seleção, com tinta por cima. Texto sobre
+vermelho é tinta; sobre azul, creme. Bordas de 3px, nada arredondado, sombra
+dura. Só tema claro — o modo escuro saiu de propósito.
 
-São dois tons porque a cor da bolinha foi mantida clara de propósito: `--acento`
-é bolinha, borda e anel de foco, componente gráfico, onde 3:1 basta;
-`--acento-forte` carrega texto e vira preenchimento de botão, onde são
-necessários 4,5:1 nos dois sentidos. O texto sobre os dois vem de
-`--acento-contraste`: branco no claro, preto no escuro, onde o acento é a cor
-clara.
+`tests/test_pages.py` calcula a razão de contraste de cada par de tokens e
+falha se alguma cor reprovar em AA. Outro teste lê os nomes de classe que o
+JavaScript alterna e exige que o CSS os defina: renomear `.oculto` num redesign
+quebraria a interface inteira sem nenhum outro teste falhar. Um terceiro trava
+o "nada arredondado".
 
-`tests/test_pages.py` calcula a razão de contraste de treze pares de tokens em
-três modos e três temas, e falha se alguma cor reprovar. Outro teste lê os nomes
-de classe que o JavaScript alterna e exige que o CSS os defina: renomear
-`.oculto` num redesign quebraria a interface inteira sem nenhum outro teste
-falhar.
+**Ladrilhos.** O ladrilho é a unidade visual do site: um quadrado creme (ou de
+cor) com uma forma por cima — quadrado, círculo, quarto, meio, triângulo,
+metade, anel — num múltiplo de 90°. `tiles.js` sorteia e desenha, sem DOM;
+`tile-grid.js` põe a grade na tela e a refaz quando o contêiner muda de
+tamanho (7 colunas no celular, ladrilho de 56px no desktop).
 
-**Um módulo de arrasto, não dois.** As duas dinâmicas — mover as bolinhas do
-hub e reordenar as miniaturas da galeria — usam `static/js/drag.js`. Antes
-eram duas implementações, e a da galeria usava drag-and-drop HTML5, que **não
-dispara em tela de toque**: no celular só os botões reordenavam.
+No banner da home, o ladrilho sob o mouse gira; clicar solta uma onda de giros
+com atraso proporcional à distância; deslizar o dedo na horizontal risca um
+rastro (o banner tem `touch-action: pan-y`, então deslizar na vertical continua
+rolando); rolar a página gira as fileiras em cascata, como uma persiana. Um
+ladrilho aleatório gira sozinho a cada 900ms, só com o banner à vista e a aba
+visível.
 
-A parte difícil de unificar é que na galeria a página rola, então deslizar o
-dedo num cartão é ambíguo entre reordenar e rolar. A galeria resolve exigindo
-que o dedo **segure 300ms** antes de o arrasto começar; se ele desliza antes
-disso, é rolagem e não interferimos. O hub não espera, porque ali arrastar é a
-interação principal e a página não rola.
+**A prensa.** Em `/convert` a conversão começa sozinha quando um arquivo válido
+chega — não há botão de converter. O arquivo vira uma forma pelo tipo
+(documento quadrado vermelho, planilha triângulo azul, apresentação círculo
+amarelo, imagem semicírculo preto), desliza com a porcentagem real do upload,
+a prensa bate enquanto o servidor converte e sai uma folha. Erro escurece o
+chão e a forma se debate. A tabela de estados mora em `press-state.js`, com
+teste: arquivo solto com a prensa batendo é ignorado, e upload que vai de 0%
+direto ao fim leva a forma para debaixo da prensa sem passar pelo meio.
+
+**Esteira.** Em `/imgtopdf` a página selecionada aparece grande, com a
+proporção e a margem que o PDF vai ter — inclusive a folha A4 deitada quando a
+imagem girada é mais larga que alta, como `pagina_em_px` faz no servidor. A
+fita embaixo tem todas as páginas na ordem do PDF. A geração usa a mesma cena
+da prensa; erro devolve a esteira intacta e, depois do sucesso, as imagens
+ficam até "NOVO PDF", para gerar de novo com outro tamanho ou margem.
+
+Sob `prefers-reduced-motion` nada gira, bate ou desliza: os estados só trocam,
+e a vida própria e a persiana do banner não ligam.
+
+**Arrasto por ponteiro.** Reordenar a fita da galeria arrastando usa
+`static/js/drag.js`, sobre Pointer Events. A galeria usava drag-and-drop HTML5,
+que **não dispara em tela de toque**: no celular só os botões reordenavam. Os
+botões ANTES e DEPOIS continuam sendo o mecanismo principal — arrastar é
+atalho, e não serve a teclado nem a leitor de tela.
+
+A parte difícil é que a fita rola com o dedo, então deslizar num item é ambíguo
+entre reordenar e rolar. A galeria resolve exigindo que o dedo **segure
+300ms** antes de o arrasto começar; se ele desliza antes disso, é rolagem e
+não interferimos.
 
 Cancelar a rolagem é feito com `touchmove` e `passive: false`, e não com
 `touch-action: none` no CSS: o CSS teria de valer antes do gesto começar, e aí a
 lista nunca rolaria. A decisão de quando começar mora em `drag-state.js`,
 que não toca DOM e tem doze testes no Node.
 
-**Bolinhas com física.** No hub, as duas bolinhas são arrastáveis e podem ser
-arremessadas: ao soltar com movimento elas saem com velocidade, rebatem nas
-paredes da tela e vão perdendo energia até parar. Atrito de 0,94 por quadro de
-referência, restituição de 0,7 na parede, e repouso abaixo de 0,05 px/ms — aí o
-`requestAnimationFrame` desliga, porque loop eterno queima bateria no celular.
-
-O atrito é elevado a `dt / QUADRO_MS`, então depende do tempo e não da taxa de
-quadros: sem isso a bolinha andaria bem menos numa tela de 120Hz que numa de
-60Hz. O intervalo entre quadros tem teto de 48ms, senão uma aba que voltou do
-segundo plano daria um salto de tela inteira.
-
-A velocidade do arremesso vem da média das amostras dos últimos 80ms, não do
-último par de pontos: um tremor no fim do arrasto daria arremesso torto, e
-arrastar, parar com o dedo na tela e soltar tem que largar a bolinha parada.
-
-Pointer events cobrem mouse e toque num caminho só, com limiar de arrasto de
-6px no ponteiro fino e 12px no toque — dedo treme mais que mouse, e com o mesmo
-limiar tocar para navegar viraria arrasto e o link nunca abriria no celular.
-
-A caixa é o `<main>`, medida com `getBoundingClientRect` e recalculada no
-`resize` — no máximo uma vez por quadro, porque `resize` dispara continuamente
-enquanto se arrasta a janela e cada medição força recálculo de layout. A tela é
-medida uma vez por passada, não uma vez por bolinha: ao girar o celular a posição é reenquadrada, senão uma posição salva
-numa tela larga deixaria a bolinha fora da tela estreita e o link inalcançável.
-A posição de repouso vive num cookie que o Flask lê e renderiza em `--dx` e
-`--dy` no style do elemento, então a bolinha nasce onde ficou em vez de saltar
-quando o JavaScript roda. O backend converte para inteiro e limita a faixa como
-rede de segurança.
-
-Sob `prefers-reduced-motion` não há inércia: soltar deixa a bolinha onde o dedo
-soltou.
-
-As duas bolinhas não colidem entre si — colisão elástica entre círculos é bem
-mais código e mais teste para um encontro que quase não acontece.
-
-O separador do cookie é `x_y|x_y`, não `x,y;x,y`. Em cabeçalho HTTP o `;`
-encerra o cookie e a RFC 6265 também exclui `,`, `"`, espaço e `\` do valor — com
-`;` a segunda bolinha nunca chegava ao servidor. O `set_cookie` do cliente de
-teste escreve direto no jar e esconde isso, então o teste que cobre o caso usa
-`test_client(use_cookies=False)` e monta o cabeçalho na mão.
-
-Arrastar é enriquecimento: o link continua focável e ativável por teclado, e
-mover a bolinha não muda a ordem de tabulação. Teclado não reposiciona — é
-cosmético, não funcional.
-
-`static/js/dots-state.js` não toca DOM, então rebote, atrito, repouso e
-limiar de arrasto são testados no runner do Node. Um dos testes simula a
-trajetória inteira em 60Hz e em 120Hz e exige que a distância percorrida seja a
-mesma; outro exige que a bolinha convirja para o repouso em menos de 600
-quadros, o que trava o risco de alguém mexer no atrito e o loop virar eterno.
-
 **Nomes de arquivo em inglês, identificadores em português.** A regra vale para
 a superfície pública — rotas, caminhos de API, chaves de JSON e nomes de
 arquivo — enquanto os identificadores internos e o texto de tela ficam em
 português. Os módulos que sobraram do começo do projeto foram renomeados para
 seguir isso: `format.js`, `convert.js`, `convert-ui.js`, `convert-send.js`,
-`dots.js`, `dots-state.js`, `drag.js`, `drag-state.js`.
-
-O nome do cookie de posição continua `bolinhas`: renomeá-lo zeraria a posição
-salva de quem já usou o site, em troca de nada funcional.
+`drag.js`, `drag-state.js`.
 
 **Sem framework de CSS.** O layout veio de um mockup em Tailwind por CDN. O CDN
 do Tailwind compila CSS no navegador a cada carregamento, é ferramenta de
@@ -401,9 +375,10 @@ quebra a página autocontida e exigiria exceção na CSP. O bloco
 virou CSS comum sobre os tokens acima, e os ícones do Material Symbols viraram
 SVG inline: a fonte de ícones traria milhares de glifos para usar meia dúzia.
 
-**Fonte auto-hospedada.** Inter variável em `static/fonts/`, subsets latin
-(48 KB) e latin-ext (85 KB) separados por `unicode-range` — o caso comum paga só
-a latin. Um host externo quebraria a página autocontida e precisaria de exceção
+**Fonte auto-hospedada.** Inter variável em `static/fonts/`, com eixo de peso
+de 100 a 900 — o 900 dos títulos sai do mesmo arquivo. Subsets latin (48 KB) e
+latin-ext (85 KB) separados por `unicode-range` — o caso comum paga só a
+latin. Um host externo quebraria a página autocontida e precisaria de exceção
 na CSP. A licença OFL acompanha o arquivo, como ela exige.
 
 **Limpeza de temporários.** Cada request ganha um `temp/{uuid}/` próprio. O
