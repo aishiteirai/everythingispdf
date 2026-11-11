@@ -1,10 +1,8 @@
 /**
  * Quando um ponteiro deixa de ser clique e passa a ser arrasto.
  *
- * Sem DOM: é a regra, não a fiação. As duas dinâmicas do site — mover as
- * bolinhas do hub e reordenar as miniaturas da galeria — decidem isso do mesmo
- * jeito, e antes tinham duas implementações, uma delas com drag-and-drop HTML5,
- * que não dispara em toque.
+ * Sem DOM: é a regra, não a fiação. Reordenar a fita da galeria decide isso
+ * aqui, com teste, em vez de no meio dos ouvintes de ponteiro.
  */
 
 /** Quanto o ponteiro precisa andar para virar arrasto, no mouse ou caneta. */

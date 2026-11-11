@@ -1,8 +1,7 @@
 /**
  * Decisão de quando um toque vira arrasto. `node --test tests/js/`.
  *
- * É a parte difícil de unificar bolinhas e galeria: na galeria a página rola,
- * então arrastar um cartão é ambíguo entre reordenar e rolar. Segurar resolve
+ * Na galeria a página rola, então arrastar um cartão é ambíguo entre reordenar e rolar. Segurar resolve
  * a ambiguidade, e a regra é pura — por isso mora aqui e não no módulo de DOM.
  */
 

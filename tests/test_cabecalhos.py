@@ -93,10 +93,10 @@ class TestPoliticaNaoQuebraOSite:
         assert "'self'" in diretivas(client.get('/imgtopdf'))['connect-src']
 
     def test_estilo_inline_e_permitido_com_motivo(self, client):
-        """O servidor renderiza a posicao das bolinhas em style="--dx: ...",
-        que e atributo inline. Sem 'unsafe-inline' em style-src elas nascem
-        todas na origem. Style inline nao e vetor da mesma classe que script
-        inline -- por isso a excecao para no estilo."""
+        """Os ladrilhos sao SVG gerado com style="transform: rotate(...)",
+        que e atributo inline. Sem 'unsafe-inline' em style-src eles nao
+        giram. Style inline nao e vetor da mesma classe que script inline --
+        por isso a excecao para no estilo."""
         assert "'unsafe-inline'" in diretivas(client.get('/'))['style-src']
 
 

@@ -13,43 +13,12 @@
 {% include '_cabecalho.html' %}
 
 <main class="tela">
-    {# Cada bolinha carrega o tema da sua funcao: os tokens de acento
-       cascateiam para dentro do link. A posicao vem do servidor, entao ela
-       nasce no lugar em vez de saltar quando o JavaScript roda. #}
-    <div class="bolinhas" id="bolinhas">
-        <a class="bolinha tema-convert" href="/convert" data-bolinha="0"
-           style="--dx: {{ posicoes[0][0] }}px; --dy: {{ posicoes[0][1] }}px">
-            <span class="bolinha-disco">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                     stroke-linejoin="round" aria-hidden="true">
-                    <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
-                    <path d="M14 3v5h5"/>
-                    <path d="M9 13h6M9 17h4"/>
-                </svg>
-            </span>
-            <span class="bolinha-rotulo">arquivos para pdf</span>
-        </a>
-
-        <a class="bolinha tema-imgtopdf" href="/imgtopdf" data-bolinha="1"
-           style="--dx: {{ posicoes[1][0] }}px; --dy: {{ posicoes[1][1] }}px">
-            <span class="bolinha-disco">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                     stroke-linejoin="round" aria-hidden="true">
-                    <rect x="3" y="4" width="18" height="16" rx="2"/>
-                    <circle cx="8.5" cy="9.5" r="1.6"/>
-                    <path d="M4 17l4.5-4.5 3 3 3-3L20 17"/>
-                </svg>
-            </span>
-            <span class="bolinha-rotulo">imagens para pdf</span>
-        </a>
-    </div>
-
+    <nav class="funcoes">
+        <a class="funcao" href="/convert">arquivos para pdf</a>
+        <a class="funcao" href="/imgtopdf">imagens para pdf</a>
+    </nav>
 </main>
 
-
-<script type="module" src="{{ url_for('static', filename='js/dots.js') }}"></script>
 
 </body>
 </html>

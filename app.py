@@ -88,19 +88,13 @@ IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 DOCUMENT_EXTENSIONS = {'docx', 'doc', 'pptx', 'ppt', 'odt', 'odp', 'xlsx', 'xls'}
 ALLOWED_EXTENSIONS = IMAGE_EXTENSIONS | DOCUMENT_EXTENSIONS
 
-# Rotulos dos tamanhos de pagina que /api/imgtopdf aceita. Montado a partir de
-# imgtopdf.TAMANHOS para o select nao poder oferecer um tamanho que a API
-# recusa -- e para faltar rotulo virar erro no import, nao opcao em branco.
-# Quantas bolinhas o hub tem e quanto elas podem se afastar do lugar de
-# origem. O limite existe porque a posicao vem de cookie: sem ele um valor
-# adulterado joga a bolinha para fora da tela e o link fica inalcancavel.
 # Cabecalhos de seguranca. O frontend foi construido para viver sem
 # 'unsafe-inline' em script -- a configuracao vai num bloco
 # application/json que o navegador nao executa, as fontes sao
 # auto-hospedadas e nao ha CDN -- entao a politica estrita nao quebra nada.
 #
-# style-src aceita 'unsafe-inline' porque o servidor renderiza a posicao das
-# bolinhas em style="--dx: ...", que e atributo inline. Estilo inline nao e
+# style-src aceita 'unsafe-inline' porque os ladrilhos sao SVG gerado com
+# style="transform: rotate(...)", que e atributo inline. Estilo inline nao e
 # vetor da mesma classe que script inline, e a excecao para no estilo.
 #
 # img-src precisa de blob: porque as miniaturas da galeria vem de
@@ -123,16 +117,9 @@ POLITICA_DE_SEGURANCA = '; '.join((
 # estes prefixos, e vale so para a CSP -- os outros cabecalhos continuam.
 CAMINHOS_SEM_CSP = ('/apidocs', '/flasgger_static')
 
-QUANTIDADE_DE_BOLINHAS = 2
-LIMITE_ARRASTO_PX = 400
-
-# Separadores do cookie de posicao: "x_y|x_y". Nao da para usar ';' nem ',':
-# em cabecalho HTTP o ';' separa cookies e a RFC 6265 tambem exclui ',', '"',
-# espaco e '\\' do valor -- o navegador cortaria o valor no separador e a
-# posicao voltaria para a origem a cada carregamento.
-SEPARADOR_DE_BOLINHAS = '|'
-SEPARADOR_DE_EIXOS = '_'
-
+# Rotulos dos tamanhos de pagina que /api/imgtopdf aceita. Montado a partir de
+# imgtopdf.TAMANHOS para o select nao poder oferecer um tamanho que a API
+# recusa -- e para faltar rotulo virar erro no import, nao opcao em branco.
 ROTULOS_DE_TAMANHO = {
     'image': 'Tamanho da imagem',
     'a4': 'A4',
@@ -142,42 +129,6 @@ TAMANHOS_DE_PAGINA = [
     {'valor': valor, 'rotulo': ROTULOS_DE_TAMANHO[valor]}
     for valor in imgtopdf.TAMANHOS
 ]
-
-
-def _limita_arrasto(valor):
-    return max(-LIMITE_ARRASTO_PX, min(LIMITE_ARRASTO_PX, valor))
-
-
-def posicoes_das_bolinhas():
-    """Deslocamento (x, y) de cada bolinha do hub, lido do cookie.
-
-    Renderizar a posicao no servidor faz a bolinha nascer no lugar; aplicar
-    por JavaScript depois do load faria ela saltar do lugar padrao para o
-    escolhido a cada carregamento.
-
-    Qualquer desvio -- contagem errada, valor nao inteiro, campo faltando --
-    devolve todas na origem em vez de tentar adivinhar. E melhor a bolinha
-    voltar ao lugar do que ir para um lugar errado.
-    """
-    padrao = [(0, 0)] * QUANTIDADE_DE_BOLINHAS
-
-    partes = (request.cookies.get('bolinhas') or '').split(SEPARADOR_DE_BOLINHAS)
-    if len(partes) != QUANTIDADE_DE_BOLINHAS:
-        return padrao
-
-    posicoes = []
-    for parte in partes:
-        eixos = parte.split(SEPARADOR_DE_EIXOS)
-        if len(eixos) != 2:
-            return padrao
-        try:
-            x, y = (int(eixo) for eixo in eixos)
-        except ValueError:
-            return padrao
-
-        posicoes.append((_limita_arrasto(x), _limita_arrasto(y)))
-
-    return posicoes
 
 
 def get_extension(filename):
@@ -224,7 +175,7 @@ def convert_with_libreoffice(input_path, work_dir):
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('home.html', posicoes=posicoes_das_bolinhas())
+    return render_template('home.html')
 
 
 @app.route('/convert', methods=['GET'])

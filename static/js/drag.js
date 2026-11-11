@@ -1,12 +1,12 @@
 /**
- * Fiação de arrasto por ponteiro, compartilhada pelas duas dinâmicas do site.
+ * Fiação de arrasto por ponteiro. Hoje só a fita da galeria arrasta.
  *
  * Pointer Events cobrem mouse, caneta e toque num caminho só. A decisão de
  * quando um ponteiro pressionado vira arrasto está em `drag-state.js`, que
  * não toca DOM e tem teste.
  *
- * Antes existiam duas implementações: as bolinhas usavam Pointer Events e a
- * galeria usava drag-and-drop HTML5, que não dispara em toque.
+ * A galeria usava drag-and-drop HTML5, que não dispara em toque: no celular
+ * só os botões funcionavam.
  */
 
 import { ESPERA_NO_TOQUE_MS, decideInicio } from './drag-state.js';
