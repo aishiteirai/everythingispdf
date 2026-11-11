@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Página de imagens</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#e9e7e0; font-family: "Helvetica Neue", Arial, sans-serif; color:#000; padding:24px 16px 60px; }
+  .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
+  .intro { max-width:1100px; margin:0 auto 18px; font-size:14px; line-height:1.55; }
+  .intro h2 { margin:0 0 6px; font-size:20px; }
+  .bloco { max-width:1100px; margin:0 auto 36px; }
+  .bloco > h3 { margin:0 0 4px; font-size:18px; font-weight:900; text-transform:uppercase; }
+  .bloco > p { margin:0 0 10px; font-size:13px; line-height:1.5; max-width:760px; }
+  .pg { background:#fffef9; border:3px solid #000; }
+  .faixa { height:46px; border-bottom:3px solid #000; display:flex; }
+  .faixa div { border-right:3px solid #000; padding:0 14px; display:flex; align-items:center; font-size:12px; font-weight:700; white-space:nowrap; }
+  .faixa .nome { font-size:16px; font-weight:900; }
+  .faixa .fim { margin-left:auto; border-right:0; border-left:3px solid #000; }
+  .titulo { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; padding:16px 18px; border-bottom:3px solid #000; flex-wrap:wrap; }
+  .titulo h1 { margin:0; font-size:44px; line-height:.9; font-weight:900; letter-spacing:-2px; }
+  .ctl { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  .seg { display:flex; border:3px solid #000; }
+  .seg button { font: 700 11px ui-monospace, Menlo, monospace; padding:8px 10px; border:0; border-right:3px solid #000; background:#fffef9; cursor:pointer; }
+  .seg button:last-child { border-right:0; }
+  .seg button.on { background:#000; color:#fffef9; }
+  .seg span { font: 700 11px ui-monospace, Menlo, monospace; padding:8px 10px; border-right:3px solid #000; min-width:62px; text-align:center; }
+  .rot-ctl { font: 700 10px ui-monospace, Menlo, monospace; margin-right:-6px; }
+  .gerar { font: 900 14px "Helvetica Neue", Arial, sans-serif; background:#e8452c; border:3px solid #000; padding:12px 18px; box-shadow:5px 5px 0 #000; cursor:pointer; }
+  .gerar:active { transform:translate(3px,3px); box-shadow:2px 2px 0 #000; }
+
+  /* página (folha) */
+  .folha { background:#fff; border:3px solid #000; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  .folha .img { width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+  .folha svg.foto { max-width:100%; max-height:100%; transition: transform .35s cubic-bezier(.3,1.5,.5,1); display:block; }
+  .mini { width:28px; height:28px; border:3px solid #000; background:#fffef9; font: 900 13px/1 "Helvetica Neue", Arial; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+  .mini:hover { background:#000; color:#fffef9; }
+
+  /* adicionar: pedaço do banner */
+  .add { position:relative; overflow:hidden; display:grid; cursor:pointer; }
+  .add .cel svg { width:100%; height:100%; display:block; transition: transform .4s cubic-bezier(.3,1.5,.5,1); }
+  .add .sobre { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); background:#fffef9; border:3px solid #000; padding:6px 10px; font-weight:900; font-size:12px; text-align:center; white-space:nowrap; box-shadow:4px 4px 0 #000; }
+  .add .sobre small { display:block; font: 400 10px ui-monospace, Menlo, monospace; }
+
+  /* ===== A · prova de contato ===== */
+  .va .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+  .va .cel-a { border-right:3px solid #000; border-bottom:3px solid #000; padding:12px; position:relative; cursor:grab; background:#fffef9; }
+  .va .cel-a.arrastando { opacity:.35; }
+  .va .cel-a.alvo { background:#f2b705; }
+  .va .num { font-size:30px; font-weight:900; letter-spacing:-1px; line-height:1; margin-bottom:8px; }
+  .va .acoes { position:absolute; right:12px; top:12px; display:flex; gap:4px; }
+  .va .nomearq { font-size:10px; margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .va .folha { width:100%; }
+  .va .add { min-height:240px; border-right:3px solid #000; border-bottom:3px solid #000; }
+
+  /* ===== B · esteira ===== */
+  .vb .palco { display:grid; grid-template-columns: 1fr 230px; border-bottom:3px solid #000; }
+  .vb .grande { padding:22px; display:flex; align-items:center; justify-content:center; border-right:3px solid #000; min-height:380px; background-color:#fffef9; background-image: linear-gradient(#e9e7e0 1px, transparent 1px), linear-gradient(90deg, #e9e7e0 1px, transparent 1px); background-size: 24px 24px; }
+  .vb .grande .folha { height:330px; box-shadow:10px 10px 0 #000; }
+  .vb .lado { padding:16px; display:flex; flex-direction:column; gap:10px; }
+  .vb .lado .n { font-size:72px; font-weight:900; line-height:.85; letter-spacing:-4px; }
+  .vb .lado .n small { font-size:16px; letter-spacing:0; }
+  .vb .lado button.larga { font: 900 12px ui-monospace, Menlo, monospace; border:3px solid #000; background:#fffef9; padding:10px; cursor:pointer; text-align:left; }
+  .vb .lado button.larga:hover { background:#000; color:#fffef9; }
+  .vb .fita { display:flex; gap:0; overflow-x:auto; border-bottom:3px solid #000; }
+  .vb .item { flex:0 0 auto; padding:12px; border-right:3px solid #000; cursor:pointer; position:relative; }
+  .vb .item .folha { height:110px; }
+  .vb .item.sel { background:#f2b705; }
+  .vb .item .k { position:absolute; left:14px; top:14px; z-index:2; background:#000; color:#fffef9; font: 900 11px ui-monospace, Menlo, monospace; padding:2px 5px; }
+  .vb .add { width:120px; height:134px; flex:0 0 auto; }
+
+  /* ===== C · índice + prévia ===== */
+  .vc .corpo { display:grid; grid-template-columns: minmax(280px, 420px) 1fr; }
+  .vc .lista { border-right:3px solid #000; }
+  .vc .linha { display:grid; grid-template-columns: 54px 56px 1fr auto; align-items:center; gap:10px; padding:8px 12px 8px 0; border-bottom:3px solid #000; cursor:pointer; }
+  .vc .linha.sel { background:#000; color:#fffef9; }
+  .vc .linha.sel .mini { border-color:#fffef9; background:#000; color:#fffef9; }
+  .vc .linha .k { font-size:26px; font-weight:900; text-align:right; letter-spacing:-1px; }
+  .vc .linha .folha { width:56px; height:56px; border-width:2px; }
+  .vc .linha .nm { font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .vc .linha .acoes { display:flex; gap:4px; }
+  .vc .add { height:110px; }
+  .vc .previa { padding:24px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; min-height:440px; }
+  .vc .previa .folha { height:360px; box-shadow:10px 10px 0 #000; }
+  .vc .previa .cota { font-size:10px; }
+
+  @media (max-width: 720px) {
+    .vb .palco, .vc .corpo { grid-template-columns: 1fr; }
+    .vb .grande { border-right:0; border-bottom:3px solid #000; min-height:300px; }
+    .vb .grande .folha { height:250px; }
+    .vb .lado { flex-direction:row; flex-wrap:wrap; align-items:center; }
+    .vc .lista { border-right:0; border-bottom:3px solid #000; }
+    .vc .previa { min-height:0; }
+    .vc .previa .folha { height:260px; }
+    .titulo h1 { font-size:34px; }
+  }
+</style>
+</head>
+<body>
+  <div class="intro">
+    <h2>Página "Imagens para PDF": três organizações</h2>
+    Tudo funciona de verdade: girar (↻), remover (×), tamanho da página (A4, Carta ou Imagem) e margem. No A você reordena arrastando. No B e no C, com ← →. O bloco de ladrilhos é o "adicionar mais" e gira quando você passa o mouse. O botão GERAR levaria para a cena da prensa que já aprovamos.
+  </div>
+
+  <div class="bloco"><h3>A · Prova de contato</h3><p>Grade de células numeradas, e cada célula é uma página com o tamanho e a margem reais. Arrastar troca a ordem. Os controles da página ficam no título. É o mais próximo do que existe hoje, só que na nova língua.</p><div class="pg va" id="va"></div></div>
+  <div class="bloco"><h3>B · Esteira</h3><p>Uma página grande em foco, com sombra dura, e embaixo uma fita horizontal com todas as páginas. A fita rola com o dedo no celular. O número gigante diz "03 de 06". Dá foco a cada imagem, bom para girar e conferir uma a uma.</p><div class="pg vb" id="vb"></div></div>
+  <div class="bloco"><h3>C · Índice + prévia</h3><p>À esquerda, uma lista como índice de catálogo (número grande, miniatura, nome, ações). À direita, a prévia da página selecionada com cotas. É o mais organizado e o melhor para muitas imagens (até 20).</p><div class="pg vc" id="vc"></div></div>
+
+<script>
+/* ---------- fotos falsas (formas, para não depender de imagem externa) ---------- */
+const PALETAS = [['#f2b705','#2453d6','#e8452c'], ['#e8452c','#fffef9','#000'], ['#2453d6','#f2b705','#fff'], ['#000','#e8452c','#f2b705'], ['#9fc5b0','#2b3a2a','#f2b705'], ['#f0c9b5','#e8452c','#2453d6']];
+const FOTOS = [
+  { nome: 'praia-2025.jpg', w: 400, h: 300 }, { nome: 'retrato_vovo.png', w: 300, h: 400 }, { nome: 'IMG_4412.jpeg', w: 400, h: 400 },
+  { nome: 'recibo-escaneado.jpg', w: 280, h: 420 }, { nome: 'quadro-branco.jpg', w: 420, h: 260 }, { nome: 'gato.png', w: 320, h: 380 },
+];
+function svgFoto(i) {
+  const f = FOTOS[i], [a, b, c] = PALETAS[i];
+  return `<svg class="foto" viewBox="0 0 ${f.w} ${f.h}" width="${f.w}" height="${f.h}"><rect width="${f.w}" height="${f.h}" fill="${a}"/><circle cx="${f.w * .68}" cy="${f.h * .34}" r="${Math.min(f.w, f.h) * .18}" fill="${c}"/><path d="M0 ${f.h * .78} L${f.w * .35} ${f.h * .5} L${f.w * .6} ${f.h * .72} L${f.w} ${f.h * .45} L${f.w} ${f.h} L0 ${f.h}Z" fill="${b}"/></svg>`;
+}
+
+/* ---------- ladrilhos para o "adicionar" ---------- */
+const CORES = ['#e8452c', '#f2b705', '#2453d6', '#000'];
+const FORMAS = [c => `<rect width="100" height="100" fill="${c}"/>`, c => `<circle cx="50" cy="50" r="42" fill="${c}"/>`, c => `<path d="M0 100 A100 100 0 0 1 100 0 L100 100Z" fill="${c}"/>`, c => `<path d="M0 50 A50 50 0 0 1 100 50Z" fill="${c}"/>`, c => `<polygon points="0,100 100,100 100,0" fill="${c}"/>`];
+const sorteia = a => a[Math.floor(Math.random() * a.length)];
+function blocoAdd(cols, lins) {
+  const d = document.createElement('div'); d.className = 'add';
+  d.style.gridTemplateColumns = `repeat(${cols}, 1fr)`; d.style.gridTemplateRows = `repeat(${lins}, 1fr)`;
+  for (let i = 0; i < cols * lins; i++) {
+    const c = document.createElement('div'); c.className = 'cel'; let r = 90 * Math.floor(Math.random() * 4);
+    c.innerHTML = Math.random() < .55 ? `<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="transform:rotate(${r}deg)"><rect width="100" height="100" fill="#fffef9"/>${sorteia(FORMAS)(sorteia(CORES))}</svg>` : `<svg viewBox="0 0 100 100" preserveAspectRatio="none"><rect width="100" height="100" fill="#fffef9"/></svg>`;
+    c.onpointerenter = () => { r += 90; c.firstChild.style.transform = `rotate(${r}deg)`; };
+    d.appendChild(c);
+  }
+  d.insertAdjacentHTML('beforeend', '<div class="sobre">+ SOLTE MAIS<small>ou toque para escolher</small></div>');
+  return d;
+}
+
+/* ---------- folha com tamanho, margem e rotação ---------- */
+const PAGINAS = { a4: 210 / 297, letter: 216 / 279 };
+function folha(item, st, alturaPx, larguraPx) {
+  const f = FOTOS[item.i], gira = item.rot % 180 !== 0;
+  let razao = st.tam === 'image' ? (gira ? f.h / f.w : f.w / f.h) : PAGINAS[st.tam];
+  const d = document.createElement('div'); d.className = 'folha';
+  if (alturaPx) { d.style.height = alturaPx + 'px'; d.style.width = (alturaPx * razao) + 'px'; }
+  else { d.style.aspectRatio = String(razao); }
+  const larg = alturaPx ? alturaPx * razao : (larguraPx || 150);
+  const m = st.tam === 'image' ? st.margem / 210 * larg : st.margem / 210 * larg;
+  d.style.padding = m + 'px';
+  d.innerHTML = `<div class="img">${svgFoto(item.i)}</div>`;
+  const s = d.querySelector('svg.foto');
+  s.style.transform = `rotate(${item.rot}deg)` + (gira ? ` scale(${Math.min(f.w, f.h) / Math.max(f.w, f.h)})` : '');
+  return d;
+}
+
+function controles(st, rerender, titulo) {
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `<div class="faixa"><div class="nome">EVERYTHING IS PDF</div><div class="mono">02 · imagens</div><div class="fim mono">pt-br</div></div>
+  <div class="titulo"><h1>IMAGENS<br>PARA PDF.</h1><div class="ctl">
+    <span class="rot-ctl">PÁGINA</span><div class="seg tam">${[['image','IMAGEM'],['a4','A4'],['letter','CARTA']].map(([v, r]) => `<button data-v="${v}" class="${st.tam === v ? 'on' : ''}">${r}</button>`).join('')}</div>
+    <span class="rot-ctl">MARGEM</span><div class="seg"><button data-m="-5">−</button><span>${st.margem} mm</span><button data-m="5">+</button></div>
+    <button class="gerar">GERAR PDF · ${st.itens.length} PÁG${st.itens.length === 1 ? '' : 'S'}</button>
+  </div></div>`;
+  wrap.querySelectorAll('.tam button').forEach(b => b.onclick = () => { st.tam = b.dataset.v; rerender(); });
+  wrap.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { st.margem = Math.max(0, Math.min(30, st.margem + +b.dataset.m)); rerender(); });
+  wrap.querySelector('.gerar').onclick = () => alert('Aqui entraria a cena da prensa: as páginas entram como formas, a prensa bate e sai o PDF.');
+  return wrap;
+}
+const mini = (txt, fn, title) => { const b = document.createElement('button'); b.className = 'mini'; b.textContent = txt; b.title = title; b.onclick = e => { e.stopPropagation(); fn(); }; return b; };
+const novoEstado = () => ({ itens: FOTOS.map((_, i) => ({ i, rot: 0 })), tam: 'a4', margem: 0, sel: 0 });
+const pad = n => String(n).padStart(2, '0');
+
+/* ---------- A ---------- */
+(() => {
+  const raiz = document.getElementById('va'), st = novoEstado(); let arrastado = null;
+  function render() {
+    raiz.innerHTML = ''; raiz.appendChild(controles(st, render));
+    const g = document.createElement('div'); g.className = 'grid';
+    st.itens.forEach((it, k) => {
+      const c = document.createElement('div'); c.className = 'cel-a'; c.draggable = true;
+      c.innerHTML = `<div class="num">${pad(k + 1)}</div>`;
+      const ac = document.createElement('div'); ac.className = 'acoes';
+      ac.append(mini('↻', () => { it.rot += 90; render(); }, 'girar'), mini('×', () => { st.itens.splice(k, 1); render(); }, 'remover'));
+      c.appendChild(ac); c.appendChild(folha(it, st, 0, 150));
+      c.insertAdjacentHTML('beforeend', `<div class="nomearq mono">${FOTOS[it.i].nome}</div>`);
+      c.ondragstart = () => { arrastado = k; c.classList.add('arrastando'); };
+      c.ondragend = () => c.classList.remove('arrastando');
+      c.ondragover = e => { e.preventDefault(); c.classList.add('alvo'); };
+      c.ondragleave = () => c.classList.remove('alvo');
+      c.ondrop = e => { e.preventDefault(); const [m] = st.itens.splice(arrastado, 1); st.itens.splice(k, 0, m); render(); };
+      g.appendChild(c);
+    });
+    g.appendChild(blocoAdd(3, 4));
+    raiz.appendChild(g);
+  }
+  render();
+})();
+
+/* ---------- B ---------- */
+(() => {
+  const raiz = document.getElementById('vb'), st = novoEstado();
+  function render() {
+    raiz.innerHTML = ''; raiz.appendChild(controles(st, render));
+    if (!st.itens.length) return;
+    st.sel = Math.min(st.sel, st.itens.length - 1);
+    const it = st.itens[st.sel];
+    const p = document.createElement('div'); p.className = 'palco';
+    const gr = document.createElement('div'); gr.className = 'grande';
+    gr.appendChild(folha(it, st, innerWidth < 720 ? 250 : 330));
+    const lado = document.createElement('div'); lado.className = 'lado';
+    lado.innerHTML = `<div class="n">${pad(st.sel + 1)}<small> de ${pad(st.itens.length)}</small></div><div class="mono" style="font-size:11px">${FOTOS[it.i].nome}</div>`;
+    const bt = (t, fn) => { const b = document.createElement('button'); b.className = 'larga'; b.textContent = t; b.onclick = fn; return b; };
+    lado.append(
+      bt('↻  GIRAR', () => { it.rot += 90; render(); }),
+      bt('←  ANTES', () => { if (st.sel > 0) { st.itens.splice(st.sel - 1, 0, st.itens.splice(st.sel, 1)[0]); st.sel--; render(); } }),
+      bt('→  DEPOIS', () => { if (st.sel < st.itens.length - 1) { st.itens.splice(st.sel + 1, 0, st.itens.splice(st.sel, 1)[0]); st.sel++; render(); } }),
+      bt('×  REMOVER', () => { st.itens.splice(st.sel, 1); render(); }),
+    );
+    p.append(gr, lado); raiz.appendChild(p);
+    const fita = document.createElement('div'); fita.className = 'fita';
+    st.itens.forEach((x, k) => {
+      const d = document.createElement('div'); d.className = 'item' + (k === st.sel ? ' sel' : '');
+      d.innerHTML = `<span class="k">${pad(k + 1)}</span>`; d.appendChild(folha(x, st, 110));
+      d.onclick = () => { st.sel = k; render(); }; fita.appendChild(d);
+    });
+    fita.appendChild(blocoAdd(3, 4)); raiz.appendChild(fita);
+  }
+  render();
+})();
+
+/* ---------- C ---------- */
+(() => {
+  const raiz = document.getElementById('vc'), st = novoEstado();
+  function render() {
+    raiz.innerHTML = ''; raiz.appendChild(controles(st, render));
+    st.sel = Math.min(st.sel, Math.max(0, st.itens.length - 1));
+    const corpo = document.createElement('div'); corpo.className = 'corpo';
+    const lista = document.createElement('div'); lista.className = 'lista';
+    st.itens.forEach((it, k) => {
+      const l = document.createElement('div'); l.className = 'linha' + (k === st.sel ? ' sel' : '');
+      l.innerHTML = `<div class="k">${pad(k + 1)}</div>`;
+      const th = folha(it, { tam: 'image', margem: 0 }, 0, 56); th.style.aspectRatio = '1'; l.appendChild(th);
+      l.insertAdjacentHTML('beforeend', `<div class="nm mono">${FOTOS[it.i].nome}</div>`);
+      const ac = document.createElement('div'); ac.className = 'acoes';
+      ac.append(
+        mini('↑', () => { if (k > 0) { st.itens.splice(k - 1, 0, st.itens.splice(k, 1)[0]); st.sel = k - 1; render(); } }, 'subir'),
+        mini('↓', () => { if (k < st.itens.length - 1) { st.itens.splice(k + 1, 0, st.itens.splice(k, 1)[0]); st.sel = k + 1; render(); } }, 'descer'),
+        mini('↻', () => { it.rot += 90; render(); }, 'girar'),
+        mini('×', () => { st.itens.splice(k, 1); render(); }, 'remover'));
+      l.appendChild(ac); l.onclick = () => { st.sel = k; render(); };
+      lista.appendChild(l);
+    });
+    lista.appendChild(blocoAdd(8, 2));
+    const pv = document.createElement('div'); pv.className = 'previa';
+    if (st.itens.length) {
+      const it = st.itens[st.sel];
+      pv.appendChild(folha(it, st, innerWidth < 720 ? 260 : 360));
+      pv.insertAdjacentHTML('beforeend', `<div class="cota mono">fig. ${pad(st.sel + 1)} — ${FOTOS[it.i].nome} · ${({ image: 'tamanho da imagem', a4: 'A4 · 210 × 297 mm', letter: 'Carta · 216 × 279 mm' })[st.tam]} · margem ${st.margem} mm</div>`);
+    }
+    corpo.append(lista, pv); raiz.appendChild(corpo);
+  }
+  render();
+})();
+</script>
+</body>
+</html>

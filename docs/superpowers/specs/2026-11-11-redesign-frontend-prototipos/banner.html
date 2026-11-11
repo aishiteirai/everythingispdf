@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banner — responsivo</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#e9e7e0; font-family: "Helvetica Neue", Arial, sans-serif; color:#000; padding:24px 16px; }
+  .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
+  .intro { max-width:1180px; margin:0 auto 18px; font-size:14px; line-height:1.55; }
+  .intro h2 { margin:0 0 6px; font-size:20px; }
+  .intro ul { margin:8px 0 0; padding-left:18px; }
+  .palco { max-width:1180px; margin:0 auto; display:flex; gap:28px; align-items:flex-start; flex-wrap:wrap; }
+  .rot { font: 700 11px ui-monospace, Menlo, monospace; margin-bottom:6px; }
+  .desk { flex: 1 1 560px; min-width:0; }
+  .cel-frame { flex: 0 0 auto; }
+  .tel { width:375px; height:720px; border:12px solid #111; border-radius:40px; overflow:hidden; background:#111; }
+  .tel .scroll { width:100%; height:100%; overflow-y:auto; overflow-x:hidden; border-radius:28px; background:#fffef9; }
+
+  /* ===== componente (responde à largura do próprio contêiner) ===== */
+  .pg { container-type:inline-size; background:#fffef9; border:3px solid #000; }
+  .tel .pg { border:0; }
+  .faixa { height:50px; border-bottom:3px solid #000; display:flex; }
+  .faixa div { border-right:3px solid #000; padding:0 16px; display:flex; align-items:center; font-size:12px; font-weight:700; white-space:nowrap; }
+  .faixa .nome { font-size:18px; font-weight:900; letter-spacing:-.5px; }
+  .faixa .fim { margin-left:auto; border-right:0; border-left:3px solid #000; }
+
+  .banner { position:relative; height:340px; border-bottom:3px solid #000; overflow:hidden; touch-action: pan-y; cursor:crosshair; }
+  .grade { position:absolute; inset:0; display:grid; }
+  .cel { position:relative; overflow:hidden; }
+  .cel svg { position:absolute; inset:0; width:100%; height:100%; transition: transform .45s cubic-bezier(.3,1.5,.5,1); }
+  .titulo { position:absolute; left:24px; bottom:24px; background:#fffef9; border:3px solid #000; padding:10px 18px 6px; box-shadow: 8px 8px 0 #000; pointer-events:none; }
+  .titulo h1 { margin:0; font-size:96px; line-height:.86; font-weight:900; letter-spacing:-6px; }
+  .titulo p { margin:8px 0 6px; font-size:11px; }
+
+  .funcoes { display:grid; grid-template-columns: 1fr 1fr; }
+  .fn { position:relative; min-height:190px; padding:18px 20px 64px; }
+  .fn:first-child { border-right:3px solid #000; }
+  .fn .n { font-size:13px; font-weight:900; }
+  .fn b { display:block; font-size:30px; font-weight:900; text-transform:uppercase; letter-spacing:-.5px; margin:4px 0 8px; }
+  .fn .meta { font-size:11px; line-height:1.5; }
+  .fn .seta { position:absolute; right:0; bottom:0; padding:14px 20px; border-left:3px solid #000; border-top:3px solid #000; font-size:13px; font-weight:900; }
+  .rodape { border-top:3px solid #000; padding:16px 20px; font-size:11px; line-height:1.6; }
+
+  @container (max-width: 600px) {
+    .faixa .meio { display:none; }
+    .faixa .nome { font-size:15px; padding:0 14px; }
+    .banner { height: 300px; }
+    .titulo { left:12px; right:12px; bottom:12px; box-shadow: 6px 6px 0 #000; padding:10px 14px 4px; }
+    .titulo h1 { font-size: 21cqi; letter-spacing:-.06em; }
+    .funcoes { grid-template-columns: 1fr; }
+    .fn:first-child { border-right:0; border-bottom:3px solid #000; }
+    .fn { min-height:0; padding:16px 16px 76px; }
+    .fn .seta { left:0; right:0; text-align:center; border-left:0; padding:18px; font-size:15px; }
+  }
+</style>
+</head>
+<body>
+  <div class="intro">
+    <h2>Gira + vida própria, agora responsivo</h2>
+    No celular não existe "passar por cima", então a dinâmica muda e passa a funcionar com três gestos naturais. Teste no quadro do celular com o mouse (arrastar = dedo). Para testar de verdade, use o modo dispositivo do DevTools.
+    <ul>
+      <li><b>Tocar</b>: solta uma onda de giros a partir do dedo.</li>
+      <li><b>Deslizar na horizontal</b> sobre o banner: risca um rastro de giros. Deslizar na vertical continua rolando a página normalmente.</li>
+      <li><b>Rolar a página</b>: as fileiras giram em cascata, de cima para baixo, como uma persiana mecânica. Funciona sem o usuário precisar descobrir nada.</li>
+    </ul>
+  </div>
+
+  <div class="palco">
+    <div class="desk"><div class="rot">DESKTOP · passar por cima, clicar, rolar</div><div id="d"></div></div>
+    <div class="cel-frame"><div class="rot">CELULAR · 375px · tocar, deslizar, rolar</div><div class="tel"><div class="scroll" id="telscroll"><div id="m"></div></div></div></div>
+  </div>
+
+<template id="tpl">
+  <div class="pg">
+    <div class="faixa"><div class="nome">EVERYTHING IS PDF</div><div class="mono meio">conversor</div><div class="fim mono">pt-br</div></div>
+    <div class="banner"><div class="grade"></div>
+      <div class="titulo"><h1>TUDO<br>VIRA PDF.</h1><p class="mono">documentos, planilhas, apresentações e imagens.</p></div>
+    </div>
+    <div class="funcoes">
+      <div class="fn"><span class="n mono">01</span><b>Arquivos</b><div class="meta mono">docx pptx xlsx odt doc ppt xls odp<br>até 32 MB</div><div class="seta" style="background:#e8452c">SOLTAR ↓</div></div>
+      <div class="fn"><span class="n mono">02</span><b>Imagens</b><div class="meta mono">png jpg jpeg · até 20 imagens<br>até 32 MB no total</div><div class="seta" style="background:#2453d6;color:#fff">SOLTAR ↓</div></div>
+    </div>
+    <div class="rodape mono">conversão no servidor · arquivos apagados após o download<br><br>(espaço extra para dar o que rolar)<br><br><br><br><br><br><br><br><br><br>fim.</div>
+  </div>
+</template>
+
+<script>
+const CORES = ['#e8452c', '#f2b705', '#2453d6', '#000', '#fffef9'];
+const FUNDO = '#fffef9';
+const FORMAS = [
+  c => `<rect width="100" height="100" fill="${c}"/>`,
+  c => `<circle cx="50" cy="50" r="42" fill="${c}"/>`,
+  c => `<path d="M0 100 A100 100 0 0 1 100 0 L100 100Z" fill="${c}"/>`,
+  c => `<path d="M0 50 A50 50 0 0 1 100 50Z" fill="${c}"/>`,
+  c => `<polygon points="0,100 100,100 100,0" fill="${c}"/>`,
+  c => `<rect x="0" y="0" width="50" height="100" fill="${c}"/>`,
+  c => `<circle cx="50" cy="50" r="42" fill="none" stroke="${c}" stroke-width="14"/>`,
+];
+const sorteia = a => a[Math.floor(Math.random() * a.length)];
+const calmo = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function novoLadrilho() {
+  const fundo = Math.random() < .7 ? FUNDO : sorteia(CORES);
+  return { fundo, cor: sorteia(CORES.filter(c => c !== fundo)), forma: Math.floor(Math.random() * FORMAS.length), rot: 90 * Math.floor(Math.random() * 4) };
+}
+const svgDe = t => `<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="transform: rotate(${t.rot}deg)"><rect width="100" height="100" fill="${t.fundo}"/>${FORMAS[t.forma](t.cor)}</svg>`;
+
+function instala(alvo, rolagem) {
+  alvo.appendChild(document.getElementById('tpl').content.cloneNode(true));
+  const banner = alvo.querySelector('.banner'), grade = alvo.querySelector('.grade');
+  let cels = [], cols, lins, tam;
+
+  function monta() {
+    const w = banner.clientWidth, h = banner.clientHeight;
+    tam = w < 600 ? Math.floor(w / 7) : 56;          // celular: 7 colunas, ladrilho grande o bastante para o dedo
+    cols = Math.ceil(w / tam); lins = Math.ceil(h / tam);
+    grade.style.gridTemplateColumns = `repeat(${cols}, ${tam}px)`;
+    grade.style.gridTemplateRows = `repeat(${lins}, ${tam}px)`;
+    grade.innerHTML = ''; cels = [];
+    for (let i = 0; i < cols * lins; i++) {
+      const t = novoLadrilho(), el = document.createElement('div');
+      el.className = 'cel'; el.innerHTML = svgDe(t); grade.appendChild(el);
+      cels.push({ el, t, x: (i % cols) * tam + tam / 2, y: Math.floor(i / cols) * tam + tam / 2, ultimo: 0 });
+    }
+  }
+  const gira = (c, atraso = 0, sentido = 1) => setTimeout(() => {
+    c.t.rot += 90 * sentido; c.el.firstChild.style.transform = `rotate(${c.t.rot}deg)`;
+  }, atraso);
+  const celEm = (x, y) => {
+    const cx = Math.floor(x / tam), cy = Math.floor(y / tam);
+    return cx < 0 || cy < 0 || cx >= cols || cy >= lins ? null : cels[cy * cols + cx];
+  };
+  const local = e => { const b = banner.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
+
+  // mouse: passar por cima. toque: só enquanto o dedo está na tela (deslizar).
+  let atual = null, dedo = false;
+  banner.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') dedo = true; });
+  banner.addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse' && !dedo) return;
+    const c = celEm(...local(e));
+    if (!c || c === atual) return;
+    atual = c;
+    const agora = performance.now();
+    if (agora - c.ultimo < 300) return;
+    c.ultimo = agora; gira(c);
+  });
+  const fim = () => { dedo = false; atual = null; };
+  banner.addEventListener('pointerup', fim); banner.addEventListener('pointercancel', fim); banner.addEventListener('pointerleave', fim);
+
+  // tocar / clicar: onda
+  banner.addEventListener('click', e => {
+    const [x, y] = local(e);
+    for (const c of cels) gira(c, Math.hypot(c.x - x, c.y - y) * 1.6);
+  });
+
+  // rolar: persiana. Cada ~28px rolados gira a próxima fileira; descer gira num sentido, subir no outro.
+  let acumulado = 0, ultimaRolagem = rolagem === window ? scrollY : rolagem.scrollTop, fileira = 0;
+  rolagem.addEventListener('scroll', () => {
+    if (calmo) return;
+    const y = rolagem === window ? scrollY : rolagem.scrollTop, d = y - ultimaRolagem;
+    ultimaRolagem = y; acumulado += d;
+    while (Math.abs(acumulado) >= 28) {
+      const s = Math.sign(acumulado); acumulado -= 28 * s;
+      for (let i = 0; i < cols; i++) gira(cels[fileira * cols + i], i * 22, s);
+      fileira = (fileira + 1) % lins;
+    }
+  }, { passive: true });
+
+  // vida própria: só quando o banner está visível e o usuário não pediu menos movimento
+  let visivel = true;
+  new IntersectionObserver(([en]) => { visivel = en.isIntersecting; }).observe(banner);
+  setInterval(() => { if (visivel && !calmo && !document.hidden) gira(sorteia(cels)); }, 900);
+
+  monta();
+  new ResizeObserver(monta).observe(banner);
+}
+
+instala(document.getElementById('d'), window);
+instala(document.getElementById('m'), document.getElementById('telscroll'));
+</script>
+</body>
+</html>

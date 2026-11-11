@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conversão — híbridos</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#e9e7e0; font-family: "Helvetica Neue", Arial, sans-serif; color:#000; padding:24px 16px; }
+  .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
+  .intro { max-width:1180px; margin:0 auto 18px; font-size:14px; line-height:1.55; }
+  .intro h2 { margin:0 0 6px; font-size:20px; }
+  .grid { max-width:1180px; margin:0 auto; display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap:24px; }
+  .painel { background:#fffef9; border:3px solid #000; }
+  .cab { border-bottom:3px solid #000; padding:10px 14px; display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .cab b { font-size:18px; font-weight:900; text-transform:uppercase; letter-spacing:-.3px; }
+  .palco { height:280px; position:relative; overflow:hidden; border-bottom:3px solid #000; }
+  .botoes { display:flex; }
+  .botoes button { flex:1; font: 900 12px ui-monospace, Menlo, monospace; padding:12px; border:0; border-right:3px solid #000; background:#fffef9; cursor:pointer; }
+  .botoes button:last-child { border-right:0; }
+  .botoes button:hover { background:#000; color:#fffef9; }
+  .txt { padding:12px 14px; font-size:12.5px; line-height:1.5; }
+  .estado { position:absolute; left:10px; top:8px; font: 700 10px ui-monospace, Menlo, monospace; z-index:5; background:#fffef9; padding:2px 4px; }
+  .rotulo { position:absolute; bottom:10px; left:0; right:0; text-align:center; font: 700 10px ui-monospace, Menlo, monospace; z-index:5; }
+  .rotulo .baixar { display:inline-block; margin-left:6px; background:#e8452c; border:2px solid #000; padding:2px 8px; font-weight:900; }
+
+  .grade { position:absolute; display:grid; }
+  .grade.borda { border:3px solid #000; }
+  .grade.tracejada { border-style:dashed; }
+  .t { position:relative; overflow:hidden; }
+  .t svg { position:absolute; inset:0; width:100%; height:100%; transition: transform .4s cubic-bezier(.3,1.5,.5,1); transform-origin: 50% 100%; }
+
+  .prensa { position:absolute; left:50%; top:0; width:150px; height:90px; margin-left:-75px; background:#000; transform: translateY(-70px); z-index:4; transition: transform .25s; }
+  .prensa::before { content:""; position:absolute; left:50%; top:-200px; width:18px; height:200px; margin-left:-9px; background:#000; }
+  .forma { position:absolute; width:80px; height:80px; transform-origin:50% 100%; z-index:3; transition: left .15s linear; }
+  .esmaga { animation: esmaga .25s cubic-bezier(.6,0,.4,1); }
+  @keyframes esmaga { 50% { transform: scale(1.35,.45);} 80% { transform: scale(.94,1.08);} }
+</style>
+</head>
+<body>
+  <div class="intro">
+    <h2>Meio-termo entre Ladrilhos (A) e Prensa (B)</h2>
+    Os três mantêm a grade de ladrilhos do A e a ideia do B: <b>cada tipo de arquivo tem sua forma e a forma é achatada</b>. Cada clique em SIMULAR alterna entre documento (quadrado vermelho), planilha (triângulo azul) e apresentação (círculo amarelo).
+  </div>
+
+  <div class="grid">
+    <div class="painel">
+      <div class="cab"><b>1 · Forma ladrilhada</b><span class="mono">a forma é feita de ladrilhos</span></div>
+      <div class="palco" id="p1"><span class="estado">ESPERANDO</span><div class="rotulo">solte aqui</div></div>
+      <div class="botoes"><button data-p="1">SIMULAR</button><button data-p="1" data-erro>SIMULAR ERRO</button></div>
+      <div class="txt">No <b>envio</b>, os ladrilhos se acendem e montam, em grande, a forma do tipo do arquivo. Na <b>conversão</b>, uma fileira preta (a prensa feita de ladrilho) varre a grade de cima para baixo, e o que ela atravessa gira. <b>Pronto</b>: a forma desaba, achatada até o chão, e a grade vira uma folha com o canto dobrado.</div>
+    </div>
+
+    <div class="painel">
+      <div class="cab"><b>2 · Prensa sobre o padrão</b><span class="mono">cena do B, fundo do A</span></div>
+      <div class="palco" id="p2"><span class="estado">ESPERANDO</span><div class="rotulo">solte aqui</div></div>
+      <div class="botoes"><button data-p="2">SIMULAR</button><button data-p="2" data-erro>SIMULAR ERRO</button></div>
+      <div class="txt">A prensa do B, agora em cima de um chão de ladrilhos. A forma desliza com o <b>envio</b>. Na <b>conversão</b>, cada pancada da prensa solta uma onda de giros no padrão, como um tremor. <b>Pronto</b>: uma última onda vira o chão todo branco e a folha sobe. É o mais físico e tem impacto de verdade.</div>
+    </div>
+
+    <div class="painel">
+      <div class="cab"><b>3 · Estilhaça em padrão</b><span class="mono">objeto → padrão → página</span></div>
+      <div class="palco" id="p3"><span class="estado">ESPERANDO</span><div class="rotulo">solte aqui</div></div>
+      <div class="botoes"><button data-p="3">SIMULAR</button><button data-p="3" data-erro>SIMULAR ERRO</button></div>
+      <div class="txt">A forma inteira entra com o <b>envio</b>. Na <b>conversão</b>, a prensa bate e, a cada pancada, a forma encolhe e se estilhaça em ladrilhos da mesma cor que se espalham pela grade. O arquivo vira padrão. <b>Pronto</b>: o padrão se apaga em branco e vira a folha. Conta a ideia "tudo vira PDF" como uma pequena história.</div>
+    </div>
+  </div>
+
+<script>
+const CR = '#fffef9', CORES = ['#e8452c', '#f2b705', '#2453d6', '#000'];
+const FORMAS = [
+  c => `<rect width="100" height="100" fill="${c}"/>`,                         // 0 cheio
+  c => `<circle cx="50" cy="50" r="42" fill="${c}"/>`,                         // 1 círculo
+  c => `<path d="M0 100 A100 100 0 0 1 100 0 L100 100Z" fill="${c}"/>`,       // 2 quarto (centro no canto inf. dir.)
+  c => `<path d="M0 50 A50 50 0 0 1 100 50Z" fill="${c}"/>`,                   // 3 meio
+  c => `<polygon points="0,100 100,100 100,0" fill="${c}"/>`,                  // 4 triângulo (inf. dir.)
+];
+const sorteia = a => a[Math.floor(Math.random() * a.length)];
+const espera = ms => new Promise(r => setTimeout(r, ms));
+
+const TIPOS = [
+  { nome: 'relatorio.docx', cor: '#e8452c', svg: '<rect x="2" y="2" width="76" height="76" fill="#e8452c"/>' },
+  { nome: 'planilha.xlsx',  cor: '#2453d6', svg: '<polygon points="40,2 78,78 2,78" fill="#2453d6"/>' },
+  { nome: 'slides.pptx',    cor: '#f2b705', svg: '<circle cx="40" cy="40" r="38" fill="#f2b705"/>' },
+];
+let vez = 0;
+const proximoTipo = () => TIPOS[vez++ % TIPOS.length];
+
+/* forma grande em 4x4 ladrilhos: devolve {forma, rot} ou null para cada (x,y) local */
+function mapa(tipo, x, y) {
+  if (tipo.nome.endsWith('docx')) return { forma: 0, rot: 0 };
+  if (tipo.nome.endsWith('xlsx')) { if (x < y) return { forma: 0, rot: 0 }; if (x === y) return { forma: 4, rot: 90 }; return null; }
+  const canto = { '0,0': 0, '3,0': 90, '3,3': 180, '0,3': 270 }[`${x},${y}`];
+  return canto !== undefined ? { forma: 2, rot: canto } : { forma: 0, rot: 0 };
+}
+
+function criaGrade(palco, cols, lins, tam, x, y, borda = true) {
+  const g = document.createElement('div');
+  g.className = 'grade' + (borda ? ' borda tracejada' : '');
+  Object.assign(g.style, { left: x + 'px', top: y + 'px', gridTemplateColumns: `repeat(${cols}, ${tam}px)`, gridTemplateRows: `repeat(${lins}, ${tam}px)` });
+  const ts = [];
+  for (let i = 0; i < cols * lins; i++) {
+    const el = document.createElement('div'); el.className = 't'; g.appendChild(el);
+    const t = { el, rot: 0, c: i % cols, l: Math.floor(i / cols), x: (i % cols) * tam + tam / 2 + x, y: Math.floor(i / cols) * tam + tam / 2 + y };
+    pinta(t, CR, null, null, 0); ts.push(t);
+  }
+  palco.appendChild(g);
+  return { g, ts };
+}
+function pinta(t, fundo, forma, cor, rot) {
+  t.rot = rot;
+  t.el.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="transform:rotate(${rot}deg)"><rect width="100" height="100" fill="${fundo}"/>${forma != null ? FORMAS[forma](cor) : ''}</svg>`;
+}
+const gira = (t, s = 1) => { t.rot += 90 * s; t.el.firstChild.style.transform = `rotate(${t.rot}deg)`; };
+function onda(ts, x, y, fn = gira, vel = 1.4) { ts.forEach(t => setTimeout(() => fn(t), Math.hypot(t.x - x, t.y - y) * vel)); }
+
+function limpa(palco) {
+  palco.querySelectorAll('.grade, .prensa, .forma').forEach(e => e.remove());
+  palco._timers?.forEach(clearInterval); palco._timers = [];
+  palco.querySelector('.estado').textContent = 'ESPERANDO';
+}
+const estado = (p, t) => p.querySelector('.estado').textContent = t;
+const rotulo = (p, h) => p.querySelector('.rotulo').innerHTML = h;
+const pdf = n => n.replace(/\.\w+$/, '.pdf');
+
+async function envio(p, aoProgresso) { for (let i = 0; i <= 100; i += 4) { estado(p, `ENVIANDO ${i}%`); aoProgresso(i); await espera(55); } }
+async function folha(p, ts, cols, tipo, erro) {
+  for (const t of ts) { await espera(14); erro ? pinta(t, '#000', null, null, 0) : pinta(t, '#fff', (t.c === cols - 1 && t.l === 0) ? 4 : null, '#000', 270); }
+  if (erro) { estado(p, 'ERRO'); rotulo(p, 'não deu: arquivo corrompido <span class="baixar" style="background:#fffef9">TENTAR OUTRO</span>'); }
+  else { estado(p, 'PRONTO'); rotulo(p, `${pdf(tipo.nome)} · 3 págs <span class="baixar">BAIXAR ↓</span>`); }
+}
+
+/* ---------- 1 · forma ladrilhada ---------- */
+async function um(erro) {
+  const p = document.getElementById('p1'); limpa(p);
+  const tipo = proximoTipo(), cols = 6, lins = 4, tam = 46;
+  const x0 = (p.clientWidth - cols * tam) / 2, y0 = 30;
+  const { g, ts } = criaGrade(p, cols, lins, tam, x0, y0);
+  rotulo(p, `${tipo.nome} · 2,4 MB`);
+  g.classList.remove('tracejada');
+  const alvo = ts.filter(t => t.c >= 1 && t.c <= 4).map(t => ({ t, m: mapa(tipo, t.c - 1, t.l) })).filter(o => o.m);
+  let n = 0;
+  await envio(p, i => { const meta = Math.round(i / 100 * alvo.length); while (n < meta) { const { t, m } = alvo[n++]; pinta(t, CR, m.forma, tipo.cor, m.rot); } });
+  estado(p, 'CONVERTENDO…');
+  let linha = 0, antes = null;
+  const salva = new Map();
+  const tm = setInterval(() => {
+    if (antes) antes.forEach(t => { const s = salva.get(t); pinta(t, s.f, s.fo, s.c, s.r); gira(t); });
+    antes = ts.filter(t => t.l === linha);
+    antes.forEach(t => { const svg = t.el.firstChild; salva.set(t, { f: svg.querySelector('rect').getAttribute('fill'), fo: alvo.find(o => o.t === t)?.m.forma ?? null, c: tipo.cor, r: t.rot }); pinta(t, '#000', null, null, t.rot); });
+    linha = (linha + 1) % lins;
+  }, 260);
+  p._timers.push(tm);
+  await espera(2600);
+  clearInterval(tm); if (antes) antes.forEach(t => { const s = salva.get(t); pinta(t, s.f, s.fo, s.c, s.r); });
+  if (!erro) { ts.forEach(t => t.el.firstChild.style.transform = `rotate(${t.rot}deg) scaleY(${t.l === lins - 1 ? .35 : .05})`); await espera(450); }
+  await folha(p, ts, cols, tipo, erro);
+}
+
+/* ---------- 2 · prensa sobre o padrão ---------- */
+async function dois(erro) {
+  const p = document.getElementById('p2'); limpa(p);
+  const tipo = proximoTipo(), tam = 40;
+  const cols = Math.ceil(p.clientWidth / tam), lins = Math.ceil(p.clientHeight / tam);
+  const { ts } = criaGrade(p, cols, lins, tam, 0, 0, false);
+  ts.forEach(t => { if (Math.random() < .28) pinta(t, CR, Math.floor(Math.random() * FORMAS.length), sorteia(CORES), 90 * Math.floor(Math.random() * 4)); });
+  const pr = document.createElement('div'); pr.className = 'prensa'; p.appendChild(pr);
+  const f = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); f.setAttribute('viewBox', '0 0 80 80'); f.classList.add('forma'); f.innerHTML = tipo.svg; p.appendChild(f);
+  const chao = p.clientHeight - 40, meio = p.clientWidth / 2 - 40;
+  f.style.top = (chao - 80) + 'px'; f.style.left = '16px';
+  rotulo(p, `${tipo.nome} · 2,4 MB`);
+  await envio(p, i => f.style.left = (16 + (meio - 16) * i / 100) + 'px');
+  estado(p, 'CONVERTENDO…');
+  const bate = async () => {
+    pr.style.transform = `translateY(${chao - 80 - 90 + 36}px)`; await espera(250);
+    f.classList.remove('esmaga'); void f.offsetWidth; f.classList.add('esmaga');
+    onda(ts, p.clientWidth / 2, chao, gira, 1.2);
+    await espera(120); pr.style.transform = 'translateY(-70px)';
+  };
+  bate(); const tm = setInterval(bate, 900); p._timers.push(tm);
+  await espera(2700); clearInterval(tm); await espera(300);
+  if (erro) { onda(ts, p.clientWidth / 2, chao, t => pinta(t, '#000', null, null, 0), 2); f.animate([{ transform: 'translateX(-8px)' }, { transform: 'translateX(8px)' }], { duration: 120, iterations: 6 }); await espera(700); estado(p, 'ERRO'); rotulo(p, '<span style="color:#fffef9">não achatou: arquivo corrompido</span> <span class="baixar" style="background:#fffef9">TENTAR OUTRO</span>'); return; }
+  f.style.transform = 'scale(1.6,.08)';
+  onda(ts, p.clientWidth / 2, chao, t => pinta(t, '#fff', null, null, 0), 1.6);
+  await espera(600);
+  const fo = document.createElement('div');
+  Object.assign(fo.style, { position: 'absolute', left: '50%', top: '40px', width: '120px', height: '156px', marginLeft: '-60px', background: '#fff', border: '3px solid #000', boxShadow: '8px 8px 0 #000', zIndex: 4, transform: 'translateY(300px)', transition: 'transform .5s cubic-bezier(.3,1.6,.5,1)' });
+  fo.innerHTML = '<div style="position:absolute;right:-3px;top:-3px;border-left:26px solid #000;border-top:26px solid #fffef9"></div><b style="position:absolute;left:10px;bottom:6px;font-size:22px">PDF</b>';
+  fo.className = 'forma'; p.appendChild(fo); f.remove();
+  requestAnimationFrame(() => requestAnimationFrame(() => fo.style.transform = 'translateY(0)'));
+  estado(p, 'PRONTO'); rotulo(p, `${pdf(tipo.nome)} · 3 págs <span class="baixar">BAIXAR ↓</span>`);
+}
+
+/* ---------- 3 · estilhaça em padrão ---------- */
+async function tres(erro) {
+  const p = document.getElementById('p3'); limpa(p);
+  const tipo = proximoTipo(), cols = 6, lins = 4, tam = 46;
+  const x0 = (p.clientWidth - cols * tam) / 2, y0 = 44;
+  const { g, ts } = criaGrade(p, cols, lins, tam, x0, y0);
+  const pr = document.createElement('div'); pr.className = 'prensa'; pr.style.width = '110px'; pr.style.marginLeft = '-55px'; pr.style.height = '50px'; p.appendChild(pr);
+  const f = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); f.setAttribute('viewBox', '0 0 80 80'); f.classList.add('forma'); f.innerHTML = tipo.svg; p.appendChild(f);
+  const cx = p.clientWidth / 2 - 40, cy = y0 + (lins * tam) / 2 - 40;
+  f.style.top = cy + 'px'; f.style.left = '-90px'; f.style.transition = 'left .15s linear, transform .25s';
+  rotulo(p, `${tipo.nome} · 2,4 MB`);
+  await envio(p, i => f.style.left = (-90 + (cx + 90) * i / 100) + 'px');
+  g.classList.remove('tracejada');
+  estado(p, 'CONVERTENDO…');
+  let escala = 1; const livres = [...ts].sort(() => Math.random() - .5);
+  const formaDoTipo = tipo.nome.endsWith('docx') ? 0 : tipo.nome.endsWith('xlsx') ? 4 : 1;
+  const bate = async () => {
+    pr.style.transform = `translateY(${cy - 70 + 40 - (1 - escala) * 20}px)`; await espera(240);
+    escala = Math.max(.15, escala - .22); f.style.transform = `scale(${escala})`;
+    for (let k = 0; k < 6 && livres.length; k++) { const t = livres.pop(); setTimeout(() => pinta(t, CR, Math.random() < .5 ? formaDoTipo : Math.floor(Math.random() * FORMAS.length), Math.random() < .75 ? tipo.cor : '#000', 90 * Math.floor(Math.random() * 4)), k * 40); }
+    await espera(120); pr.style.transform = 'translateY(-70px)';
+  };
+  bate(); const tm = setInterval(bate, 650); p._timers.push(tm);
+  await espera(2600); clearInterval(tm); await espera(300);
+  f.style.transform = 'scale(0)'; await espera(250); f.remove();
+  await folha(p, ts, cols, tipo, erro);
+}
+
+document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => ({ 1: um, 2: dois, 3: tres })[b.dataset.p](b.hasAttribute('data-erro')));
+</script>
+</body>
+</html>
