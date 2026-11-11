@@ -476,6 +476,12 @@ a {
     animation: debate .12s linear 6 alternate;
 }
 
+/* No erro o chão fica preto: o semicírculo preto da imagem sumiria nele. */
+.prensa[data-cena="erro"] .prensa-forma > * {
+    stroke: var(--creme);
+    stroke-width: 3;
+}
+
 @keyframes debate {
     from {
         transform: translateX(-8px);
@@ -668,493 +674,497 @@ a {
 }
 
 /* =============================================================
-   Legado
+   Imagens: esteira
 
-   Estilos das páginas antigas, de pé até cada página ganhar o layout novo.
-   Os tokens antigos apontam para a paleta nova enquanto isso.
+   Palco com a página selecionada em tamanho real sobre a mesa
+   quadriculada; ao lado, o número e os botões. Embaixo, a fita com todas as
+   páginas e o bloco "+ SOLTE MAIS".
    ============================================================= */
 
-:root {
-    --fundo: var(--mesa);
-    --superficie: var(--creme);
-    --superficie-alt: var(--creme);
-    --borda-forte: var(--tinta);
-    --texto: var(--tinta);
-    --erro: var(--tinta);
-    --sucesso: var(--tinta);
-    --sucesso-fundo: var(--creme);
-    --acento: var(--tinta);
-    --acento-forte: var(--tinta);
-    --acento-fraco: var(--mesa);
-    --acento-contraste: var(--creme);
-    --sombra-forte: none;
-    --raio: 0;
-    --raio-pequeno: 0;
+.cabeca-galeria {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px 24px;
 }
 
-.tela {
-    padding: 32px 24px;
+.controles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px 16px;
+    min-width: 0;
+    margin: 0;
+    padding: 0 8px 8px 0;
+    border: 0;
 }
 
-/* =============================================================
-   Bolinhas do hub
-
-   O deslocamento vem em --dx e --dy, renderizados pelo servidor a partir do
-   cookie: assim a bolinha nasce onde foi deixada, em vez de saltar do lugar
-   padrao quando o JavaScript roda.
-   ============================================================= */
-
-.bolinhas {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 48px;
-    width: 100%;
-    max-width: 720px;
-    justify-items: center;
-}
-
-@media (min-width: 768px) {
-    .bolinhas {
-        grid-template-columns: 1fr 1fr;
-        gap: 48px 64px;
-    }
-}
-
-.bolinha {
+.controle {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    color: var(--texto);
-    text-decoration: none;
-    transform: translate(var(--dx, 0px), var(--dy, 0px));
-    /* Sem isso o navegador rola a pagina em vez de entregar o arrasto. */
-    touch-action: none;
-    cursor: grab;
+    gap: 4px;
 }
 
-.bolinha-disco {
-    width: 96px;
-    height: 96px;
-    display: grid;
-    place-items: center;
-    border-radius: 9999px;
-    background: var(--acento);
-    color: var(--acento-contraste);
-    box-shadow: var(--sombra);
-    transition: box-shadow .3s, transform .3s;
+.controle-rotulo {
+    font-size: 10px;
+    font-weight: 700;
 }
 
-.bolinha:hover .bolinha-disco {
-    box-shadow: var(--sombra-forte);
-    transform: translateY(-4px);
-}
-
-.bolinha:focus-visible {
-    outline: none;
-}
-
-.bolinha:focus-visible .bolinha-disco {
-    outline: 2px solid var(--acento-forte);
-    outline-offset: 4px;
-}
-
-.bolinha-rotulo {
-    font-size: 24px;
-    font-weight: 500;
-    line-height: 1.3;
-    letter-spacing: -.01em;
-    text-align: center;
-}
-
-/* Enquanto arrasta, a bolinha segue o ponteiro sem transicao -- interpolar
-   deixaria o movimento borrachudo -- e passa por cima da outra. */
-.bolinha.arrastando {
-    cursor: grabbing;
-    z-index: 2;
-}
-
-.bolinha.arrastando .bolinha-disco {
-    transition: none;
-    box-shadow: var(--sombra-forte);
-    transform: none;
-}
-
-/* =============================================================
-   Cartao das paginas internas
-   ============================================================= */
-
-.cartao {
-    width: 100%;
-    max-width: 440px;
-    background: var(--superficie);
+.segmentos {
+    display: flex;
     border: var(--borda);
-    border-radius: var(--raio);
-    box-shadow: var(--sombra);
-    padding: 22px;
+    background: var(--creme);
 }
 
-@media (min-width: 768px) {
-    .cartao {
-        padding: 28px;
-    }
-}
-
-.cartao-largo {
-    max-width: 720px;
-}
-
-/* Selo da funcao: a mesma bolinha do hub, menor, para a pagina interna dizer
-   de qual funcao ela e sem explicar por texto. */
-.selo {
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    margin-bottom: 14px;
-    border-radius: 9999px;
-    background: var(--acento);
-    color: var(--acento-contraste);
-}
-
-.cartao h1 {
-    margin: 0 0 6px;
-    font-size: 24px;
-    font-weight: 600;
-    letter-spacing: -.02em;
-    line-height: 1.2;
-}
-
-@media (min-width: 768px) {
-    .cartao h1 {
-        font-size: 28px;
-    }
-}
-
-.subtitulo {
-    margin: 0 0 20px;
-    color: var(--texto-fraco);
-    font-size: 15px;
-    line-height: 1.6;
-    max-width: 46ch;
-}
-
-/* =============================================================
-   Area de soltar
-
-   E um <label>: clique e teclado funcionam pelo input nativo, sem
-   JavaScript no meio.
-   ============================================================= */
-
-.cartao .area {
+.segmento span {
     display: block;
-    border: 1.5px dashed var(--borda-forte);
-    border-radius: var(--raio);
-    padding: 36px 20px;
-    text-align: center;
-    cursor: pointer;
-    background: transparent;
-    transition: border-color .18s, background-color .18s;
-}
-
-.cartao .area:hover {
-    border-color: var(--acento);
-    background: var(--acento-fraco);
-}
-
-.cartao .area:focus-within {
-    border-color: var(--acento);
-    outline: 2px solid var(--acento);
-    outline-offset: 3px;
-}
-
-.cartao .area.arrastando {
-    border-color: var(--acento);
-    border-style: solid;
-    background: var(--acento-fraco);
-}
-
-/* Fora da tela em vez de display:none, para continuar focavel. */
-.cartao .area input[type="file"] {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    pointer-events: none;
-}
-
-.cartao .area-icone {
-    display: block;
-    margin: 0 auto 12px;
-    color: var(--acento-forte);
-}
-
-.cartao .area-titulo {
-    display: block;
-    font-weight: 600;
-}
-
-.cartao .area-dica {
-    display: block;
-    margin-top: 5px;
-    color: var(--texto-fraco);
-    font-size: 14px;
-}
-
-.cartao .formatos {
-    margin-top: 12px;
-    color: var(--texto-fraco);
-    font-size: 12px;
-    text-align: center;
-    word-break: break-word;
-}
-
-/* =============================================================
-   Galeria de paginas
-
-   <ol> de proposito: a ordem visual E a ordem das paginas do PDF, e o leitor
-   de tela anuncia a posicao.
-   ============================================================= */
-
-.grade {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-    gap: 14px;
-    margin: 18px 0 0;
-    padding: 0;
-    list-style: none;
-}
-
-.pagina {
-    position: relative;
-    border: var(--borda);
-    border-radius: var(--raio-pequeno);
-    padding: 10px;
-    background: var(--superficie);
-    transition: border-color .18s;
-}
-
-.pagina:hover {
-    border-color: var(--borda-forte);
-}
-
-.pagina {
-    cursor: grab;
-}
-
-/* Enquanto arrasta, o cartao sai do teste de acerto: assim o que esta embaixo
-   do dedo e o alvo de verdade, e nao o proprio cartao arrastado. touch-action
-   fecha a rolagem so durante o arrasto. */
-.pagina.arrastando {
-    cursor: grabbing;
-    z-index: 2;
-    pointer-events: none;
-    touch-action: none;
-    box-shadow: var(--sombra-forte);
-}
-
-/* Cartao sob o dedo: e para onde a pagina arrastada vai. */
-.pagina.alvo {
-    border-color: var(--acento);
-    background: var(--acento-fraco);
-}
-
-.pagina-numero {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    z-index: 1;
-    min-width: 22px;
-    padding: 2px 6px;
-    border-radius: 9999px;
-    background: var(--acento-forte);
-    color: var(--acento-contraste);
+    padding: 8px 10px;
+    border-right: var(--borda);
+    font-family: var(--mono);
     font-size: 11px;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    text-align: center;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
 }
 
-/* Caixa quadrada: com object-fit: contain, girar 90 graus cabe sem
-   recalcular layout e sem cortar a imagem. */
-.pagina-caixa {
-    display: grid;
-    place-items: center;
-    aspect-ratio: 1;
-    overflow: hidden;
-    border-radius: 8px;
-    background: var(--fundo);
+.segmento:last-child span {
+    border-right: 0;
 }
 
-.pagina-imagem {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    transition: transform .18s;
+.segmento input:checked + span {
+    background: var(--tinta);
+    color: var(--creme);
 }
 
-.pagina-nome {
-    display: block;
-    margin-top: 9px;
+.segmento input:focus-visible + span {
+    outline: 3px solid var(--azul);
+    outline-offset: -6px;
+}
+
+.segmento-botao {
+    width: 34px;
+    border: 0;
+    background: var(--creme);
+    color: var(--tinta);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.segmento-botao:first-child {
+    border-right: var(--borda);
+}
+
+.segmento-botao:last-child {
+    border-left: var(--borda);
+}
+
+.margem-valor {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.margem-valor input {
+    width: 3ch;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--tinta);
+    font-family: var(--mono);
     font-size: 12px;
-    color: var(--texto-fraco);
+    font-weight: 700;
+    text-align: right;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.margem-valor input::-webkit-outer-spin-button,
+.margem-valor input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.controles :disabled,
+.controles input:disabled + span {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+.controles .botao {
+    box-shadow: var(--sombra-curta);
+}
+
+/* ---------- Palco ---------- */
+
+.palco-galeria {
+    display: grid;
+    grid-template-columns: 1fr 230px;
+    border-bottom: var(--borda);
+}
+
+.mesa {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    padding: 22px 32px 32px 22px;
+    border-right: var(--borda);
+    background-color: var(--creme);
+    background-image:
+        linear-gradient(var(--mesa) 1px, transparent 1px),
+        linear-gradient(90deg, var(--mesa) 1px, transparent 1px);
+    background-size: 24px 24px;
+    container-type: inline-size;
+}
+
+/* A folha: proporção e margem reais, vindas de gallery-ui.js. Branca como
+   o PDF, não creme. */
+.folha {
+    position: relative;
+    display: block;
+    flex: 0 0 auto;
+    aspect-ratio: var(--proporcao, .707);
+    background: #ffffff;
+    border: var(--borda);
+    overflow: hidden;
+}
+
+.mesa .folha {
+    height: min(340px, calc((100cqw - 54px) / var(--proporcao, .707)));
+    box-shadow: 10px 10px 0 var(--tinta);
+}
+
+.folha-area {
+    position: absolute;
+    inset: var(--margem-y, 0) var(--margem-x, 0);
+    container-type: size;
+}
+
+/* Girada de 90 a imagem troca de lados, então a caixa dela troca também:
+   assim object-fit encaixa a imagem já de pé. */
+.folha-area img {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 100cqw;
+    height: 100cqh;
+    object-fit: contain;
+    transform: translate(-50%, -50%) rotate(var(--rotacao, 0deg));
+    transition: transform .35s cubic-bezier(.3, 1.5, .5, 1);
+}
+
+.folha-area img[data-deitada="true"] {
+    width: 100cqh;
+    height: 100cqw;
+}
+
+.lado {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    padding: 16px;
+}
+
+.numero {
+    margin: 0;
+    font-size: 72px;
+    font-weight: 900;
+    letter-spacing: -.06em;
+    line-height: .85;
+}
+
+.numero small {
+    font-size: 16px;
+    letter-spacing: 0;
+}
+
+.nome-arquivo {
+    margin: 0 0 6px;
+    font-size: 11px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.pagina-acoes {
-    display: flex;
-    gap: 3px;
-    margin-top: 9px;
-}
-
-.pagina-acao {
-    flex: 1;
-    height: 28px;
+.lado-acoes {
     display: grid;
-    place-items: center;
-    border: none;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--texto-fraco);
-    font-family: inherit;
-    font-size: 14px;
-    line-height: 1;
+    grid-template-columns: 52px 1fr;
+    gap: 10px;
+}
+
+.acao-larga {
+    grid-column: span 2;
+    padding: 10px;
+    border: var(--borda);
+    background: var(--creme);
+    color: var(--tinta);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 900;
+    text-align: left;
     cursor: pointer;
-    transition: background-color .15s, color .15s;
 }
 
-.pagina-acao:hover:not(:disabled) {
-    background: var(--acento-fraco);
-    color: var(--acento-forte);
+.acao-curta,
+.acao-curta + .acao-larga {
+    grid-column: span 1;
 }
 
-.pagina-acao:focus-visible {
-    outline: 2px solid var(--acento);
-    outline-offset: 1px;
+.acao-curta {
+    text-align: center;
 }
 
-.pagina-acao:disabled {
-    opacity: .28;
+.acao-larga:disabled {
+    opacity: .35;
     cursor: not-allowed;
 }
 
-/* Remover e destrutivo, entao foge do acento da funcao. */
-.pagina-acao[data-acao="remove"]:hover:not(:disabled) {
-    background: var(--erro-fundo);
-    color: var(--erro);
-}
+@media (hover: hover) {
+    .acao-larga:hover:not(:disabled) {
+        background: var(--tinta);
+        color: var(--creme);
+    }
 
-/* =============================================================
-   Opcoes da pagina
-   ============================================================= */
-
-.opcoes {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin: 18px 0 0;
-    padding: 16px 18px;
-    border: var(--borda);
-    border-radius: var(--raio-pequeno);
-}
-
-/* Em linha so quando ha largura para isso: empilhado, o fieldset nao quebra
-   feio no celular. */
-@media (min-width: 640px) {
-    .opcoes {
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 20px;
-        align-items: center;
+    .acao-remover:hover:not(:disabled) {
+        background: var(--vermelho);
+        color: var(--tinta);
     }
 }
 
-.opcoes legend {
-    padding: 0 6px;
-    color: var(--texto-fraco);
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .08em;
+/* Na geração a cena da prensa toma o lugar da página. */
+.palco-galeria.com-cena {
+    grid-template-columns: 1fr;
 }
 
-.opcao {
+.palco-galeria.com-cena .mesa,
+.palco-galeria.com-cena .lado {
+    display: none;
+}
+
+/* ---------- Fita ---------- */
+
+.trilho {
     display: flex;
-    align-items: center;
-    gap: 9px;
-    font-size: 14px;
 }
 
-.opcao label {
-    color: var(--texto-fraco);
-    white-space: nowrap;
+.fita {
+    display: flex;
+    /* Encolhe só quando transborda: assim o "+ SOLTE MAIS" encosta na
+       última página em vez de ir para a ponta. */
+    flex: 0 1 auto;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
 }
 
-.opcao select,
-.opcao input {
-    padding: 8px 10px;
-    border: 1px solid var(--borda-forte);
-    border-radius: 9px;
-    background: var(--superficie);
-    color: var(--texto);
-    font-family: inherit;
-    font-size: 14px;
+.fita-item {
+    position: relative;
+    flex: 0 0 auto;
+    border-right: var(--borda);
 }
 
-.opcao input[type="number"] {
-    width: 76px;
+.fita-item.selecionado {
+    background: var(--amarelo);
 }
 
-.opcao select:focus-visible,
-.opcao input:focus-visible {
-    outline: 2px solid var(--acento);
-    outline-offset: 1px;
-    border-color: var(--acento);
+.fita-item.alvo {
+    background: var(--mesa);
+    outline: 3px dashed var(--tinta);
+    outline-offset: -8px;
 }
 
-/* Margem nao tem efeito quando a pagina herda o tamanho da imagem. */
-.opcao input:disabled {
-    opacity: .45;
-    cursor: not-allowed;
+.fita-item.arrastando {
+    z-index: 5;
+    opacity: .7;
+    pointer-events: none;
 }
 
-/* =============================================================
-   Botao
-   ============================================================= */
+.fita.travada {
+    pointer-events: none;
+    opacity: .55;
+}
 
-.principal {
-    width: 100%;
-    margin-top: 20px;
-    padding: 14px 20px;
-    border: none;
-    border-radius: 9999px;
-    background: var(--acento-forte);
-    color: var(--acento-contraste);
-    font-size: 16px;
-    font-weight: 600;
-    font-family: inherit;
+.fita-botao {
+    position: relative;
+    display: block;
+    padding: 12px;
+    border: 0;
+    background: transparent;
     cursor: pointer;
-    transition: opacity .18s, transform .12s;
 }
 
-.principal:hover:not(:disabled) {
-    opacity: .88;
+.fita-botao:focus-visible {
+    outline-offset: -6px;
 }
 
-.principal:active:not(:disabled) {
-    transform: translateY(1px);
+.fita-numero {
+    position: absolute;
+    left: 14px;
+    top: 14px;
+    z-index: 2;
+    padding: 2px 5px;
+    background: var(--tinta);
+    color: var(--creme);
+    font-size: 11px;
+    font-weight: 900;
 }
 
-.principal:focus-visible {
-    outline: 2px solid var(--acento);
-    outline-offset: 3px;
+.fita .folha {
+    height: 104px;
+    border-width: 2px;
 }
 
-.principal:disabled {
-    opacity: .45;
-    cursor: not-allowed;
+/* ---------- "+ SOLTE MAIS" ---------- */
+
+.mais {
+    position: relative;
+    display: block;
+    flex: 0 0 150px;
+    min-height: 134px;
+    border-right: var(--borda);
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.mais-ladrilhos {
+    position: absolute;
+    inset: 0;
+}
+
+.mais-sobre {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 2;
+    transform: translate(-50%, -50%);
+    padding: 6px 10px;
+    background: var(--creme);
+    border: var(--borda);
+    box-shadow: 4px 4px 0 var(--tinta);
+    text-align: center;
+    width: max-content;
+    max-width: calc(100% - 24px);
+    pointer-events: none;
+}
+
+.mais-titulo,
+.mais-titulo-vazio {
+    display: block;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.mais-titulo-vazio {
+    display: none;
+}
+
+.mais-sobre small {
+    display: block;
+    font-size: 10px;
+}
+
+.mais.arrastando .mais-sobre {
+    background: var(--amarelo);
+}
+
+.mais:focus-within {
+    outline: 3px solid var(--azul);
+    outline-offset: -6px;
+}
+
+/* Vazia: o bloco de soltar vira o palco inteiro. */
+.galeria.vazia .palco-galeria,
+.galeria.vazia .fita {
+    display: none;
+}
+
+.galeria.vazia .mais {
+    flex: 1 1 auto;
+    height: 380px;
+    border-right: 0;
+}
+
+.galeria.vazia .mais-sobre {
+    padding: 14px 22px 12px;
+    box-shadow: var(--sombra);
+}
+
+.galeria.vazia .mais-titulo {
+    display: none;
+}
+
+.galeria.vazia .mais-titulo-vazio {
+    display: block;
+    font-size: 30px;
+    letter-spacing: -.04em;
+    line-height: 1;
+}
+
+.galeria.vazia .mais-sobre small {
+    margin-top: 6px;
+    font-size: 12px;
+}
+
+/* ---------- Celular ---------- */
+
+@media (max-width: 720px) {
+    .palco-galeria {
+        grid-template-columns: 1fr;
+    }
+
+    .mesa {
+        min-height: 300px;
+        border-right: 0;
+        border-bottom: var(--borda);
+    }
+
+    .mesa .folha {
+        height: min(250px, calc((100cqw - 54px) / var(--proporcao, .707)));
+    }
+
+    .lado {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: end;
+        gap: 10px 14px;
+    }
+
+    .numero {
+        font-size: 48px;
+    }
+
+    .nome-arquivo {
+        margin: 0;
+    }
+
+    .lado-acoes {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .acao-larga {
+        flex: 1 1 auto;
+        text-align: center;
+    }
+
+    .galeria.vazia .mais {
+        height: 300px;
+    }
+
+    .galeria.vazia .mais-titulo-vazio {
+        font-size: 24px;
+    }
 }
 
 /* =============================================================
@@ -1255,6 +1265,7 @@ a {
     .barra-preenchimento,
     .botao,
     .ladrilho svg,
+    .folha-area img,
     .prensa-bloco,
     .prensa-forma,
     .prensa-folha {

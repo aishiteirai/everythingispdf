@@ -94,6 +94,23 @@ class TestHub:
 
 
 class TestGaleria:
+    def test_titulo(self, galeria):
+        assert 'IMAGENS PARA PDF.' in galeria
+
+    def test_tem_palco_e_fita(self, galeria):
+        assert 'id="palco"' in galeria and 'id="fita"' in galeria
+
+    def test_tamanho_e_escolha_unica_com_as_opcoes_do_backend(
+        self, galeria, config_galeria
+    ):
+        valores = re.findall(
+            r'<input type="radio" name="tamanho" value="([^"]+)"', galeria
+        )
+        assert valores == [t['valor'] for t in config_galeria['tamanhos']]
+
+    def test_margem_respeita_o_teto_do_backend(self, galeria):
+        assert f'max="{imgtopdf.MARGEM_MAX_MM}"' in galeria
+
     def test_aceita_varios_arquivos(self, galeria):
         casa = re.search(r'<input type="file"[^>]*>', galeria)
         assert casa, 'input de arquivo ausente'
@@ -141,7 +158,10 @@ class TestConfiguracaoDaGaleria:
 
 
 class TestModulosDaGaleria:
-    MODULOS = ('imgtopdf.js', 'gallery.js', 'gallery-ui.js', 'gallery-send.js')
+    MODULOS = (
+        'imgtopdf.js', 'gallery.js', 'gallery-ui.js', 'gallery-send.js',
+        'press.js', 'press-state.js', 'tile-grid.js', 'tiles.js',
+    )
 
     @pytest.mark.parametrize('modulo', MODULOS)
     def test_sao_servidos(self, client, modulo):

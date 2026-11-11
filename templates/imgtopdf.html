@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
-    <title>Montar PDF de imagens</title>
+    <title>Imagens para PDF</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
 </head>
@@ -15,59 +15,97 @@
 {% set contexto = '02 · imagens' %}
 {% include '_cabecalho.html' %}
 
-<main class="tela">
+{# Sem imagens, a classe "vazia" esconde palco e fita e estica a area de
+   soltar no lugar deles. #}
+<main class="galeria vazia" id="galeria">
+<form id="formulario" novalidate>
 
-<section class="cartao cartao-largo">
-    <span class="selo" aria-hidden="true">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-             stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M4 17l4.5-4.5 3 3 3-3L20 17"/></svg>
-    </span>
-    <h1>Montar PDF de imagens</h1>
-    <p class="subtitulo">
-        Adicione imagens, ordene e gire o que precisar. Até {{ max_imagens }} imagens
-        e {{ max_mb }} MB no total.
-    </p>
+    <section class="cabeca cabeca-galeria">
+        <div>
+            <h1>IMAGENS PARA PDF.</h1>
+            <p class="cabeca-meta mono">
+                <span class="formatos" id="formatos">{{ extensoes | join(', ') }}</span>
+                <span>até {{ max_imagens }} imagens · até {{ max_mb }} MB no total · Ctrl+V cola</span>
+            </p>
+        </div>
 
-    <form id="formulario" novalidate>
-        <label class="area" id="area">
-            <svg class="area-icone" width="30" height="30" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-                 stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/>
-                <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
-            </svg>
-            <span class="area-titulo">Arraste imagens ou clique para escolher</span>
-            <span class="area-dica">Também dá para colar com Ctrl+V. Adicionar não substitui.</span>
-            <input type="file" id="entrada" name="files" multiple
+        <fieldset class="controles" id="opcoes">
+            <legend class="so-leitor">Página do PDF</legend>
+
+            <div class="controle">
+                <span class="controle-rotulo mono" id="rotulo-tamanho">PÁGINA</span>
+                <div class="segmentos" role="radiogroup" aria-labelledby="rotulo-tamanho">
+                    {% for tamanho in tamanhos %}
+                    <label class="segmento">
+                        <input type="radio" name="tamanho" value="{{ tamanho.valor }}" class="so-leitor"{% if tamanho.valor == 'a4' %} checked{% endif %}>
+                        <span>{{ tamanho.rotulo }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="controle">
+                <label class="controle-rotulo mono" for="margem">MARGEM</label>
+                <div class="segmentos">
+                    <button type="button" class="segmento-botao" data-margem="-5" aria-label="Diminuir a margem">−</button>
+                    <span class="margem-valor">
+                        <input type="number" id="margem" value="0" min="0" max="{{ margem_max }}" step="1">
+                        <span class="mono" aria-hidden="true">mm</span>
+                    </span>
+                    <button type="button" class="segmento-botao" data-margem="5" aria-label="Aumentar a margem">+</button>
+                </div>
+            </div>
+
+            <button type="submit" class="botao botao-vermelho" id="enviar" disabled>GERAR PDF</button>
+        </fieldset>
+    </section>
+
+    {# A pagina em foco, grande, com tamanho e margem reais. Na geracao a
+       cena da prensa toma o lugar dela. #}
+    <section class="palco-galeria" id="palco" aria-label="Página selecionada">
+        <div class="mesa" id="mesa">
+            <div class="folha" id="folha">
+                <div class="folha-area"><img id="folha-imagem" alt=""></div>
+            </div>
+        </div>
+
+        <div class="lado" id="lado">
+            <p class="numero" aria-live="polite">
+                <span id="numero-atual">01</span><small> de <span id="numero-total">01</span></small>
+            </p>
+            <p class="nome-arquivo mono" id="nome-arquivo"></p>
+            <div class="lado-acoes">
+                <button type="button" class="acao-larga acao-curta" data-acao="giraEsquerda"
+                        title="Girar para a esquerda" aria-label="Girar para a esquerda">↺</button>
+                <button type="button" class="acao-larga" data-acao="giraDireita"
+                        aria-label="Girar para a direita">↻ GIRAR</button>
+                <button type="button" class="acao-larga" data-acao="moveTras"
+                        aria-label="Mover para antes">← ANTES</button>
+                <button type="button" class="acao-larga" data-acao="moveFrente"
+                        aria-label="Mover para depois">→ DEPOIS</button>
+                <button type="button" class="acao-larga acao-remover" data-acao="remove"
+                        aria-label="Remover imagem">× REMOVER</button>
+            </div>
+        </div>
+
+        <div class="cena oculto" id="cena" aria-hidden="true"></div>
+    </section>
+
+    <div class="trilho">
+        {# Lista ordenada: a ordem visual e a ordem das paginas. #}
+        <ol class="fita" id="fita" aria-label="Páginas, na ordem do PDF"></ol>
+
+        <label class="area mais" id="area">
+            <span class="mais-ladrilhos" id="mais-ladrilhos" aria-hidden="true"></span>
+            <span class="mais-sobre">
+                <strong class="mais-titulo">+ SOLTE MAIS</strong>
+                <strong class="mais-titulo-vazio">SOLTE IMAGENS AQUI</strong>
+                <small class="mono">ou toque para escolher</small>
+            </span>
+            <input type="file" id="entrada" name="files" multiple class="so-leitor"
                    accept="{% for ext in extensoes %}.{{ ext }}{% if not loop.last %},{% endif %}{% endfor %}">
         </label>
-
-        <p class="formatos" id="formatos">{{ extensoes | join(', ') }}</p>
-
-        {# Lista ordenada: a ordem visual E a ordem das paginas. #}
-        <ol class="grade oculto" id="grade"></ol>
-
-        <fieldset class="opcoes oculto" id="opcoes">
-            <legend>Página</legend>
-
-            <div class="opcao">
-                <label for="tamanho">Tamanho</label>
-                <select id="tamanho">
-                    {% for tamanho in tamanhos %}
-                    <option value="{{ tamanho.valor }}">{{ tamanho.rotulo }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="opcao">
-                <label for="margem">Margem (mm)</label>
-                <input type="number" id="margem" value="0" min="0" max="{{ margem_max }}" step="1">
-            </div>
-        </fieldset>
-
-        <button type="submit" class="principal" id="enviar" disabled>Gerar PDF</button>
-    </form>
+    </div>
 
     <div class="barra oculto" id="barra" role="progressbar" aria-label="Progresso da geração"
          aria-valuemin="0" aria-valuemax="100">
@@ -75,12 +113,13 @@
     </div>
 
     <div class="recado oculto" id="recado" aria-live="polite"></div>
-</section>
+
+    <div class="acoes" id="acoes"></div>
+
+</form>
 </main>
 
 </div>
-
-
 
 {# Configuração do backend. Bloco JSON em vez de JavaScript inline: não é
    executado, então sobrevive a uma CSP sem unsafe-inline. #}

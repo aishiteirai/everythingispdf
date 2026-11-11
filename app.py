@@ -121,7 +121,7 @@ CAMINHOS_SEM_CSP = ('/apidocs', '/flasgger_static')
 # imgtopdf.TAMANHOS para o select nao poder oferecer um tamanho que a API
 # recusa -- e para faltar rotulo virar erro no import, nao opcao em branco.
 ROTULOS_DE_TAMANHO = {
-    'image': 'Tamanho da imagem',
+    'image': 'Imagem',
     'a4': 'A4',
     'letter': 'Carta',
 }
