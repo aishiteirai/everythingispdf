@@ -1248,36 +1248,3 @@ a {
     white-space: nowrap;
     border: 0;
 }
-
-/* =============================================================
-   Movimento reduzido
-
-   Nada gira, quica, bate ou desliza. Os estados só trocam.
-   ============================================================= */
-
-@media (prefers-reduced-motion: reduce) {
-    .barra.indeterminada .barra-preenchimento {
-        width: 100%;
-        animation: none;
-        opacity: .5;
-    }
-
-    .barra-preenchimento,
-    .botao,
-    .ladrilho svg,
-    .folha-area img,
-    .prensa-bloco,
-    .prensa-forma,
-    .prensa-folha {
-        transition: none;
-    }
-
-    .prensa-forma.esmaga,
-    .prensa-forma.debate {
-        animation: none;
-    }
-
-    .botao:active:not(:disabled) {
-        transform: none;
-    }
-}

@@ -187,13 +187,23 @@ class TestModulosDaGaleria:
                 f'{modulo} e importado mas nao e servido'
 
 
-class TestMovimentoReduzido:
-    def test_o_css_respeita_movimento_reduzido(self, client):
-        """Ladrilhos giram e a prensa bate; quem pediu menos movimento recebe
-        so a troca de estado."""
+class TestAnimacaoSempreLigada:
+    """Decisao de produto: as animacoes nao seguem prefers-reduced-motion.
+    Muitos computadores ligam a preferencia sem o dono saber (modo de
+    desempenho do Windows, maquina virtual, acesso remoto) e o site ficava
+    parado. Este teste impede que a regra volte sem a decisao ser revista."""
+
+    def test_o_css_nao_desliga_animacao(self, client):
         css = client.get('/static/css/estilo.css').get_data(as_text=True)
 
-        assert 'prefers-reduced-motion: reduce' in css
+        assert 'prefers-reduced-motion' not in css
+
+    @pytest.mark.parametrize('modulo', ['banner.js', 'press.js', 'tile-grid.js'])
+    def test_o_javascript_nao_consulta_a_preferencia(self, client, modulo):
+        fonte = client.get(f'/static/js/{modulo}').get_data(as_text=True)
+
+        assert 'prefers-reduced-motion' not in fonte
+        assert 'movimentoReduzido' not in fonte
 
 
 class TestMensagensDaGaleria:

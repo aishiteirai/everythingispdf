@@ -2,11 +2,15 @@
  * Banner da home: ladrilhos que giram com o ponteiro, o toque e a rolagem.
  *
  * Tudo que se mexe reage a algo. A única exceção é a vida própria — um
- * ladrilho por vez, de tempos em tempos — e ela pausa fora da tela, com a
- * aba oculta e para quem pediu menos movimento.
+ * ladrilho por vez, de tempos em tempos — e ela pausa fora da tela e com a
+ * aba oculta.
+ *
+ * As animações ignoram a preferência de menos movimento do sistema:
+ * decisão de produto, para o site não ficar parado nos computadores que
+ * ligam a preferência sem o dono saber.
  */
 
-import { criaGradeDeLadrilhos, movimentoReduzido } from './tile-grid.js';
+import { criaGradeDeLadrilhos } from './tile-grid.js';
 import { criaPersiana } from './tiles.js';
 
 /** Um ladrilho só gira de novo depois disso, senão o mouse parado treme. */
@@ -77,31 +81,29 @@ if (typeof IntersectionObserver !== 'undefined') {
     }).observe(banner);
 }
 
-if (!movimentoReduzido()) {
-    /* Rolar: as fileiras giram em cascata, como uma persiana. Descer gira
-       num sentido e subir no outro. */
-    const persiana = criaPersiana();
-    let ultimaRolagem = window.scrollY;
-    let fileira = 0;
+/* Rolar: as fileiras giram em cascata, como uma persiana. Descer gira
+   num sentido e subir no outro. */
+const persiana = criaPersiana();
+let ultimaRolagem = window.scrollY;
+let fileira = 0;
 
-    window.addEventListener('scroll', () => {
-        const delta = window.scrollY - ultimaRolagem;
-        ultimaRolagem = window.scrollY;
-        if (!visivel) return;
+window.addEventListener('scroll', () => {
+    const delta = window.scrollY - ultimaRolagem;
+    ultimaRolagem = window.scrollY;
+    if (!visivel) return;
 
-        persiana.rola(delta).forEach((sentido) => {
-            grade.fileira(fileira).forEach((celula, coluna) => {
-                grade.gira(celula, sentido, coluna * ATRASO_ENTRE_COLUNAS_MS);
-            });
-            fileira = (fileira + 1) % grade.linhas();
+    persiana.rola(delta).forEach((sentido) => {
+        grade.fileira(fileira).forEach((celula, coluna) => {
+            grade.gira(celula, sentido, coluna * ATRASO_ENTRE_COLUNAS_MS);
         });
-    }, { passive: true });
+        fileira = (fileira + 1) % grade.linhas();
+    });
+}, { passive: true });
 
-    /* Vida própria. */
-    setInterval(() => {
-        if (!visivel || document.hidden) return;
+/* Vida própria. */
+setInterval(() => {
+    if (!visivel || document.hidden) return;
 
-        const todas = grade.todas();
-        grade.gira(todas[Math.floor(Math.random() * todas.length)]);
-    }, VIDA_PROPRIA_MS);
-}
+    const todas = grade.todas();
+    grade.gira(todas[Math.floor(Math.random() * todas.length)]);
+}, VIDA_PROPRIA_MS);

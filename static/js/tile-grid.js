@@ -10,10 +10,6 @@ import { atrasoDaOnda, colunasDaGrade, marcacaoDoLadrilho, novoLadrilho } from '
 
 const SVG = 'http://www.w3.org/2000/svg';
 
-export function movimentoReduzido() {
-    return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-}
-
 /**
  * Preenche `raiz` com ladrilhos e se refaz quando ela muda de tamanho.
  *
@@ -36,7 +32,7 @@ export function criaGradeDeLadrilhos(raiz, { chanceDeForma = 1, medida = colunas
     raiz.classList.add('grade-ladrilhos');
 
     function agenda(acao, atrasoMs) {
-        if (!atrasoMs || movimentoReduzido()) {
+        if (!atrasoMs) {
             acao();
             return;
         }

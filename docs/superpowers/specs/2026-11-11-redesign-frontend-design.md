@@ -67,7 +67,10 @@ o arquivo vira uma forma, a forma é prensada e sai uma folha.
   anunciado para leitor de tela, `accept` e limites batendo com o backend,
   todo import resolvido, sintaxe do JS (`tests/js/sintaxe.test.mjs`), toda
   classe usada no JS definida no CSS.
-- **Movimento reduzido:** com `prefers-reduced-motion: reduce`, nada gira,
+- **Movimento reduzido:** *revisado depois da implementação: as animações
+  passaram a ignorar `prefers-reduced-motion`, por decisão do dono do
+  produto, porque computadores com a preferência ligada sem querer deixavam o
+  site parado. O texto abaixo é a regra original.* Com `prefers-reduced-motion: reduce`, nada gira,
   quica ou bate. Os estados só trocam.
 
 ## Protótipos de referência

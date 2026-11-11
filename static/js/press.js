@@ -6,13 +6,10 @@
  * Só desenho. Quem decide a ordem dos métodos é quem chama, seguindo
  * `transicao` de `press-state.js`. Tudo que vem do usuário — nome do
  * arquivo, mensagem — entra por textContent, nunca como HTML.
- *
- * Com movimento reduzido nada desliza, bate ou quica: cada método só aplica
- * o estado final.
  */
 
 import { COR_DA_FORMA, posicaoNaEsteira } from './press-state.js';
-import { criaGradeDeLadrilhos, movimentoReduzido } from './tile-grid.js';
+import { criaGradeDeLadrilhos } from './tile-grid.js';
 import { CREME } from './tiles.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -89,13 +86,7 @@ export function criaPrensa(palco) {
     const relogios = new Set();
     let pancadas = null;
 
-    const calmo = movimentoReduzido;
-
     function depois(acao, ms) {
-        if (calmo()) {
-            acao();
-            return;
-        }
         const relogio = setTimeout(() => {
             relogios.delete(relogio);
             acao();
@@ -137,7 +128,7 @@ export function criaPrensa(palco) {
 
     /** Reinicia uma animação de classe: tirar, forçar layout e pôr de novo. */
     function anima(alvo, classe) {
-        if (!alvo || calmo()) return;
+        if (!alvo) return;
         alvo.classList.remove(classe);
         void alvo.getBoundingClientRect();
         alvo.classList.add(classe);
@@ -202,10 +193,6 @@ export function criaPrensa(palco) {
             mostraEstado('convertendo', 'CONVERTENDO…');
             if (pancadas !== null) return;
 
-            if (calmo()) {
-                desce();
-                return;
-            }
             pancada();
             pancadas = setInterval(pancada, PANCADA_MS);
         },
@@ -225,8 +212,7 @@ export function criaPrensa(palco) {
                 folha.classList.remove('oculto');
                 // Dois quadros: a folha precisa ser pintada embaixo antes de
                 // a transição levar ela para cima.
-                if (calmo()) folha.classList.add('sobe');
-                else requestAnimationFrame(() => requestAnimationFrame(() => folha.classList.add('sobe')));
+                requestAnimationFrame(() => requestAnimationFrame(() => folha.classList.add('sobe')));
             }, 600);
 
             rotulo.textContent = texto;

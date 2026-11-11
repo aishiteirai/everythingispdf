@@ -341,8 +341,11 @@ fita embaixo tem todas as páginas na ordem do PDF. A geração usa a mesma cena
 da prensa; erro devolve a esteira intacta e, depois do sucesso, as imagens
 ficam até "NOVO PDF", para gerar de novo com outro tamanho ou margem.
 
-Sob `prefers-reduced-motion` nada gira, bate ou desliza: os estados só trocam,
-e a vida própria e a persiana do banner não ligam.
+As animações **não** seguem `prefers-reduced-motion`. Foi decisão de produto:
+muitos computadores ligam essa preferência sem o dono saber (modo de
+desempenho do Windows, máquina virtual, acesso remoto), e o site ficava
+parado neles. A vida própria do banner continua pausando fora da tela e com
+a aba oculta. Um teste trava a decisão para a regra não voltar sem revisão.
 
 **Arrasto por ponteiro.** Reordenar a fita da galeria arrastando usa
 `static/js/drag.js`, sobre Pointer Events. A galeria usava drag-and-drop HTML5,
