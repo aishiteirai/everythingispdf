@@ -8,7 +8,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { criaGaleria } from '../../static/js/gallery.js';
+import { criaGaleria, margemEmFracao, proporcaoDaFolha } from '../../static/js/gallery.js';
 
 /** Coleta as URLs criadas e revogadas, para provar que nada vaza. */
 function urlsDeTeste() {
@@ -241,4 +241,121 @@ test('remover o unico item nao tem onde focar', () => {
 
 test('id que nao existe mais e nao foi substituido nao foca nada', () => {
     assert.equal(focoDepoisDe('giraDireita', 9, lista(1, 2), lista(1, 2)), null);
+});
+
+/* ----------------------------------------------------------------
+   Selecao: a pagina em foco no palco
+   ---------------------------------------------------------------- */
+
+test('adicionar numa galeria vazia seleciona o primeiro adicionado', () => {
+    const { galeria } = galeriaCom(['a', 'b']);
+
+    assert.equal(galeria.selecionado(), idDe(galeria, 'a'));
+});
+
+test('adicionar mais nao muda a selecao', () => {
+    const { galeria } = galeriaCom(['a', 'b']);
+    galeria.seleciona(idDe(galeria, 'b'));
+
+    galeria.adiciona([arquivo('c')]);
+
+    assert.equal(galeria.selecionado(), idDe(galeria, 'b'));
+});
+
+test('remover a selecionada passa para a seguinte', () => {
+    const { galeria } = galeriaCom(['a', 'b', 'c']);
+    galeria.seleciona(idDe(galeria, 'b'));
+
+    galeria.remove(idDe(galeria, 'b'));
+
+    assert.equal(galeria.selecionado(), idDe(galeria, 'c'));
+});
+
+test('remover a ultima selecionada passa para a anterior', () => {
+    const { galeria } = galeriaCom(['a', 'b', 'c']);
+    galeria.seleciona(idDe(galeria, 'c'));
+
+    galeria.remove(idDe(galeria, 'c'));
+
+    assert.equal(galeria.selecionado(), idDe(galeria, 'b'));
+});
+
+test('remover outra que nao a selecionada mantem a selecao', () => {
+    const { galeria } = galeriaCom(['a', 'b', 'c']);
+    galeria.seleciona(idDe(galeria, 'c'));
+
+    galeria.remove(idDe(galeria, 'a'));
+
+    assert.equal(galeria.selecionado(), idDe(galeria, 'c'));
+});
+
+test('remover a unica deixa a selecao nula', () => {
+    const { galeria } = galeriaCom(['a']);
+
+    galeria.remove(idDe(galeria, 'a'));
+
+    assert.equal(galeria.selecionado(), null);
+});
+
+test('limpa zera a selecao', () => {
+    const { galeria } = galeriaCom(['a', 'b']);
+
+    galeria.limpa();
+
+    assert.equal(galeria.selecionado(), null);
+});
+
+test('depois de limpar, adicionar seleciona de novo', () => {
+    const { galeria } = galeriaCom(['a']);
+    galeria.limpa();
+
+    galeria.adiciona([arquivo('z')]);
+
+    assert.equal(galeria.selecionado(), idDe(galeria, 'z'));
+});
+
+test('seleciona id inexistente devolve false e nao muda', () => {
+    const { galeria } = galeriaCom(['a', 'b']);
+    const antes = galeria.selecionado();
+
+    assert.equal(galeria.seleciona(999), false);
+    assert.equal(galeria.selecionado(), antes);
+});
+
+test('mover e girar nao mudam a selecao', () => {
+    const { galeria } = galeriaCom(['a', 'b']);
+    const id = idDe(galeria, 'a');
+
+    galeria.move(id, 1);
+    galeria.gira(id, 90);
+
+    assert.equal(galeria.selecionado(), id);
+});
+
+/* ----------------------------------------------------------------
+   Geometria da folha
+   ---------------------------------------------------------------- */
+
+test('folha A4 e carta em pe tem proporcao fixa', () => {
+    assert.equal(proporcaoDaFolha({ tamanho: 'a4', largura: 3000, altura: 4000, rotacao: 0 }), 210 / 297);
+    assert.equal(proporcaoDaFolha({ tamanho: 'letter', largura: 1, altura: 1, rotacao: 0 }), 215.9 / 279.4);
+});
+
+test('imagem deitada deita a folha A4, como o servidor faz', () => {
+    assert.equal(proporcaoDaFolha({ tamanho: 'a4', largura: 4000, altura: 3000, rotacao: 0 }), 297 / 210);
+});
+
+test('girar 90 levanta a folha de uma imagem deitada', () => {
+    assert.equal(proporcaoDaFolha({ tamanho: 'a4', largura: 4000, altura: 3000, rotacao: 90 }), 210 / 297);
+});
+
+test('folha no tamanho da imagem segue a imagem e a rotacao', () => {
+    assert.equal(proporcaoDaFolha({ tamanho: 'image', largura: 400, altura: 300, rotacao: 0 }), 400 / 300);
+    assert.equal(proporcaoDaFolha({ tamanho: 'image', largura: 400, altura: 300, rotacao: 90 }), 300 / 400);
+});
+
+test('margem em fracao da largura e zero no tamanho da imagem', () => {
+    assert.equal(margemEmFracao(21, 'a4'), 0.1);
+    assert.ok(Math.abs(margemEmFracao(29.7, 'a4', true) - 0.1) < 1e-9);
+    assert.equal(margemEmFracao(21, 'image'), 0);
 });
