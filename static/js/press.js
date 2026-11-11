@@ -217,7 +217,7 @@ export function criaPrensa(palco) {
 
             // A última onda deixa o chão liso, e a folha sobe dele.
             grade.onda(centro(), linhaDoChao(), (celula) => {
-                grade.pinta(celula, { fundo: CREME, cor: TINTA, forma: null, rot: 0 });
+                grade.pinta(celula, { fundo: CREME, cor: TINTA, forma: null });
             }, 1.6);
 
             depois(() => {
@@ -237,7 +237,7 @@ export function criaPrensa(palco) {
             para();
             recolhe();
             grade.onda(centro(), linhaDoChao(), (celula) => {
-                grade.pinta(celula, { fundo: TINTA, cor: CREME, forma: null, rot: 0 });
+                grade.pinta(celula, { fundo: TINTA, cor: CREME, forma: null });
             }, 2);
             // A forma se debate e não achata.
             anima(forma, 'debate');

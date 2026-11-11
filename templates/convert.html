@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
-    <title>Conversor de Arquivos para PDF</title>
+    <title>Arquivos para PDF</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
 </head>
@@ -15,43 +15,23 @@
 {% set contexto = '01 · arquivos' %}
 {% include '_cabecalho.html' %}
 
-<main class="tela">
+<main>
+    <section class="cabeca">
+        <h1>ARQUIVOS PARA PDF.</h1>
+        <p class="cabeca-meta mono">
+            <span class="formatos" id="formatos">{{ extensoes | join(', ') }}</span>
+            <span>até {{ max_mb }} MB · um arquivo por vez · Ctrl+V cola</span>
+        </p>
+    </section>
 
-<section class="cartao">
-    <span class="selo" aria-hidden="true">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-             stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>
-    </span>
-    <h1>Conversor para PDF</h1>
-    <p class="subtitulo">Documentos do Office, ODF e imagens. Até {{ max_mb }} MB.</p>
-
-    <form id="formulario" novalidate>
-        <label class="area" id="area">
-            <svg class="area-icone" width="30" height="30" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-                 stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/>
-                <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
-            </svg>
-            <span class="area-titulo">Arraste um arquivo ou clique para escolher</span>
-            <span class="area-dica">Também dá para colar uma imagem com Ctrl+V</span>
-            <input type="file" id="entrada" name="file"
-                   accept="{% for ext in extensoes %}.{{ ext }}{% if not loop.last %},{% endif %}{% endfor %}">
-        </label>
-
-        <p class="formatos" id="formatos">{{ extensoes | join(', ') }}</p>
-
-        <div class="selecionado oculto" id="selecionado">
-            <div class="selecionado-info">
-                <div class="selecionado-nome" id="nome"></div>
-                <div class="selecionado-meta" id="tamanho"></div>
-            </div>
-            <button type="button" class="remover" id="remover" aria-label="Remover arquivo">&times;</button>
-        </div>
-
-        <button type="submit" class="principal" id="enviar" disabled>Converter para PDF</button>
-    </form>
+    {# O palco e a propria area de soltar. A conversao comeca sozinha quando
+       um arquivo valido chega: a cena da prensa e a resposta ao gesto. A
+       cena e montada por press.js; o convite dela e o nome acessivel do
+       campo. #}
+    <label class="area palco" id="area">
+        <input type="file" id="entrada" name="file" class="so-leitor"
+               accept="{% for ext in extensoes %}.{{ ext }}{% if not loop.last %},{% endif %}{% endfor %}">
+    </label>
 
     <div class="barra oculto" id="barra" role="progressbar" aria-label="Progresso da conversão"
          aria-valuemin="0" aria-valuemax="100">
@@ -59,12 +39,11 @@
     </div>
 
     <div class="recado oculto" id="recado" aria-live="polite"></div>
-</section>
+
+    <div class="acoes" id="acoes"></div>
 </main>
 
 </div>
-
-
 
 {# Configuração do backend. Bloco JSON em vez de JavaScript inline: não é
    executado, então sobrevive a uma CSP sem unsafe-inline. #}

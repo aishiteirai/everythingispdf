@@ -419,7 +419,8 @@ class TestSeguranca:
 
         # Regex e nao busca da palavra: comentarios citam innerHTML para dizer
         # que ele nao e usado.
-        assert not re.search(r'\.(?:innerHTML|outerHTML)\s*=|insertAdjacentHTML\(', fonte)
+        vira_html = r'\.(?:innerHTML|outerHTML)\s*=|insertAdjacentHTML\('
+        assert not re.search(vira_html, fonte)
 
 
 class TestBolinhasSairam:

@@ -108,8 +108,10 @@ export function criaGradeDeLadrilhos(raiz, { chanceDeForma = 1, medida = colunas
         }, atrasoMs);
     }
 
+    /** Troca o desenho. Sem `rot`, mantém o giro atual: voltar ao zero
+     *  faria o ladrilho desgirar na frente de quem olha. */
     function pinta(celula, ladrilho) {
-        celula.ladrilho = { ...ladrilho };
+        celula.ladrilho = { rot: celula.ladrilho.rot, ...ladrilho };
         desenha(celula);
     }
 

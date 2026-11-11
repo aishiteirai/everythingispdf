@@ -598,6 +598,76 @@ a {
 }
 
 /* =============================================================
+   Cabeça das páginas internas e ações
+
+   O título grande, e embaixo, em monoespaçada, o que a página aceita.
+   ============================================================= */
+
+.cabeca {
+    padding: 22px 24px 18px;
+    border-bottom: var(--borda);
+}
+
+.cabeca h1 {
+    font-size: clamp(38px, 9vw, 72px);
+}
+
+.cabeca-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin: 14px 0 0;
+    font-size: 12px;
+    color: var(--texto-fraco);
+}
+
+.cabeca-meta > * {
+    word-break: break-word;
+}
+
+.acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 18px;
+    padding: 18px 24px 26px;
+    border-top: var(--borda);
+}
+
+.acoes:empty {
+    display: none;
+}
+
+/* =============================================================
+   Conversor
+
+   O palco é a área de soltar: um <label> com o input dentro, então clique
+   e teclado funcionam pelo input nativo.
+   ============================================================= */
+
+.palco:focus-within {
+    outline: 3px solid var(--azul);
+    outline-offset: -6px;
+}
+
+.palco.travada {
+    cursor: progress;
+}
+
+.palco + .barra {
+    border-top: var(--borda);
+}
+
+@media (max-width: 600px) {
+    .cabeca {
+        padding: 18px 16px 14px;
+    }
+
+    .acoes {
+        padding: 16px 16px 24px;
+    }
+}
+
+/* =============================================================
    Legado
 
    Estilos das páginas antigas, de pé até cada página ganhar o layout novo.
@@ -776,7 +846,7 @@ a {
    JavaScript no meio.
    ============================================================= */
 
-.area {
+.cartao .area {
     display: block;
     border: 1.5px dashed var(--borda-forte);
     border-radius: var(--raio);
@@ -787,25 +857,25 @@ a {
     transition: border-color .18s, background-color .18s;
 }
 
-.area:hover {
+.cartao .area:hover {
     border-color: var(--acento);
     background: var(--acento-fraco);
 }
 
-.area:focus-within {
+.cartao .area:focus-within {
     border-color: var(--acento);
     outline: 2px solid var(--acento);
     outline-offset: 3px;
 }
 
-.area.arrastando {
+.cartao .area.arrastando {
     border-color: var(--acento);
     border-style: solid;
     background: var(--acento-fraco);
 }
 
 /* Fora da tela em vez de display:none, para continuar focavel. */
-.area input[type="file"] {
+.cartao .area input[type="file"] {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -813,90 +883,30 @@ a {
     pointer-events: none;
 }
 
-.area-icone {
+.cartao .area-icone {
     display: block;
     margin: 0 auto 12px;
     color: var(--acento-forte);
 }
 
-.area-titulo {
+.cartao .area-titulo {
     display: block;
     font-weight: 600;
 }
 
-.area-dica {
+.cartao .area-dica {
     display: block;
     margin-top: 5px;
     color: var(--texto-fraco);
     font-size: 14px;
 }
 
-.formatos {
+.cartao .formatos {
     margin-top: 12px;
     color: var(--texto-fraco);
     font-size: 12px;
     text-align: center;
     word-break: break-word;
-}
-
-/* =============================================================
-   Arquivo escolhido (pagina de conversao)
-   ============================================================= */
-
-.selecionado {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 14px;
-    border: var(--borda);
-    border-left: 3px solid var(--acento);
-    border-radius: var(--raio-pequeno);
-    padding: 12px 14px;
-    background: var(--superficie);
-}
-
-.selecionado-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.selecionado-nome {
-    font-weight: 600;
-    font-size: 15px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.selecionado-meta {
-    color: var(--texto-fraco);
-    font-size: 13px;
-}
-
-.remover {
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    display: grid;
-    place-items: center;
-    border: var(--borda);
-    border-radius: 9999px;
-    background: transparent;
-    color: var(--texto-fraco);
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 18px;
-    line-height: 1;
-}
-
-.remover:hover {
-    border-color: var(--erro);
-    color: var(--erro);
-}
-
-.remover:focus-visible {
-    outline: 2px solid var(--acento);
-    outline-offset: 2px;
 }
 
 /* =============================================================

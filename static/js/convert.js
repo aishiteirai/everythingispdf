@@ -1,68 +1,106 @@
 /**
- * Amarra o formulário: lê a configuração, valida, envia, mostra o resultado.
+ * Amarra a página: lê a configuração, valida, envia e conduz a cena.
+ *
+ * A conversão começa sozinha quando um arquivo válido chega — escolhido,
+ * solto ou colado. Não há botão de converter: a prensa é a resposta ao
+ * gesto. O estado segue a tabela de press-state.js.
  */
 
-import { problemaCom } from './format.js';
+import { formataTamanho, problemaCom } from './format.js';
 import { envia } from './convert-send.js';
 import { criaInterface } from './convert-ui.js';
+import { aceitaArquivo, formaDoArquivo, transicao } from './press-state.js';
 
-// Vem do backend num bloco <script type="application/json">, então o
-// formulário não pode divergir do que /api/convert aceita. Bloco JSON em vez
-// de JavaScript inline: não é executado, e sobrevive a CSP sem unsafe-inline.
+// Vem do backend num bloco <script type="application/json">, então a página
+// não pode divergir do que /api/convert aceita.
 const config = JSON.parse(document.getElementById('config-conversor').textContent);
 
+const CONVITE = 'SOLTE AQUI';
+
 const ui = criaInterface();
+const { prensa } = ui;
 
-let arquivo = null;
-let enviando = false;
+let estado = 'esperando';
 
-function seleciona(candidato) {
-    const problema = problemaCom(candidato, config);
+/** Aplica o evento se ele vale no estado atual. */
+function muda(evento) {
+    const proximo = transicao(estado, evento);
+    if (proximo) estado = proximo;
+    return proximo !== null;
+}
 
+function reinicia() {
+    if (!muda('reinicia')) return;
+
+    prensa.espera(CONVITE);
+    ui.limpaAcoes();
+    ui.limpaRecado();
+}
+
+/**
+ * Recebe um candidato. Devolve true se a conversão começou.
+ *
+ * Erro pego aqui — formato, tamanho, vazio — não passa pela cena: vira
+ * recado abaixo do palco, e o palco volta a esperar.
+ */
+function seleciona(arquivo) {
+    if (!aceitaArquivo(estado)) return false;
+
+    const problema = problemaCom(arquivo, config);
     if (problema) {
-        arquivo = null;
-        ui.escondeArquivo();
+        reinicia();
         ui.mostraErro(problema);
+        return false;
+    }
+
+    muda('escolheu');
+    ui.limpaRecado();
+    ui.limpaAcoes();
+    prensa.chegou({
+        forma: formaDoArquivo(arquivo.name),
+        rotulo: `${arquivo.name} · ${formataTamanho(arquivo.size)}`,
+    });
+
+    converte(arquivo);
+    return true;
+}
+
+function aoProgresso(pct) {
+    // null = upload acabou, agora é o LibreOffice trabalhando. Pode chegar
+    // sem nenhuma porcentagem antes, com arquivo pequeno.
+    if (pct === null) {
+        muda('servidor');
+        ui.mostraConvertendo();
+        prensa.convertendo();
         return;
     }
 
-    arquivo = candidato;
-    ui.mostraArquivo(candidato);
-    ui.limpaRecado();
+    muda('progresso');
+    ui.mostraProgresso(pct);
+    prensa.progresso(pct);
 }
 
-function limpa() {
-    arquivo = null;
-    ui.escondeArquivo();
-    ui.escondeProgresso();
-    ui.limpaRecado();
-}
-
-async function converte() {
-    if (!arquivo || enviando) return;
-
-    enviando = true;
-    ui.marcaEnviando(true, true);
-    ui.limpaRecado();
+async function converte(arquivo) {
+    ui.travaEntrada(true);
     ui.mostraProgresso(0);
 
     try {
-        const { blob, nome } = await envia({
-            arquivo,
-            maxMb: config.maxMb,
-            // null = upload acabou, agora é o LibreOffice trabalhando.
-            aoProgresso: (pct) => (pct === null ? ui.mostraConvertendo() : ui.mostraProgresso(pct)),
-        });
+        const { blob, nome } = await envia({ arquivo, maxMb: config.maxMb, aoProgresso });
 
         const url = ui.baixa(blob, nome);
-        limpa();
-        ui.mostraSucesso(url, nome);
-    } catch (erro) {
-        ui.mostraErro(erro.message);
+        muda('sucesso');
         ui.escondeProgresso();
+        prensa.pronto(`${nome} · baixando`);
+        ui.mostraFim({ url, nome });
+    } catch (erro) {
+        muda('falha');
+        ui.escondeProgresso();
+        ui.mostraErro(erro.message);
+        prensa.erro('não achatou');
+        ui.mostraTentarOutro();
     } finally {
-        enviando = false;
-        ui.marcaEnviando(false, Boolean(arquivo));
+        ui.travaEntrada(false);
+        ui.el.entrada.value = '';
     }
 }
 
@@ -70,21 +108,24 @@ async function converte() {
    Eventos
    ---------------------------------------------------------------- */
 
-ui.el.formulario.addEventListener('submit', (evento) => {
-    evento.preventDefault();
-    converte();
-});
-
 ui.el.entrada.addEventListener('change', () => {
-    if (ui.el.entrada.files.length) seleciona(ui.el.entrada.files[0]);
+    const [arquivo] = ui.el.entrada.files;
+    if (arquivo) seleciona(arquivo);
+    ui.el.entrada.value = '';
 });
 
-ui.el.remover.addEventListener('click', limpa);
+// "CONVERTER OUTRO" e "TENTAR OUTRO" voltam a esperar e já abrem o seletor.
+ui.el.acoes.addEventListener('click', (evento) => {
+    if (!evento.target.closest('#outro')) return;
+
+    reinicia();
+    ui.el.entrada.click();
+});
 
 ['dragenter', 'dragover'].forEach((tipo) => {
     ui.el.area.addEventListener(tipo, (evento) => {
         evento.preventDefault();
-        if (!enviando) ui.marcaArrastando(true);
+        if (aceitaArquivo(estado)) ui.marcaArrastando(true);
     });
 });
 
@@ -95,15 +136,13 @@ ui.el.remover.addEventListener('click', limpa);
 ui.el.area.addEventListener('drop', (evento) => {
     evento.preventDefault();
     ui.marcaArrastando(false);
-    if (enviando) return;
 
     const soltos = evento.dataTransfer?.files;
     if (!soltos?.length) return;
 
-    if (soltos.length > 1) {
+    if (seleciona(soltos[0]) && soltos.length > 1) {
         ui.mostraErro('Um arquivo por vez. Usei o primeiro.');
     }
-    seleciona(soltos[0]);
 });
 
 // Sem isso o navegador abre o arquivo soltado fora da área.
@@ -114,11 +153,11 @@ ui.el.area.addEventListener('drop', (evento) => {
 });
 
 document.addEventListener('paste', (evento) => {
-    if (enviando) return;
+    const [colado] = evento.clipboardData?.files || [];
+    if (!colado) return;
 
-    const colado = [...(evento.clipboardData?.files || [])];
-    if (colado.length) {
-        evento.preventDefault();
-        seleciona(colado[0]);
-    }
+    evento.preventDefault();
+    seleciona(colado);
 });
+
+prensa.espera(CONVITE);

@@ -169,7 +169,7 @@ class TestRotasDeApoio:
         r = client.get('/convert')
 
         assert r.status_code == 200
-        assert 'Conversor' in r.get_data(as_text=True)
+        assert 'ARQUIVOS PARA PDF.' in r.get_data(as_text=True)
 
     def test_health(self, client):
         r = client.get('/health')

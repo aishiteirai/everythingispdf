@@ -104,6 +104,23 @@ class TestArquivosEstaticos:
 
 
 class TestEstrutura:
+    def test_nao_tem_mais_botao_de_converter_nem_remover(self, pagina):
+        """A conversao comeca sozinha quando o arquivo chega."""
+        assert 'id="enviar"' not in pagina and 'id="remover"' not in pagina
+
+    def test_o_palco_e_a_area_de_soltar(self, pagina):
+        assert re.search(r'<label[^>]*id="area"[^>]*class="[^"]*palco', pagina) or \
+            re.search(r'<label[^>]*class="[^"]*palco[^"]*"[^>]*id="area"', pagina)
+
+    def test_o_campo_fica_dentro_do_palco(self, pagina):
+        """Dentro do <label>, clique e teclado abrem o seletor sem
+        JavaScript no meio."""
+        palco = re.search(r'<label[^>]*id="area"[^>]*>(.*?)</label>', pagina, re.DOTALL)
+        assert palco and 'type="file"' in palco.group(1)
+
+    def test_titulo(self, pagina):
+        assert 'ARQUIVOS PARA PDF.' in pagina
+
     def test_campo_tem_o_nome_que_a_api_espera(self, pagina):
         assert 'name="file"' in pagina
 
