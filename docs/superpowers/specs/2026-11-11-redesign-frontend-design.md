@@ -123,7 +123,7 @@ usuário durante o plano, revertendo o palpite anterior.)*
   botão "afunda" ao ser pressionado: anda na direção da sombra e a sombra
   encolhe.
 - A página é uma grade de células separadas por bordas. Os rótulos de ação
-  ("SOLTAR ↓", "BAIXAR ↓") encostam no canto da célula.
+  ("ABRIR →", "BAIXAR ↓") encostam no canto da célula.
 
 ### Ladrilhos
 
@@ -159,11 +159,10 @@ De cima para baixo:
    intercepta o ponteiro (`pointer-events: none`), para a interação com o
    banner continuar embaixo dele.
 3. **Duas células lado a lado:** "01 Arquivos" e "02 Imagens", com as extensões
-   aceitas e o limite em monoespaçada, mais um rótulo-botão no canto ("SOLTAR
-   ↓", vermelho na 01 e azul na 02). A célula inteira é o link para `/convert`
-   ou `/imgtopdf`.
-   O rótulo do canto é "ABRIR →", não "SOLTAR ↓": a home não recebe arquivo, e
-   soltar ali não faz nada. *(Decisão do redator.)*
+   aceitas e o limite em monoespaçada, mais um rótulo-botão no canto ("ABRIR
+   →", vermelho na 01 e azul na 02). A célula inteira é o link para `/convert`
+   ou `/imgtopdf`. O rótulo não é "SOLTAR ↓", como no protótipo: a home não
+   recebe arquivo, e soltar ali não faz nada. *(Decisão do redator.)*
 
 As bolinhas arremessáveis saem. Ver "O que sai".
 
