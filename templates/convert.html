@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light dark">
+    <meta name="color-scheme" content="light">
     <title>Conversor de Arquivos para PDF</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
 </head>
-<body class="tema-convert">
+<body>
 
+<div class="site">
+
+{% set contexto = '01 · arquivos' %}
 {% include '_cabecalho.html' %}
 
 <main class="tela">
@@ -58,6 +61,8 @@
     <div class="recado oculto" id="recado" aria-live="polite"></div>
 </section>
 </main>
+
+</div>
 
 
 

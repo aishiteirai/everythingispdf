@@ -184,34 +184,22 @@ class TestMensagensDaGaleria:
 # Tokens de cor, contraste e fonte
 # =============================================================
 
-TEMAS = {
-    '/': 'tema-neutro',
-    '/convert': 'tema-convert',
-    '/imgtopdf': 'tema-imgtopdf',
-}
-
 # (frente, fundo, razao minima). 4.5 para texto, 3.0 para componente grafico
 # -- o que a WCAG 2.1 AA exige de cada um.
 #
-# Sao dois tons por funcao: --acento e a bolinha e as bordas, componente
-# grafico, entao 3:1 basta; --acento-forte carrega texto e vira preenchimento
-# de botao com texto em cima, entao precisa de 4.5:1 nos dois sentidos. A cor
-# da bolinha nao aguenta texto branco -- foi a escolha de manter o tom claro.
+# Texto sobre vermelho e tinta e sobre azul e creme. O amarelo nunca carrega
+# texto, mas o par existe porque a selecao da fita e amarela com tinta por
+# cima. Vermelho e azul sobre creme sao forma e borda: 3:1 basta.
 PARES_DE_CONTRASTE = [
-    ('--texto', '--fundo', 4.5),
-    ('--texto', '--superficie', 4.5),
-    ('--texto', '--superficie-alt', 4.5),
-    ('--texto-fraco', '--superficie', 4.5),
-    ('--texto-fraco', '--superficie-alt', 4.5),
-    ('--acento', '--superficie', 3.0),
-    ('--acento', '--fundo', 3.0),
-    ('--acento-contraste', '--acento', 3.0),
-    ('--acento-forte', '--superficie', 4.5),
-    ('--acento-forte', '--fundo', 4.5),
-    ('--acento-contraste', '--acento-forte', 4.5),
-    ('--erro', '--erro-fundo', 4.5),
-    ('--sucesso', '--sucesso-fundo', 4.5),
-    ('--marca', '--superficie-alt', 4.5),
+    ('--tinta', '--creme', 4.5),
+    ('--tinta', '--mesa', 4.5),
+    ('--tinta', '--vermelho', 4.5),
+    ('--creme', '--azul', 4.5),
+    ('--tinta', '--amarelo', 4.5),
+    ('--tinta', '--erro-fundo', 4.5),
+    ('--texto-fraco', '--creme', 4.5),
+    ('--vermelho', '--creme', 3.0),
+    ('--azul', '--creme', 3.0),
 ]
 
 def _blocos(css):
@@ -224,23 +212,12 @@ def _blocos(css):
         yield casa.group(1), casa.group(2)
 
 
-def _vale_para_o_tema(seletores, tema):
-    """Bloco que nomeia algum .tema-* serve so ao tema que ele nomeia; bloco
-    que nao nomeia nenhum e base e serve a todos."""
-    if '.tema-' not in seletores:
-        return True
-
-    return f'.{tema}' in seletores
-
-
-def tokens(css, tema):
-    """Tokens em vigor para um tema, varrendo as regras na ordem do arquivo,
-    que e a ordem da cascata."""
+def tokens(css):
+    """Tokens em vigor, varrendo as regras na ordem do arquivo, que e a ordem
+    da cascata. O site tem um tema so, entao toda regra conta."""
     valores = {}
 
-    for seletores, corpo in _blocos(css):
-        if not _vale_para_o_tema(seletores, tema):
-            continue
+    for _seletores, corpo in _blocos(css):
         for nome, valor in re.findall(r'(--[\w-]+)\s*:\s*([^;]+);', corpo):
             valores[nome] = valor.strip()
 
@@ -278,37 +255,47 @@ def css_do_site(client):
 
 
 class TestContraste:
-    """Cor por função só serve se der para ler. Este teste calcula a razão de
-    contraste dos tokens em vez de confiar na palavra de quem escolheu."""
+    """Este teste calcula a razao de contraste dos tokens em vez de confiar
+    na palavra de quem escolheu."""
 
-    @pytest.mark.parametrize('tema', sorted(set(TEMAS.values())))
-    def test_todo_token_do_tema_existe(self, css_do_site, tema):
-        valores = tokens(css_do_site, tema)
+    def test_todo_token_existe(self, css_do_site):
+        valores = tokens(css_do_site)
         necessarios = {nome for par in PARES_DE_CONTRASTE for nome in par[:2]}
 
         faltando = sorted(necessarios - valores.keys())
-        assert not faltando, f'{tema} sem os tokens {faltando}'
+        assert not faltando, f'sem os tokens {faltando}'
 
-    @pytest.mark.parametrize('tema', sorted(set(TEMAS.values())))
-    def test_pares_passam_em_aa(self, css_do_site, tema):
-        valores = tokens(css_do_site, tema)
+    def test_pares_passam_em_aa(self, css_do_site):
+        valores = tokens(css_do_site)
 
         for frente, fundo, minimo in PARES_DE_CONTRASTE:
             razao = contraste(valores[frente], valores[fundo])
             assert razao >= minimo, (
-                f'{tema}: {frente} sobre {fundo} da {razao:.2f}:1, '
+                f'{frente} sobre {fundo} da {razao:.2f}:1, '
                 f'precisa de {minimo}:1'
             )
 
 
-class TestTemaPorPagina:
-    @pytest.mark.parametrize('rota, tema', sorted(TEMAS.items()))
-    def test_body_declara_o_tema_da_pagina(self, client, rota, tema):
-        pagina = client.get(rota).get_data(as_text=True)
-        corpo = re.search(r'<body([^>]*)>', pagina)
+class TestPaleta:
+    def test_a_paleta_e_a_da_spec(self, css_do_site):
+        valores = tokens(css_do_site)
+        nomes = ('--creme', '--tinta', '--vermelho', '--amarelo', '--azul', '--mesa')
 
-        assert corpo, f'{rota} sem <body>'
-        assert tema in corpo.group(1), f'{rota} sem a classe {tema}'
+        assert {k: valores[k].lower() for k in nomes} == {
+            '--creme': '#fffef9', '--tinta': '#000000', '--vermelho': '#e8452c',
+            '--amarelo': '#f2b705', '--azul': '#2453d6', '--mesa': '#e9e7e0',
+        }
+
+    @pytest.mark.parametrize('rota', ROTAS)
+    def test_declara_so_tema_claro(self, client, rota):
+        pagina = client.get(rota).get_data(as_text=True)
+
+        assert '<meta name="color-scheme" content="light">' in pagina
+
+    def test_a_fonte_cobre_o_peso_900(self, css_do_site):
+        """Os titulos sao Inter 900. Sem o peso no @font-face o navegador
+        engrossa o 700 na mao, e fica outra fonte."""
+        assert re.search(r'font-weight:\s*\d+\s+900', css_do_site)
 
 
 class TestClassesQueOJavaScriptLiga:
@@ -466,15 +453,10 @@ class TestRemocoes:
 
 
 class TestMarca:
-    def test_a_marca_usa_o_token_proprio(self, css_do_site):
-        """Vermelho da marca em token, e nao cor solta na regra, para o teste
-        de contraste alcancar."""
-        assert re.search(r'\.marca\s*\{[^}]*color:\s*var\(--marca\)', css_do_site)
-
-    def test_o_token_da_marca_e_vermelho(self, css_do_site):
-        valores = tokens(css_do_site, 'tema-neutro')
-
-        assert valores['--marca'] == '#ba1a1a'
+    def test_a_marca_usa_o_token_da_tinta(self, css_do_site):
+        """Cor em token, e nao solta na regra, para o teste de contraste
+        alcancar."""
+        assert re.search(r'\.marca\s*\{[^}]*color:\s*var\(--tinta\)', css_do_site)
 
 
 class TestArrasteUnificado:
@@ -542,12 +524,11 @@ class TestFavicon:
         assert icone, 'icone sem href'
         assert '//' not in icone.group(1)
 
-    def test_o_icone_traz_as_duas_cores_das_funcoes(self, client, css_do_site):
-        """O icone e a assinatura do produto: as duas bolinhas. Cores fora dos
-        tokens sairiam de sincronia com o site na primeira mudanca."""
-        svg = client.get('/static/favicon.svg').get_data(as_text=True)
-        tokens_convert = tokens(css_do_site, 'tema-convert')
-        tokens_imagens = tokens(css_do_site, 'tema-imgtopdf')
+    def test_o_icone_usa_a_paleta(self, client, css_do_site):
+        """Cores fora dos tokens sairiam de sincronia com o site na primeira
+        mudanca."""
+        svg = client.get('/static/favicon.svg').get_data(as_text=True).lower()
+        valores = tokens(css_do_site)
 
-        assert tokens_convert['--acento'] in svg.lower()
-        assert tokens_imagens['--acento'] in svg.lower()
+        assert valores['--vermelho'] in svg
+        assert valores['--azul'] in svg

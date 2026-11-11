@@ -1,6 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-    <!-- As duas bolinhas do hub, nas cores das duas funcoes. E a assinatura do
-         produto: um icone que diz "duas coisas viram PDF aqui". -->
-    <circle cx="11" cy="16" r="8" fill="#6790a6"/>
-    <circle cx="21" cy="16" r="8" fill="#678d58" fill-opacity="0.92"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <!-- Um ladrilho do banner: fundo creme, quarto de circulo vermelho e
+         quadrado azul. As cores sao as da paleta em estilo.css. -->
+    <rect width="24" height="24" fill="#fffef9"/>
+    <path d="M0 24 A24 24 0 0 1 24 0 L24 24Z" fill="#e8452c"/>
+    <rect x="0" y="0" width="10" height="10" fill="#2453d6"/>
+    <rect x="1" y="1" width="22" height="22" fill="none" stroke="#000000" stroke-width="2"/>
 </svg>

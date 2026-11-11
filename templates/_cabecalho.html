@@ -1,7 +1,10 @@
-{# Cabecalho de todas as paginas. A marca leva ao inicio, entao a pagina
-   interna nao precisa de um "voltar" separado. #}
+{# Faixa do topo de todas as paginas. A marca leva ao inicio, entao a pagina
+   interna nao precisa de um "voltar" separado. `contexto` diz onde se esta;
+   cada pagina define antes do include. #}
 <header class="topo">
     <div class="faixa">
         <a class="marca" href="/">everything is pdf</a>
+        <span class="faixa-contexto mono">{{ contexto }}</span>
+        <span class="faixa-fim mono" lang="pt-BR">pt-br</span>
     </div>
 </header>

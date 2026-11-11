@@ -6,14 +6,14 @@
    quando aparece um caractere fora da latin -- num nome de arquivo, por
    exemplo -- então o caso comum paga só a latin.
 
-   Os ícones são SVG inline e não uma fonte de ícones: o Material Symbols
-   traria milhares de glifos para usar meia dúzia.
+   Os arquivos são a Inter variável, com eixo wght de 100 a 900: o 900 dos
+   títulos sai do mesmo arquivo, sem download a mais.
    ============================================================= */
 
 @font-face {
     font-family: 'Inter';
     font-style: normal;
-    font-weight: 400 700;
+    font-weight: 100 900;
     font-display: swap;
     src: url('/static/fonts/inter-latin.woff2') format('woff2');
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
@@ -24,7 +24,7 @@
 @font-face {
     font-family: 'Inter';
     font-style: normal;
-    font-weight: 400 700;
+    font-weight: 100 900;
     font-display: swap;
     src: url('/static/fonts/inter-latin-ext.woff2') format('woff2');
     unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
@@ -34,71 +34,31 @@
 }
 
 /* =============================================================
-   Tokens neutros
+   Tokens
+
+   Uma paleta só: creme, tinta e as três primárias chapadas. O amarelo nunca
+   carrega texto -- é cor de forma e de seleção, com tinta por cima. Texto
+   sobre vermelho é tinta; sobre azul, creme. O teste de contraste calcula
+   cada par em vez de confiar na palavra de quem escolheu.
    ============================================================= */
 
 :root {
-    --fundo: #f4f3ee;
-    --superficie: #ffffff;
-    --superficie-alt: #faf9f4;
-    --borda: #e3e3de;
-    --borda-forte: #c3c8bb;
-    --texto: #2b3a2a;
-    --texto-fraco: #4f564a;
-    --erro: #ba1a1a;
-    --erro-fundo: #ffdad6;
-    --sucesso: #1f6b3f;
-    --sucesso-fundo: #dcf2e3;
+    --creme: #fffef9;
+    --tinta: #000000;
+    --vermelho: #e8452c;
+    --amarelo: #f2b705;
+    --azul: #2453d6;
+    --mesa: #e9e7e0;
+    --texto-fraco: #4d4b45;
+    --erro-fundo: #ffd8cc;
 
-    /* Vermelho da marca. Em token, e nao cor solta na regra, para o teste de
-       contraste alcancar: 6,13:1 sobre a faixa clara. */
-    --marca: #ba1a1a;
-    --sombra: 0 4px 24px rgba(43, 58, 42, .06);
-    --sombra-forte: 0 16px 48px rgba(43, 58, 42, .10);
+    --borda: 3px solid var(--tinta);
+    --sombra: 8px 8px 0 var(--tinta);
+    --sombra-curta: 5px 5px 0 var(--tinta);
 
-    --raio: 20px;
-    --raio-pequeno: 12px;
-    --largura-maxima: 1100px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    --largura-maxima: 1180px;
 }
-
-
-
-/* =============================================================
-   Acento por funcao
-
-   Dois tons, porque a cor da bolinha foi mantida clara de proposito:
-
-   --acento        bolinha, borda, anel de foco. Componente grafico, 3:1.
-   --acento-forte  texto e preenchimento de botao com texto em cima. 4.5:1
-                   nos dois sentidos.
-
-   O texto sobre os dois vem de --acento-contraste. O teste calcula cada par
-   nos tres temas.
-   ============================================================= */
-
-:root,
-.tema-neutro {
-    --acento: #737b70;
-    --acento-forte: #43493e;
-    --acento-fraco: #efeee9;
-    --acento-contraste: #ffffff;
-}
-
-.tema-convert {
-    --acento: #6790a6;
-    --acento-forte: #4d7083;
-    --acento-fraco: #eaf1f5;
-    --acento-contraste: #ffffff;
-}
-
-.tema-imgtopdf {
-    --acento: #678d58;
-    --acento-forte: #527146;
-    --acento-fraco: #edf3ea;
-    --acento-contraste: #ffffff;
-}
-
-
 
 /* =============================================================
    Base
@@ -111,99 +71,202 @@
 body {
     margin: 0;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    background: var(--fundo);
-    color: var(--texto);
+    background: var(--mesa);
+    color: var(--tinta);
     font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     font-size: 16px;
-    line-height: 1.6;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
 }
 
-/* Faixa de conteudo: mesma largura e mesmas margens no cabecalho, no corpo e
-   no rodape, para as tres partes alinharem. */
-.faixa {
-    width: 100%;
+/* A folha creme sobre a mesa. No celular ela encosta nas bordas: a margem
+   comeria espaço que o dedo precisa. */
+.site {
     max-width: var(--largura-maxima);
-    margin: 0 auto;
-    padding: 0 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
+    margin: 24px auto;
+    background: var(--creme);
+    border: var(--borda);
 }
 
-@media (min-width: 768px) {
-    .faixa {
-        padding: 0 64px;
+@media (max-width: 600px) {
+    .site {
+        margin: 0;
+        border-left: 0;
+        border-right: 0;
+        border-top: 0;
     }
 }
 
-/* =============================================================
-   Cabecalho
-   ============================================================= */
-
-.topo {
-    width: 100%;
-    background: var(--superficie-alt);
+h1,
+h2 {
+    margin: 0;
+    font-weight: 900;
+    letter-spacing: -.06em;
+    line-height: .86;
+    text-transform: uppercase;
 }
 
-.topo .faixa {
-    height: 88px;
+.mono {
+    font-family: var(--mono);
+}
+
+a {
+    color: inherit;
+}
+
+:focus-visible {
+    outline: 3px solid var(--azul);
+    outline-offset: 3px;
+}
+
+/* =============================================================
+   Faixa do topo
+
+   Células separadas por borda. O rótulo do meio diz onde se está; no
+   celular ele sai para a marca caber inteira.
+   ============================================================= */
+
+.faixa {
+    display: flex;
+    height: 50px;
+    border-bottom: var(--borda);
+}
+
+.faixa > * {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-right: var(--borda);
+    white-space: nowrap;
 }
 
 .marca {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -.01em;
-    color: var(--marca);
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: -.03em;
+    text-transform: uppercase;
+    color: var(--tinta);
     text-decoration: none;
 }
 
-@media (min-width: 768px) {
-    .marca {
-        font-size: 26px;
-    }
-}
-
 .marca:hover {
-    opacity: .8;
+    background: var(--tinta);
+    color: var(--creme);
 }
 
 .marca:focus-visible {
-    outline: 2px solid var(--acento);
-    outline-offset: 4px;
-    border-radius: 6px;
+    outline-offset: -6px;
 }
 
-/* =============================================================
-   Corpo
-   ============================================================= */
-
-.tela {
-    flex: 1;
-    width: 100%;
-    max-width: var(--largura-maxima);
-    margin: 0 auto;
-    padding: 64px 24px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
+.faixa-contexto {
+    font-size: 12px;
+    font-weight: 700;
 }
 
-@media (min-width: 768px) {
-    .tela {
-        padding: 80px 64px;
+.faixa-fim {
+    margin-left: auto;
+    border-right: 0;
+    border-left: var(--borda);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+@media (max-width: 600px) {
+    .faixa-contexto {
+        display: none !important;
+    }
+
+    .faixa > * {
+        padding: 0 12px;
+    }
+
+    .marca {
+        font-size: 15px;
     }
 }
 
-/* A galeria cresce para baixo; centralizar verticalmente estrangularia a
-   pagina. */
-body.pagina-alta .tela {
-    justify-content: flex-start;
+/* =============================================================
+   Botão
+
+   Cor chapada, borda, sombra dura. Pressionado ele afunda: anda na direção
+   da sombra e a sombra encolhe o mesmo tanto.
+   ============================================================= */
+
+.botao {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 18px;
+    border: var(--borda);
+    border-radius: 0;
+    box-shadow: var(--sombra);
+    background: var(--creme);
+    color: var(--tinta);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: -.01em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform .08s, box-shadow .08s;
+}
+
+.botao:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: 5px 5px 0 var(--tinta);
+}
+
+.botao:disabled {
+    cursor: not-allowed;
+    background: var(--mesa);
+    color: var(--texto-fraco);
+    box-shadow: none;
+}
+
+.botao-vermelho {
+    background: var(--vermelho);
+    color: var(--tinta);
+}
+
+.botao-azul {
+    background: var(--azul);
+    color: var(--creme);
+}
+
+.botao-creme {
+    background: var(--creme);
+    color: var(--tinta);
+}
+
+/* =============================================================
+   Legado
+
+   Estilos das páginas antigas, de pé até cada página ganhar o layout novo.
+   Os tokens antigos apontam para a paleta nova enquanto isso.
+   ============================================================= */
+
+:root {
+    --fundo: var(--mesa);
+    --superficie: var(--creme);
+    --superficie-alt: var(--creme);
+    --borda-forte: var(--tinta);
+    --texto: var(--tinta);
+    --erro: var(--tinta);
+    --sucesso: var(--tinta);
+    --sucesso-fundo: var(--creme);
+    --acento: var(--tinta);
+    --acento-forte: var(--tinta);
+    --acento-fraco: var(--mesa);
+    --acento-contraste: var(--creme);
+    --sombra-forte: none;
+    --raio: 0;
+    --raio-pequeno: 0;
+}
+
+.tela {
+    padding: 32px 24px;
 }
 
 /* =============================================================
@@ -298,7 +361,7 @@ body.pagina-alta .tela {
     width: 100%;
     max-width: 440px;
     background: var(--superficie);
-    border: 1px solid var(--borda);
+    border: var(--borda);
     border-radius: var(--raio);
     box-shadow: var(--sombra);
     padding: 22px;
@@ -428,7 +491,7 @@ body.pagina-alta .tela {
     align-items: center;
     gap: 12px;
     margin-top: 14px;
-    border: 1px solid var(--borda);
+    border: var(--borda);
     border-left: 3px solid var(--acento);
     border-radius: var(--raio-pequeno);
     padding: 12px 14px;
@@ -459,7 +522,7 @@ body.pagina-alta .tela {
     height: 32px;
     display: grid;
     place-items: center;
-    border: 1px solid var(--borda);
+    border: var(--borda);
     border-radius: 9999px;
     background: transparent;
     color: var(--texto-fraco);
@@ -497,7 +560,7 @@ body.pagina-alta .tela {
 
 .pagina {
     position: relative;
-    border: 1px solid var(--borda);
+    border: var(--borda);
     border-radius: var(--raio-pequeno);
     padding: 10px;
     background: var(--superficie);
@@ -626,7 +689,7 @@ body.pagina-alta .tela {
     gap: 12px;
     margin: 18px 0 0;
     padding: 16px 18px;
-    border: 1px solid var(--borda);
+    border: var(--borda);
     border-radius: var(--raio-pequeno);
 }
 
@@ -732,18 +795,15 @@ body.pagina-alta .tela {
    ============================================================= */
 
 .barra {
-    margin-top: 18px;
     height: 6px;
-    border-radius: 9999px;
-    background: var(--borda);
+    background: var(--mesa);
     overflow: hidden;
 }
 
 .barra-preenchimento {
     height: 100%;
     width: 0;
-    border-radius: 9999px;
-    background: var(--acento-forte);
+    background: var(--tinta);
     transition: width .15s linear;
 }
 
@@ -764,28 +824,31 @@ body.pagina-alta .tela {
 
 /* =============================================================
    Recado
+
+   Erros pegos no navegador (formato, tamanho) não passam pela cena: viram
+   texto numa faixa com borda logo abaixo dela.
    ============================================================= */
 
 .recado {
-    margin-top: 18px;
-    padding: 12px 14px;
-    border-radius: var(--raio-pequeno);
+    padding: 12px 16px;
+    border-top: var(--borda);
     font-size: 14px;
+    font-weight: 600;
 }
 
 .recado.erro {
     background: var(--erro-fundo);
-    color: var(--erro);
+    color: var(--tinta);
 }
 
 .recado.sucesso {
-    background: var(--sucesso-fundo);
-    color: var(--sucesso);
+    background: var(--creme);
+    color: var(--tinta);
 }
 
 .recado a {
     color: inherit;
-    font-weight: 600;
+    font-weight: 900;
 }
 
 /* =============================================================
@@ -796,8 +859,23 @@ body.pagina-alta .tela {
     display: none !important;
 }
 
+/* Fora da tela mas lido pelo leitor de tela e alcançável pelo teclado. */
+.so-leitor {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 /* =============================================================
    Movimento reduzido
+
+   Nada gira, quica, bate ou desliza. Os estados só trocam.
    ============================================================= */
 
 @media (prefers-reduced-motion: reduce) {
@@ -808,19 +886,11 @@ body.pagina-alta .tela {
     }
 
     .barra-preenchimento,
-    .pagina-imagem,
-    .bolinha-disco,
-    .principal,
-    .pagina-acao,
-    .area {
+    .botao {
         transition: none;
     }
 
-    .bolinha:hover .bolinha-disco {
-        transform: none;
-    }
-
-    .principal:active:not(:disabled) {
+    .botao:active:not(:disabled) {
         transform: none;
     }
 }
