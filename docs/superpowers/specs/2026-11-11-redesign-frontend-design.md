@@ -99,19 +99,12 @@ O amarelo nunca carrega texto. Ele é cor de forma e de destaque de seleção co
 texto preto por cima. Texto sobre vermelho é preto e texto sobre azul é branco.
 Os pares entram em `PARES_DE_CONTRASTE` e precisam passar em AA.
 
-### Modo escuro
+### Sem modo escuro
 
-É um tema invertido: fundo preto, linhas e texto creme, sombras duras em creme.
-As três primárias continuam iguais. Segue o padrão atual de `color-scheme:
-light dark` e de tokens em `:root` sobrescritos por
-`prefers-color-scheme: dark`.
-
-O banner, o palco da prensa, o palco da esteira e o bloco "+ SOLTE MAIS"
-**não invertem**. Eles continuam como ilhas claras (creme, preto e primárias,
-com cores fixas e não de token de tema), como folhas de papel sobre uma mesa
-escura, e mantêm a borda e a sombra dura do tema escuro em volta. Assim a
-prensa preta, a onda branca do sucesso e a onda escura do erro funcionam igual
-nos dois modos. *(Decidido com o usuário.)*
+O site continua só claro. O modo noturno foi removido de propósito no commit
+`6fc6b31`, e o teste `test_o_css_nao_tem_mais_tema_escuro` continua valendo. O
+`<meta name="color-scheme">` passa a declarar só `light`. *(Decidido com o
+usuário durante o plano, revertendo o palpite anterior.)*
 
 ### Tipografia
 
