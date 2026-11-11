@@ -321,7 +321,7 @@ class TestClassesQueOJavaScriptLiga:
     MODULOS = (
         'convert.js', 'convert-ui.js', 'feedback.js',
         'imgtopdf.js', 'gallery-ui.js',
-        'drag.js', 'banner.js', 'tile-grid.js',
+        'drag.js', 'banner.js', 'tile-grid.js', 'press.js',
     )
 
     @pytest.fixture
@@ -408,6 +408,18 @@ class TestCabecalho:
         pagina = client.get(rota).get_data(as_text=True)
 
         assert 'href="#"' not in pagina
+
+
+class TestSeguranca:
+    @pytest.mark.parametrize('modulo', ['press.js', 'gallery-ui.js', 'convert-ui.js'])
+    def test_dado_do_usuario_nunca_vira_html(self, client, modulo):
+        """Nome de arquivo como `"><img src=x onerror=alert(1)>.docx` tem de
+        aparecer como texto no rotulo da prensa, no palco e na fita."""
+        fonte = client.get(f'/static/js/{modulo}').get_data(as_text=True)
+
+        # Regex e nao busca da palavra: comentarios citam innerHTML para dizer
+        # que ele nao e usado.
+        assert not re.search(r'\.(?:innerHTML|outerHTML)\s*=|insertAdjacentHTML\(', fonte)
 
 
 class TestBolinhasSairam:

@@ -401,6 +401,203 @@ a {
 }
 
 /* =============================================================
+   Prensa
+
+   Cena da conversão sobre um chão de ladrilhos. O estado vem em
+   data-cena no palco; press.js põe as peças e as move.
+   ============================================================= */
+
+.prensa {
+    position: relative;
+    display: block;
+    height: 320px;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+}
+
+.prensa-chao {
+    position: absolute;
+    inset: 0;
+}
+
+.prensa-chao .ladrilho svg {
+    transition-duration: .4s;
+}
+
+/* O bloco preto e a haste. Recolhido, só a ponta aparece no alto. */
+.prensa-bloco {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    z-index: 4;
+    width: 150px;
+    height: 90px;
+    margin-left: -75px;
+    background: var(--tinta);
+    transform: translateY(-70px);
+    transition: transform .25s cubic-bezier(.6, 0, .4, 1);
+}
+
+.prensa-bloco::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: -400px;
+    width: 18px;
+    height: 400px;
+    margin-left: -9px;
+    background: var(--tinta);
+}
+
+.prensa-forma {
+    position: absolute;
+    z-index: 3;
+    width: 80px;
+    height: 80px;
+    transform-origin: 50% 100%;
+    transition: left .15s linear, transform .3s cubic-bezier(.6, 0, .4, 1);
+}
+
+.prensa-forma.esmaga {
+    animation: esmaga .25s cubic-bezier(.6, 0, .4, 1);
+}
+
+@keyframes esmaga {
+    50% {
+        transform: scale(1.35, .45);
+    }
+    80% {
+        transform: scale(.94, 1.08);
+    }
+}
+
+.prensa-forma.debate {
+    animation: debate .12s linear 6 alternate;
+}
+
+@keyframes debate {
+    from {
+        transform: translateX(-8px);
+    }
+    to {
+        transform: translateX(8px);
+    }
+}
+
+/* A folha: creme, sombra dura, canto dobrado. Sobe de baixo com overshoot. */
+.prensa-folha {
+    position: absolute;
+    left: 50%;
+    top: 40px;
+    z-index: 4;
+    width: 120px;
+    height: 156px;
+    margin-left: -60px;
+    background: var(--creme);
+    border: var(--borda);
+    box-shadow: var(--sombra);
+    transform: translateY(320px);
+    transition: transform .5s cubic-bezier(.3, 1.6, .5, 1);
+}
+
+.prensa-folha.sobe {
+    transform: translateY(0);
+}
+
+.prensa-folha::before {
+    content: "";
+    position: absolute;
+    right: -3px;
+    top: -3px;
+    border-left: 26px solid var(--tinta);
+    border-top: 26px solid var(--mesa);
+}
+
+.prensa-folha-marca {
+    position: absolute;
+    left: 10px;
+    bottom: 6px;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -.04em;
+}
+
+.prensa-convite {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 5;
+    transform: translate(-50%, -50%);
+    padding: 14px 22px 12px;
+    background: var(--creme);
+    border: var(--borda);
+    box-shadow: var(--sombra);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.prensa-convite-titulo {
+    display: block;
+    font-size: 30px;
+    font-weight: 900;
+    letter-spacing: -.04em;
+    line-height: 1;
+}
+
+.prensa-convite-dica {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+}
+
+.prensa-estado,
+.prensa-rotulo {
+    position: absolute;
+    z-index: 5;
+    padding: 3px 6px;
+    background: var(--creme);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.prensa-estado {
+    left: 10px;
+    top: 10px;
+    border: 2px solid var(--tinta);
+}
+
+.prensa-rotulo {
+    left: 50%;
+    bottom: 8px;
+    max-width: calc(100% - 24px);
+    transform: translateX(-50%);
+    border: 2px solid var(--tinta);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.prensa-rotulo:empty {
+    display: none;
+}
+
+/* Arrastando um arquivo por cima: o palco avisa que recebe. */
+.prensa.arrastando .prensa-convite {
+    background: var(--amarelo);
+}
+
+@media (max-width: 600px) {
+    .prensa {
+        height: 280px;
+    }
+
+    .prensa-convite-titulo {
+        font-size: 24px;
+    }
+}
+
+/* =============================================================
    Legado
 
    Estilos das páginas antigas, de pé até cada página ganhar o layout novo.
@@ -1047,8 +1244,16 @@ a {
 
     .barra-preenchimento,
     .botao,
-    .ladrilho svg {
+    .ladrilho svg,
+    .prensa-bloco,
+    .prensa-forma,
+    .prensa-folha {
         transition: none;
+    }
+
+    .prensa-forma.esmaga,
+    .prensa-forma.debate {
+        animation: none;
     }
 
     .botao:active:not(:disabled) {
