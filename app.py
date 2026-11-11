@@ -175,7 +175,15 @@ def convert_with_libreoffice(input_path, work_dir):
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('home.html')
+    # Extensoes e limites vem do backend, como nas outras paginas: a home
+    # anuncia o que a API aceita.
+    return render_template(
+        'home.html',
+        extensoes_documento=sorted(DOCUMENT_EXTENSIONS),
+        extensoes_imagem=sorted(IMAGE_EXTENSIONS),
+        max_imagens=imgtopdf.MAX_IMAGENS,
+        max_mb=MAX_CONTENT_LENGTH // (1024 * 1024),
+    )
 
 
 @app.route('/convert', methods=['GET'])

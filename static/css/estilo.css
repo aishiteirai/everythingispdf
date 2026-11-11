@@ -149,9 +149,12 @@ a {
     text-decoration: none;
 }
 
-.marca:hover {
-    background: var(--tinta);
-    color: var(--creme);
+/* Só com ponteiro que paira: no toque o :hover gruda depois do toque. */
+@media (hover: hover) {
+    .marca:hover {
+        background: var(--tinta);
+        color: var(--creme);
+    }
 }
 
 .marca:focus-visible {
@@ -238,6 +241,163 @@ a {
 .botao-creme {
     background: var(--creme);
     color: var(--tinta);
+}
+
+/* =============================================================
+   Ladrilhos
+
+   O SVG gira com overshoot. A grade é posta por tile-grid.js, que define
+   colunas e linhas no style do elemento.
+   ============================================================= */
+
+.grade-ladrilhos {
+    display: grid;
+    overflow: hidden;
+}
+
+.ladrilho {
+    position: relative;
+    overflow: hidden;
+}
+
+.ladrilho svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    transition: transform .45s cubic-bezier(.3, 1.5, .5, 1);
+}
+
+/* =============================================================
+   Home
+   ============================================================= */
+
+.banner {
+    position: relative;
+    height: 340px;
+    border-bottom: var(--borda);
+    overflow: hidden;
+    /* Deslizar na vertical rola a página; só o gesto horizontal risca. */
+    touch-action: pan-y;
+    cursor: crosshair;
+}
+
+.banner .grade-ladrilhos {
+    position: absolute;
+    inset: 0;
+}
+
+.banner-titulo {
+    position: absolute;
+    left: 24px;
+    bottom: 24px;
+    padding: 12px 18px 6px;
+    background: var(--creme);
+    border: var(--borda);
+    box-shadow: var(--sombra);
+    pointer-events: none;
+}
+
+.banner-titulo h1 {
+    font-size: clamp(44px, 17vw, 96px);
+}
+
+.banner-titulo p {
+    margin: 10px 0 6px;
+    font-size: 11px;
+}
+
+.funcoes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.funcao {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 190px;
+    padding: 18px 20px 72px;
+    color: var(--tinta);
+    text-decoration: none;
+}
+
+.funcao + .funcao {
+    border-left: var(--borda);
+}
+
+@media (hover: hover) {
+    .funcao:hover {
+        background: var(--amarelo);
+    }
+}
+
+.funcao:focus-visible {
+    outline-offset: -8px;
+}
+
+.funcao-numero {
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.funcao-titulo {
+    margin: 4px 0 8px;
+    font-size: 30px;
+    font-weight: 900;
+    letter-spacing: -.03em;
+    text-transform: uppercase;
+}
+
+.funcao-meta {
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+/* O rótulo encosta no canto da célula: só as bordas de dentro. */
+.funcao-abrir {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    border-width: 3px 0 0 3px;
+    box-shadow: none;
+    font-size: 13px;
+}
+
+@media (max-width: 600px) {
+    .banner {
+        height: 300px;
+    }
+
+    .banner-titulo {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        padding: 10px 14px 4px;
+        box-shadow: var(--sombra-curta);
+    }
+
+    .funcoes {
+        grid-template-columns: 1fr;
+    }
+
+    .funcao + .funcao {
+        border-left: 0;
+        border-top: var(--borda);
+    }
+
+    .funcao {
+        min-height: 0;
+        padding: 16px 16px 80px;
+    }
+
+    .funcao-abrir {
+        left: 0;
+        border-left: 0;
+        padding: 18px;
+        font-size: 15px;
+    }
 }
 
 /* =============================================================
@@ -886,7 +1046,8 @@ a {
     }
 
     .barra-preenchimento,
-    .botao {
+    .botao,
+    .ladrilho svg {
         transition: none;
     }
 

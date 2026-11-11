@@ -15,15 +15,38 @@
 {% set contexto = 'conversor' %}
 {% include '_cabecalho.html' %}
 
-<main class="tela">
+<main>
+    {# O titulo fica por cima da grade mas nao intercepta o ponteiro: a
+       interacao com os ladrilhos continua embaixo dele. #}
+    <section class="banner" id="banner">
+        <div class="grade-ladrilhos" aria-hidden="true"></div>
+        <div class="banner-titulo">
+            <h1>TUDO<br>VIRA PDF.</h1>
+            <p class="mono">documentos, planilhas, apresentações e imagens.</p>
+        </div>
+    </section>
+
+    {# A celula inteira e o link. O rotulo do canto e "ABRIR", nao "SOLTAR":
+       a home nao recebe arquivo. #}
     <nav class="funcoes">
-        <a class="funcao" href="/convert">arquivos para pdf</a>
-        <a class="funcao" href="/imgtopdf">imagens para pdf</a>
+        <a class="funcao" href="/convert" aria-label="Arquivos para PDF">
+            <span class="funcao-numero mono">01</span>
+            <span class="funcao-titulo">Arquivos</span>
+            <span class="funcao-meta mono">{{ extensoes_documento | join(' ') }}<br>até {{ max_mb }} MB</span>
+            <span class="botao botao-vermelho funcao-abrir" aria-hidden="true">ABRIR →</span>
+        </a>
+        <a class="funcao" href="/imgtopdf" aria-label="Imagens para PDF">
+            <span class="funcao-numero mono">02</span>
+            <span class="funcao-titulo">Imagens</span>
+            <span class="funcao-meta mono">{{ extensoes_imagem | join(' ') }} · até {{ max_imagens }} imagens<br>até {{ max_mb }} MB no total</span>
+            <span class="botao botao-azul funcao-abrir" aria-hidden="true">ABRIR →</span>
+        </a>
     </nav>
 </main>
 
 </div>
 
+<script type="module" src="{{ url_for('static', filename='js/banner.js') }}"></script>
 
 </body>
 </html>

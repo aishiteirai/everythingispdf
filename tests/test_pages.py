@@ -68,14 +68,29 @@ class TestHub:
         assert 'href="/imgtopdf"' in hub
 
     def test_carrega_so_os_modulos_que_precisa(self, hub):
-        permitidos = ()
         fontes = re.findall(r'<script[^>]*src="([^"]+)"', hub)
 
-        assert [f for f in fontes if not f.endswith(permitidos)] == []
+        assert [f.rsplit('/', 1)[-1] for f in fontes] == ['banner.js']
+
+    def test_tem_o_banner_e_o_titulo(self, hub):
+        assert 'id="banner"' in hub
+        assert 'TUDO<br>VIRA PDF.' in hub
 
     def test_nomeia_as_duas_funcoes_em_texto(self, hub):
-        assert 'arquivos para pdf' in hub
-        assert 'imagens para pdf' in hub
+        assert 'aria-label="Arquivos para PDF"' in hub
+        assert 'aria-label="Imagens para PDF"' in hub
+
+    def test_o_rotulo_e_abrir_e_nao_soltar(self, hub):
+        """A home nao recebe arquivo: "SOLTAR" prometeria o que ela nao
+        faz."""
+        assert hub.count('ABRIR →') == 2
+        assert 'SOLTAR' not in hub
+
+    def test_extensoes_e_limite_vem_do_backend(self, hub):
+        for extensao in appmod.ALLOWED_EXTENSIONS:
+            assert extensao in hub
+        assert f'{appmod.MAX_CONTENT_LENGTH // (1024 * 1024)} MB' in hub
+        assert f'até {imgtopdf.MAX_IMAGENS} imagens' in hub
 
 
 class TestGaleria:
@@ -306,7 +321,7 @@ class TestClassesQueOJavaScriptLiga:
     MODULOS = (
         'convert.js', 'convert-ui.js', 'feedback.js',
         'imgtopdf.js', 'gallery-ui.js',
-        'drag.js',
+        'drag.js', 'banner.js', 'tile-grid.js',
     )
 
     @pytest.fixture
