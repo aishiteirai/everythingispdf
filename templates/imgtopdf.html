@@ -64,29 +64,21 @@
        cena da prensa toma o lugar dela. #}
     <section class="palco-galeria" id="palco" aria-label="Página selecionada">
         <div class="mesa" id="mesa">
+            <div class="mesa-info">
+                <p class="numero" aria-live="polite">
+                    <span id="numero-atual">01</span><small> de <span id="numero-total">01</span></small>
+                </p>
+                <p class="nome-arquivo mono" id="nome-arquivo"></p>
+            </div>
             <div class="folha" id="folha">
                 <div class="folha-area"><img id="folha-imagem" alt=""></div>
             </div>
         </div>
 
-        <div class="lado" id="lado">
-            <p class="numero" aria-live="polite">
-                <span id="numero-atual">01</span><small> de <span id="numero-total">01</span></small>
-            </p>
-            <p class="nome-arquivo mono" id="nome-arquivo"></p>
-            <div class="lado-acoes">
-                <button type="button" class="acao-larga acao-curta" data-acao="giraEsquerda"
-                        title="Girar para a esquerda" aria-label="Girar para a esquerda">↺</button>
-                <button type="button" class="acao-larga" data-acao="giraDireita"
-                        aria-label="Girar para a direita">↻ GIRAR</button>
-                <button type="button" class="acao-larga" data-acao="moveTras"
-                        aria-label="Mover para antes">← ANTES</button>
-                <button type="button" class="acao-larga" data-acao="moveFrente"
-                        aria-label="Mover para depois">→ DEPOIS</button>
-                <button type="button" class="acao-larga acao-remover" data-acao="remove"
-                        aria-label="Remover imagem">× REMOVER</button>
-            </div>
-        </div>
+        {# Painel de ferramentas: preenchido por toolbox.js a partir das
+           secoes que gallery-ui.js descreve. Coluna no desktop, barra com
+           gaveta no celular. #}
+        <aside class="painel" id="painel" aria-label="Ferramentas de edição"></aside>
 
         <div class="cena oculto" id="cena" aria-hidden="true"></div>
     </section>
@@ -94,15 +86,6 @@
     <div class="trilho">
         {# Lista ordenada: a ordem visual e a ordem das paginas. #}
         <ol class="fita" id="fita" aria-label="Páginas, na ordem do PDF"></ol>
-        {# Escondido com menos de duas imagens: com uma so, e o mesmo que o
-           girar do palco. #}
-        <div class="girar-todas" id="girar-todas" hidden>
-            <button type="button" class="girar-todas-botao" data-gira-todas="-90"
-                    aria-label="Girar todas as imagens para a esquerda">↺ TODAS</button>
-            <button type="button" class="girar-todas-botao" data-gira-todas="90"
-                    aria-label="Girar todas as imagens para a direita">↻ TODAS</button>
-        </div>
-
         <label class="area mais" id="area">
             <span class="mais-ladrilhos" id="mais-ladrilhos" aria-hidden="true"></span>
             <span class="mais-sobre">

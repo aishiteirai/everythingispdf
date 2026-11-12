@@ -14,6 +14,7 @@ import { ESPERA_NO_TOQUE_MS, tornaArrastavel } from './drag.js';
 import { criaFeedback } from './feedback.js';
 import { anguloNaTela, focoDepoisDe, margemEmFracao, proporcaoDaFolha } from './gallery.js';
 import { criaPrensa } from './press.js';
+import { criaPainel } from './toolbox.js';
 import { criaGradeDeLadrilhos } from './tile-grid.js';
 import { colunasDaGrade } from './tiles.js';
 
@@ -28,14 +29,13 @@ const ELEMENTOS = {
     palco: 'palco',
     folha: 'folha',
     folhaImagem: 'folha-imagem',
-    lado: 'lado',
+    painel: 'painel',
     numeroAtual: 'numero-atual',
     numeroTotal: 'numero-total',
     nomeArquivo: 'nome-arquivo',
     cena: 'cena',
     fita: 'fita',
     maisLadrilhos: 'mais-ladrilhos',
-    girarTodas: 'girar-todas',
     barra: 'barra',
     preenchimento: 'preenchimento',
     recado: 'recado',
@@ -45,6 +45,42 @@ const ELEMENTOS = {
 const INTERVALO_POR_LADRILHO_MS = 300;
 
 const doisDigitos = (n) => String(n).padStart(2, '0');
+
+/**
+ * Ações do painel de ferramentas. As de ESTA PÁGINA têm o mesmo nome das
+ * ações que imgtopdf.js passa (giraEsquerda, moveTras...), e é por esse nome
+ * que o foco volta ao botão certo depois de redesenhar. `essencial` põe a
+ * ação na barra do celular; o resto vai para a gaveta.
+ */
+const SECOES = [
+    {
+        titulo: 'ESTA PÁGINA',
+        acoes: [
+            { acao: 'giraEsquerda', icone: 'rotate-ccw', rotulo: 'ESQUERDA',
+                descricao: 'Girar esta página para a esquerda' },
+            { acao: 'giraDireita', icone: 'rotate-cw', rotulo: 'DIREITA',
+                descricao: 'Girar esta página para a direita', essencial: true },
+            { acao: 'moveTras', icone: 'arrow-left', rotulo: 'ANTES',
+                descricao: 'Mover esta página para antes', essencial: true },
+            { acao: 'moveFrente', icone: 'arrow-right', rotulo: 'DEPOIS',
+                descricao: 'Mover esta página para depois', essencial: true },
+            { acao: 'remove', icone: 'x', rotulo: 'REMOVER',
+                descricao: 'Remover esta página', essencial: true, perigo: true },
+        ],
+    },
+    {
+        titulo: 'TODAS',
+        acoes: [
+            { acao: 'giraTodasEsquerda', icone: 'rotate-ccw', rotulo: 'ESQUERDA',
+                descricao: 'Girar todas as páginas para a esquerda' },
+            { acao: 'giraTodasDireita', icone: 'rotate-cw', rotulo: 'DIREITA',
+                descricao: 'Girar todas as páginas para a direita' },
+        ],
+    },
+];
+
+/** Ações de TODAS: não dependem da página selecionada. */
+const GIRO_DE_TODAS = { giraTodasEsquerda: -90, giraTodasDireita: 90 };
 
 /**
  * Bloco de soltar estreito na fita: 3 colunas. Esticado no palco vazio:
@@ -170,11 +206,6 @@ export function criaInterfaceDaGaleria(acoes) {
         return li;
     }
 
-    el.girarTodas.addEventListener('click', (evento) => {
-        const botao = evento.target.closest('[data-gira-todas]');
-        if (botao) acoes.giraTodas?.(Number(botao.dataset.giraTodas));
-    });
-
     el.fita.addEventListener('click', (evento) => {
         const li = evento.target.closest('[data-id]');
         if (li) acoes.seleciona?.(Number(li.dataset.id));
@@ -223,14 +254,19 @@ export function criaInterfaceDaGaleria(acoes) {
        Palco
        ---------------------------------------------------------------- */
 
-    const botoesDoLado = [...el.lado.querySelectorAll('[data-acao]')];
+    const painel = criaPainel(el.painel, {
+        secoes: SECOES,
+        aoAcionar(acao) {
+            if (acao in GIRO_DE_TODAS) {
+                // O botão não é destruído e não muda de estado: o foco fica.
+                acoes.giraTodas?.(GIRO_DE_TODAS[acao]);
+                return;
+            }
+            if (selecionadoAtual === null) return;
 
-    el.lado.addEventListener('click', (evento) => {
-        const alvo = evento.target.closest('[data-acao]');
-        if (!alvo || selecionadoAtual === null) return;
-
-        ultimaAcao = { id: selecionadoAtual, acao: alvo.dataset.acao };
-        acoes[alvo.dataset.acao]?.(selecionadoAtual);
+            ultimaAcao = { id: selecionadoAtual, acao };
+            acoes[acao]?.(selecionadoAtual);
+        },
     });
 
     function desenhaPalco(itens, selecionado) {
@@ -251,16 +287,14 @@ export function criaInterfaceDaGaleria(acoes) {
         el.nomeArquivo.textContent = item.arquivo.name;
         el.nomeArquivo.title = item.arquivo.name;
 
-        botoesDoLado.forEach((botao) => {
-            const acao = botao.dataset.acao;
-            botao.disabled =
-                (acao === 'moveTras' && indice === 0) ||
-                (acao === 'moveFrente' && indice === itens.length - 1);
-        });
+        painel.habilita('moveTras', indice > 0);
+        painel.habilita('moveFrente', indice < itens.length - 1);
+        // Com uma imagem só, girar todas é o mesmo que girar a do palco.
+        Object.keys(GIRO_DE_TODAS).forEach((acao) => painel.habilita(acao, itens.length > 1));
     }
 
     /**
-     * Devolve o foco depois de uma ação. Os botões do palco não são
+     * Devolve o foco depois de uma ação. Os botões do painel não são
      * destruídos, mas ANTES e DEPOIS ficam desabilitados nos extremos, e
      * remover troca a página: focoDepoisDe decide o destino.
      */
@@ -269,7 +303,7 @@ export function criaInterfaceDaGaleria(acoes) {
             el.entrada.focus();
             return;
         }
-        el.lado.querySelector(`[data-acao="${destino.acao}"]`)?.focus();
+        painel.foca(destino.acao);
     }
 
     /* ----------------------------------------------------------------
@@ -304,8 +338,6 @@ export function criaInterfaceDaGaleria(acoes) {
             selecionadoAtual = selecionado;
 
             el.galeria.classList.toggle('vazia', itens.length === 0);
-            // Com uma imagem só, girar todas é o mesmo que girar a do palco.
-            el.girarTodas.hidden = itens.length < 2;
             el.fita.replaceChildren(
                 ...itens.map((item, indice) => {
                     const li = itemDaFita(item, indice, item.id === selecionado);
@@ -348,9 +380,7 @@ export function criaInterfaceDaGaleria(acoes) {
             el.opcoes.disabled = enviando;
             el.fita.classList.toggle('travada', enviando);
             el.entrada.disabled = enviando;
-            el.girarTodas.querySelectorAll('button').forEach((botao) => {
-                botao.disabled = enviando;
-            });
+            painel.trava(enviando);
         },
 
         marcaArrastando(arrastando) {

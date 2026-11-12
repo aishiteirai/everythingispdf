@@ -97,10 +97,12 @@ class TestGaleria:
     def test_titulo(self, galeria):
         assert 'IMAGENS PARA PDF.' in galeria
 
-    def test_tem_girar_todas_nos_dois_sentidos(self, galeria):
-        sentidos = re.findall(r'<button[^>]*data-gira-todas="(-?\d+)"', galeria)
-
-        assert sentidos == ['-90', '90']
+    def test_as_acoes_ficam_num_painel_so(self, galeria):
+        """Os botões de edição moravam em dois lugares: a lateral do palco e a
+        fita. Agora o painel de ferramentas junta tudo."""
+        assert 'id="painel"' in galeria
+        assert 'data-gira-todas' not in galeria
+        assert 'data-acao=' not in galeria, 'botão de ação fora do painel'
 
     def test_tem_palco_e_fita(self, galeria):
         assert 'id="palco"' in galeria and 'id="fita"' in galeria
@@ -166,6 +168,7 @@ class TestModulosDaGaleria:
     MODULOS = (
         'imgtopdf.js', 'gallery.js', 'gallery-ui.js', 'gallery-send.js',
         'press.js', 'press-state.js', 'tile-grid.js', 'tiles.js',
+        'toolbox.js', 'toolbox-state.js', 'icons.js',
     )
 
     @pytest.mark.parametrize('modulo', MODULOS)
@@ -362,6 +365,7 @@ class TestClassesQueOJavaScriptLiga:
         'convert.js', 'convert-ui.js', 'feedback.js',
         'imgtopdf.js', 'gallery-ui.js',
         'drag.js', 'banner.js', 'tile-grid.js', 'press.js',
+        'toolbox.js', 'icons.js',
     )
 
     @pytest.fixture
@@ -451,7 +455,9 @@ class TestCabecalho:
 
 
 class TestSeguranca:
-    @pytest.mark.parametrize('modulo', ['press.js', 'gallery-ui.js', 'convert-ui.js'])
+    @pytest.mark.parametrize(
+        'modulo', ['press.js', 'gallery-ui.js', 'convert-ui.js', 'toolbox.js']
+    )
     def test_dado_do_usuario_nunca_vira_html(self, client, modulo):
         """Nome de arquivo como `"><img src=x onerror=alert(1)>.docx` tem de
         aparecer como texto no rotulo da prensa, no palco e na fita."""
@@ -600,3 +606,47 @@ class TestFavicon:
 
         assert valores['--vermelho'] in svg
         assert valores['--azul'] in svg
+
+
+class TestIcones:
+    """Os ícones vêm do Lucide, hospedado aqui: CDN quebraria a CSP."""
+
+    @pytest.fixture
+    def sprite(self, client):
+        resposta = client.get('/static/icons/lucide.svg')
+        assert resposta.status_code == 200
+        return resposta.get_data(as_text=True)
+
+    def test_a_licenca_acompanha_o_sprite(self, client):
+        resposta = client.get('/static/icons/lucide-LICENSE.txt')
+
+        assert resposta.status_code == 200
+        assert 'ISC License' in resposta.get_data(as_text=True)
+
+    def test_todo_icone_usado_existe_no_sprite(self, client, sprite):
+        """Um nome errado vira botão vazio, sem erro nenhum no console."""
+        fontes = ''.join(
+            client.get(f'/static/js/{modulo}').get_data(as_text=True)
+            for modulo in ('gallery-ui.js', 'toolbox.js')
+        )
+        usados = set(re.findall(r"icone(?::|\()\s*'([\w-]+)'", fontes))
+        assert usados, 'nenhum ícone encontrado'
+
+        existentes = set(re.findall(r'<symbol id="([\w-]+)"', sprite))
+        faltando = sorted(usados - existentes)
+        assert not faltando, f'ícones fora do sprite: {faltando}'
+
+    def test_o_sprite_so_tem_desenho(self, sprite):
+        assert not re.search(r'<script|\son\w+=', sprite)
+
+    # Por escape: o x de multiplicação literal no fonte confunde quem lê.
+    SETAS_DE_TEXTO = '[\u21ba\u21bb\u2190\u2192\u00d7\u22ef]'  # ↺ ↻ ← → x ⋯
+
+    @pytest.mark.parametrize('arquivo', ['js/gallery-ui.js', 'js/toolbox.js'])
+    def test_setas_sao_icones_e_nao_caracteres(self, client, arquivo):
+        fonte = client.get(f'/static/{arquivo}').get_data(as_text=True)
+
+        assert not re.search(self.SETAS_DE_TEXTO, fonte)
+
+    def test_a_pagina_de_imagens_nao_usa_setas_de_texto(self, galeria):
+        assert not re.search(self.SETAS_DE_TEXTO, galeria)

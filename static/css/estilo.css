@@ -677,8 +677,8 @@ a {
    Imagens: esteira
 
    Palco com a página selecionada em tamanho real sobre a mesa
-   quadriculada; ao lado, o número e os botões. Embaixo, a fita com todas as
-   páginas e o bloco "+ SOLTE MAIS".
+   quadriculada, com o número no canto; ao lado, o painel de ferramentas.
+   Embaixo, a fita com todas as páginas e o bloco "+ SOLTE MAIS".
    ============================================================= */
 
 .cabeca-galeria {
@@ -804,11 +804,12 @@ a {
 
 .palco-galeria {
     display: grid;
-    grid-template-columns: 1fr 230px;
+    grid-template-columns: 1fr 210px;
     border-bottom: var(--borda);
 }
 
 .mesa {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -864,17 +865,18 @@ a {
     height: 100cqw;
 }
 
-.lado {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-width: 0;
-    padding: 16px;
+/* Número e nome no canto da mesa, por cima da quadrícula. */
+.mesa-info {
+    position: absolute;
+    left: 16px;
+    top: 14px;
+    right: 16px;
+    pointer-events: none;
 }
 
 .numero {
     margin: 0;
-    font-size: 72px;
+    font-size: 64px;
     font-weight: 900;
     letter-spacing: -.06em;
     line-height: .85;
@@ -886,23 +888,58 @@ a {
 }
 
 .nome-arquivo {
-    margin: 0 0 6px;
+    max-width: 40%;
+    margin: 6px 0 0;
     font-size: 11px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.lado-acoes {
-    display: grid;
-    grid-template-columns: 52px 1fr;
-    gap: 10px;
+/* ---------- Painel de ferramentas (toolbox.js) ----------
+
+   Duas versões no DOM: a coluna de seções no desktop, a barra com gaveta no
+   celular. O CSS mostra uma ou outra. */
+
+.icone {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
-.acao-larga {
-    grid-column: span 2;
-    padding: 10px;
-    border: var(--borda);
+.painel {
+    min-width: 0;
+}
+
+.painel-celular {
+    display: none;
+}
+
+.painel-titulo {
+    margin: 0;
+    padding: 6px 10px;
+    background: var(--tinta);
+    color: var(--creme);
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+}
+
+.painel-botao,
+.painel-mais {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 12px;
+    border: 0;
+    border-bottom: var(--borda);
     background: var(--creme);
     color: var(--tinta);
     font-family: var(--mono);
@@ -912,29 +949,117 @@ a {
     cursor: pointer;
 }
 
-.acao-curta,
-.acao-curta + .acao-larga {
-    grid-column: span 1;
+.painel-botao[data-perigo="true"] {
+    background: var(--vermelho);
 }
 
-.acao-curta {
-    text-align: center;
-}
-
-.acao-larga:disabled {
-    opacity: .35;
+.painel-botao:disabled,
+.painel-mais:disabled {
+    color: var(--texto-fraco);
+    opacity: .4;
     cursor: not-allowed;
 }
 
+.painel-botao:focus-visible,
+.painel-mais:focus-visible {
+    outline: 3px solid var(--azul);
+    outline-offset: -6px;
+}
+
 @media (hover: hover) {
-    .acao-larga:hover:not(:disabled) {
+    .painel-botao:hover:not(:disabled),
+    .painel-mais:hover:not(:disabled) {
+        background: var(--tinta);
+        color: var(--creme);
+    }
+}
+
+.painel-rotulo {
+    white-space: nowrap;
+}
+
+.painel-secao-curta {
+    margin-left: auto;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--texto-fraco);
+}
+
+/* Celular: barra presa na base da tela, ao alcance do polegar, e a gaveta
+   abre logo acima dela. */
+@media (max-width: 720px) {
+    .painel-secoes {
+        display: none;
+    }
+
+    .painel-celular {
+        display: block;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 20;
+    }
+
+    .painel-barra {
+        display: flex;
+        border-top: var(--borda);
+        background: var(--creme);
+    }
+
+    .painel-barra .painel-botao,
+    .painel-barra .painel-mais {
+        flex: 1;
+        justify-content: center;
+        height: 52px;
+        padding: 0;
+        border-bottom: 0;
+        border-right: var(--borda);
+    }
+
+    .painel-barra > :last-child {
+        border-right: 0;
+    }
+
+    .painel-mais.aberto {
         background: var(--tinta);
         color: var(--creme);
     }
 
-    .acao-remover:hover:not(:disabled) {
-        background: var(--vermelho);
-        color: var(--tinta);
+    .painel-gaveta {
+        border-top: var(--borda);
+        background: var(--creme);
+        box-shadow: 0 -6px 0 rgba(0, 0, 0, .12);
+    }
+
+    .painel-gaveta .painel-botao {
+        padding: 14px 16px;
+    }
+
+    .painel-gaveta .painel-botao:last-child {
+        border-bottom: 0;
+    }
+
+    /* A barra fixa cobriria o fim da página. */
+    .galeria:not(.vazia) {
+        padding-bottom: 55px;
+    }
+
+    .galeria.vazia .painel-celular,
+    .palco-galeria.com-cena .painel-celular {
+        display: none;
+    }
+
+    .mesa {
+        padding-top: 70px;
+    }
+
+    .numero {
+        font-size: 40px;
+    }
+
+    .nome-arquivo {
+        max-width: 60%;
     }
 }
 
@@ -944,7 +1069,7 @@ a {
 }
 
 .palco-galeria.com-cena .mesa,
-.palco-galeria.com-cena .lado {
+.palco-galeria.com-cena .painel {
     display: none;
 }
 
@@ -1022,78 +1147,6 @@ a {
 .fita .folha {
     height: 104px;
     border-width: 2px;
-}
-
-/* ---------- Girar todas ---------- */
-
-.girar-todas {
-    display: flex;
-    flex: 0 0 auto;
-    flex-direction: column;
-    border-right: var(--borda);
-}
-
-/* O display do bloco venceria o atributo hidden. */
-.girar-todas[hidden] {
-    display: none;
-}
-
-.girar-todas-botao {
-    flex: 1;
-    padding: 10px 14px;
-    border: 0;
-    background: var(--creme);
-    color: var(--tinta);
-    font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 900;
-    white-space: nowrap;
-    cursor: pointer;
-}
-
-.girar-todas-botao + .girar-todas-botao {
-    border-top: var(--borda);
-}
-
-.girar-todas-botao:disabled {
-    opacity: .35;
-    cursor: not-allowed;
-}
-
-@media (hover: hover) {
-    .girar-todas-botao:hover:not(:disabled) {
-        background: var(--tinta);
-        color: var(--creme);
-    }
-}
-
-/* Celular: os dois botões viram uma linha acima da fita, senão espremem as
-   miniaturas entre eles e o "+ SOLTE MAIS". Grade em vez de flex com wrap:
-   a fita encolhe dentro da sua coluna em vez de quebrar a linha. */
-@media (max-width: 600px) {
-    /* Só com imagens: vazia, a área de soltar estica sozinha no flex. */
-    .galeria:not(.vazia) .trilho {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-    }
-
-    .girar-todas {
-        order: -1;
-        grid-column: 1 / -1;
-        flex-direction: row;
-        border-right: 0;
-        border-bottom: var(--borda);
-    }
-
-    .girar-todas-botao + .girar-todas-botao {
-        border-top: 0;
-        border-left: var(--borda);
-    }
-
-    /* Na grade, o "+ SOLTE MAIS" precisa da largura dita, não do flex-basis. */
-    .galeria:not(.vazia) .mais {
-        width: 150px;
-    }
 }
 
 /* ---------- "+ SOLTE MAIS" ---------- */
@@ -1202,32 +1255,6 @@ a {
 
     .mesa .folha {
         height: min(250px, calc((100cqw - 54px) / var(--proporcao, .707)));
-    }
-
-    .lado {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        align-items: end;
-        gap: 10px 14px;
-    }
-
-    .numero {
-        font-size: 48px;
-    }
-
-    .nome-arquivo {
-        margin: 0;
-    }
-
-    .lado-acoes {
-        grid-column: 1 / -1;
-        display: flex;
-        flex-wrap: wrap;
-    }
-
-    .acao-larga {
-        flex: 1 1 auto;
-        text-align: center;
     }
 
     .galeria.vazia .mais {
