@@ -2,7 +2,8 @@
  * Painel de ferramentas: todas as ações de edição num lugar só.
  *
  * Desktop: uma coluna com seções ("ESTA PÁGINA", "TODAS"), cada botão com
- * ícone e rótulo escrito. Celular: uma barra na base da tela com as ações
+ * ícone e rótulo escrito. Seção de passos ("POSIÇÃO") é um valor entre dois
+ * botões, como "‹ 02 / 03 ›". Celular: uma barra na base da tela com as ações
  * essenciais, só ícone, e um botão "mais" que abre uma gaveta com o resto.
  * As duas versões estão sempre no DOM e o CSS mostra uma ou outra.
  *
@@ -42,9 +43,24 @@ function botao({ acao, icone: nome, rotulo, descricao, perigo }, { comRotulo, se
     return elemento;
 }
 
+/** "‹ valor ›": o valor fica entre os dois botões e é atualizado por id. */
+function passos(secao) {
+    const [menos, mais] = secao.acoes;
+
+    const grupo = document.createElement('div');
+    grupo.className = 'painel-passos';
+
+    const valor = document.createElement('span');
+    valor.className = 'painel-valor';
+    valor.dataset.valor = secao.id;
+
+    grupo.append(botao(menos, { comRotulo: false }), valor, botao(mais, { comRotulo: false }));
+    return grupo;
+}
+
 export function criaPainel(raiz, { secoes, aoAcionar }) {
     validaSecoes(secoes);
-    const { essenciais, gaveta } = divideAcoes(secoes);
+    const { barra: daBarra, gaveta } = divideAcoes(secoes);
 
     sequencia += 1;
     const idDaGaveta = `painel-gaveta-${sequencia}`;
@@ -54,15 +70,28 @@ export function criaPainel(raiz, { secoes, aoAcionar }) {
     const colunas = document.createElement('div');
     colunas.className = 'painel-secoes';
 
-    secoes.forEach(({ titulo, acoes }) => {
+    secoes.forEach((descrita) => {
         const secao = document.createElement('section');
         secao.className = 'painel-secao';
 
         const cabecalho = document.createElement('h2');
         cabecalho.className = 'painel-titulo';
-        cabecalho.textContent = titulo;
+        cabecalho.textContent = descrita.titulo;
+        secao.append(cabecalho);
 
-        secao.append(cabecalho, ...acoes.map((acao) => botao(acao, { comRotulo: true })));
+        if (descrita.passos) {
+            secao.append(passos(descrita));
+        } else {
+            secao.append(...descrita.acoes.map((acao) => botao(acao, { comRotulo: true })));
+        }
+
+        if (descrita.dica) {
+            const dica = document.createElement('p');
+            dica.className = 'painel-dica';
+            dica.textContent = descrita.dica;
+            secao.append(dica);
+        }
+
         colunas.append(secao);
     });
 
@@ -70,7 +99,9 @@ export function criaPainel(raiz, { secoes, aoAcionar }) {
 
     const barra = document.createElement('div');
     barra.className = 'painel-barra';
-    barra.append(...essenciais.map((acao) => botao(acao, { comRotulo: false })));
+    barra.append(...daBarra.map((item) => (
+        item.tipo === 'passos' ? passos(item.secao) : botao(item.acao, { comRotulo: false })
+    )));
 
     const caixaDaGaveta = document.createElement('div');
     caixaDaGaveta.className = 'painel-gaveta';
@@ -148,6 +179,13 @@ export function criaPainel(raiz, { secoes, aoAcionar }) {
 
     return {
         el: raiz,
+
+        /** Texto entre os botões de uma seção de passos, nas duas versões. */
+        mostraValor(id, texto) {
+            raiz.querySelectorAll(`[data-valor="${id}"]`).forEach((elemento) => {
+                elemento.textContent = texto;
+            });
+        },
 
         /** Liga ou desliga uma ação, nas duas versões. */
         habilita(acao, habilitada) {

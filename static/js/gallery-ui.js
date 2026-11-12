@@ -13,6 +13,7 @@
 import { ESPERA_NO_TOQUE_MS, tornaArrastavel } from './drag.js';
 import { criaFeedback } from './feedback.js';
 import { anguloNaTela, focoDepoisDe, margemEmFracao, proporcaoDaFolha } from './gallery.js';
+import { icone } from './icons.js';
 import { criaPrensa } from './press.js';
 import { criaPainel } from './toolbox.js';
 import { criaGradeDeLadrilhos } from './tile-grid.js';
@@ -54,16 +55,27 @@ const doisDigitos = (n) => String(n).padStart(2, '0');
  */
 const SECOES = [
     {
+        // Onde a página está e para onde ela vai: o valor "02 / 03" entre as
+        // setas diz que a página tem lugar na ordem e pode trocar de lugar.
+        id: 'posicao',
+        titulo: 'POSIÇÃO',
+        passos: true,
+        essencial: true,
+        dica: 'ou arraste na fita',
+        acoes: [
+            { acao: 'moveTras', icone: 'chevron-left', rotulo: 'ESQUERDA',
+                descricao: 'Mover esta página uma posição para a esquerda' },
+            { acao: 'moveFrente', icone: 'chevron-right', rotulo: 'DIREITA',
+                descricao: 'Mover esta página uma posição para a direita' },
+        ],
+    },
+    {
         titulo: 'ESTA PÁGINA',
         acoes: [
             { acao: 'giraEsquerda', icone: 'rotate-ccw', rotulo: 'ESQUERDA',
                 descricao: 'Girar esta página para a esquerda' },
             { acao: 'giraDireita', icone: 'rotate-cw', rotulo: 'DIREITA',
                 descricao: 'Girar esta página para a direita', essencial: true },
-            { acao: 'moveTras', icone: 'arrow-left', rotulo: 'ANTES',
-                descricao: 'Mover esta página para antes', essencial: true },
-            { acao: 'moveFrente', icone: 'arrow-right', rotulo: 'DEPOIS',
-                descricao: 'Mover esta página para depois', essencial: true },
             { acao: 'remove', icone: 'x', rotulo: 'REMOVER',
                 descricao: 'Remover esta página', essencial: true, perigo: true },
         ],
@@ -201,7 +213,12 @@ export function criaInterfaceDaGaleria(acoes) {
             }));
         }
 
-        botao.append(numero, folha);
+        // Alça: diz que a miniatura pode ser arrastada para mudar de lugar.
+        const alca = document.createElement('span');
+        alca.className = 'fita-alca';
+        alca.append(icone('grip-vertical'));
+
+        botao.append(numero, alca, folha);
         li.append(botao);
         return li;
     }
@@ -287,6 +304,7 @@ export function criaInterfaceDaGaleria(acoes) {
         el.nomeArquivo.textContent = item.arquivo.name;
         el.nomeArquivo.title = item.arquivo.name;
 
+        painel.mostraValor('posicao', `${doisDigitos(indice + 1)} / ${doisDigitos(itens.length)}`);
         painel.habilita('moveTras', indice > 0);
         painel.habilita('moveFrente', indice < itens.length - 1);
         // Com uma imagem só, girar todas é o mesmo que girar a do palco.

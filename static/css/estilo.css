@@ -811,6 +811,7 @@ a {
 .mesa {
     position: relative;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 400px;
@@ -865,18 +866,22 @@ a {
     height: 100cqw;
 }
 
-/* Número e nome no canto da mesa, por cima da quadrícula. */
+/* Número e nome numa linha própria no topo da mesa, e não por cima dela:
+   nome comprido passava por baixo da folha. Corta com reticências; o nome
+   inteiro fica no title. */
 .mesa-info {
-    position: absolute;
-    left: 16px;
-    top: 14px;
-    right: 16px;
-    pointer-events: none;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    align-self: stretch;
+    min-width: 0;
+    margin-bottom: 18px;
 }
 
 .numero {
+    flex: 0 0 auto;
     margin: 0;
-    font-size: 64px;
+    font-size: 56px;
     font-weight: 900;
     letter-spacing: -.06em;
     line-height: .85;
@@ -888,8 +893,9 @@ a {
 }
 
 .nome-arquivo {
-    max-width: 40%;
-    margin: 6px 0 0;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
     font-size: 11px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -974,6 +980,48 @@ a {
     }
 }
 
+.painel-passos {
+    display: flex;
+    align-items: stretch;
+    border-bottom: var(--borda);
+}
+
+.painel-passos .painel-botao {
+    flex: 0 0 auto;
+    width: 48px;
+    justify-content: center;
+    padding: 12px 0;
+    border-bottom: 0;
+}
+
+.painel-passos .painel-botao:first-child {
+    border-right: var(--borda);
+}
+
+.painel-passos .painel-botao:last-child {
+    border-left: var(--borda);
+}
+
+.painel-valor {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -.03em;
+    white-space: nowrap;
+}
+
+.painel-dica {
+    margin: 0;
+    padding: 6px 10px;
+    border-bottom: var(--borda);
+    color: var(--texto-fraco);
+    font-family: var(--mono);
+    font-size: 10px;
+}
+
 .painel-rotulo {
     white-space: nowrap;
 }
@@ -1021,6 +1069,26 @@ a {
         border-right: 0;
     }
 
+    .painel-barra .painel-passos {
+        flex: 2.4;
+        border-bottom: 0;
+        border-right: var(--borda);
+    }
+
+    .painel-barra .painel-passos .painel-botao {
+        flex: 0 0 44px;
+        width: 44px;
+    }
+
+    /* O grupo já tem a borda da direita. */
+    .painel-barra .painel-passos .painel-botao:last-child {
+        border-right: 0;
+    }
+
+    .painel-barra .painel-valor {
+        font-size: 15px;
+    }
+
     .painel-mais.aberto {
         background: var(--tinta);
         color: var(--creme);
@@ -1050,16 +1118,8 @@ a {
         display: none;
     }
 
-    .mesa {
-        padding-top: 70px;
-    }
-
     .numero {
         font-size: 40px;
-    }
-
-    .nome-arquivo {
-        max-width: 60%;
     }
 }
 
@@ -1142,6 +1202,22 @@ a {
     color: var(--creme);
     font-size: 11px;
     font-weight: 900;
+}
+
+.fita-alca {
+    position: absolute;
+    right: 14px;
+    top: 14px;
+    z-index: 2;
+    display: flex;
+    padding: 2px;
+    background: var(--creme);
+    border: 2px solid var(--tinta);
+}
+
+.fita-alca .icone {
+    width: 14px;
+    height: 14px;
 }
 
 .fita .folha {
