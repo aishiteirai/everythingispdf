@@ -815,7 +815,7 @@ a {
     align-items: center;
     justify-content: center;
     min-height: 400px;
-    padding: 22px 32px 32px 22px;
+    padding: 12px 32px 32px 22px;
     border-right: var(--borda);
     background-color: var(--creme);
     background-image:
@@ -875,20 +875,21 @@ a {
     gap: 14px;
     align-self: stretch;
     min-width: 0;
-    margin-bottom: 18px;
+    margin-bottom: 10px;
 }
 
+/* Pequeno: a posição grande já está no seletor do painel. */
 .numero {
     flex: 0 0 auto;
     margin: 0;
-    font-size: 56px;
+    font-size: 18px;
     font-weight: 900;
-    letter-spacing: -.06em;
-    line-height: .85;
+    letter-spacing: -.03em;
+    line-height: 1;
 }
 
 .numero small {
-    font-size: 16px;
+    font-size: 12px;
     letter-spacing: 0;
 }
 
@@ -1118,9 +1119,6 @@ a {
         display: none;
     }
 
-    .numero {
-        font-size: 40px;
-    }
 }
 
 /* Na geração a cena da prensa toma o lugar da página. */
@@ -1323,8 +1321,11 @@ a {
         grid-template-columns: 1fr;
     }
 
+    /* Encostado no topo: centralizado, a sobra da altura mínima abria um
+       vão acima do nome do arquivo. */
     .mesa {
-        min-height: 300px;
+        justify-content: flex-start;
+        min-height: 0;
         border-right: 0;
         border-bottom: var(--borda);
     }
