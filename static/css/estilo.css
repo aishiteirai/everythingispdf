@@ -1024,6 +1024,78 @@ a {
     border-width: 2px;
 }
 
+/* ---------- Girar todas ---------- */
+
+.girar-todas {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    border-right: var(--borda);
+}
+
+/* O display do bloco venceria o atributo hidden. */
+.girar-todas[hidden] {
+    display: none;
+}
+
+.girar-todas-botao {
+    flex: 1;
+    padding: 10px 14px;
+    border: 0;
+    background: var(--creme);
+    color: var(--tinta);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 900;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.girar-todas-botao + .girar-todas-botao {
+    border-top: var(--borda);
+}
+
+.girar-todas-botao:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+}
+
+@media (hover: hover) {
+    .girar-todas-botao:hover:not(:disabled) {
+        background: var(--tinta);
+        color: var(--creme);
+    }
+}
+
+/* Celular: os dois botões viram uma linha acima da fita, senão espremem as
+   miniaturas entre eles e o "+ SOLTE MAIS". Grade em vez de flex com wrap:
+   a fita encolhe dentro da sua coluna em vez de quebrar a linha. */
+@media (max-width: 600px) {
+    /* Só com imagens: vazia, a área de soltar estica sozinha no flex. */
+    .galeria:not(.vazia) .trilho {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .girar-todas {
+        order: -1;
+        grid-column: 1 / -1;
+        flex-direction: row;
+        border-right: 0;
+        border-bottom: var(--borda);
+    }
+
+    .girar-todas-botao + .girar-todas-botao {
+        border-top: 0;
+        border-left: var(--borda);
+    }
+
+    /* Na grade, o "+ SOLTE MAIS" precisa da largura dita, não do flex-basis. */
+    .galeria:not(.vazia) .mais {
+        width: 150px;
+    }
+}
+
 /* ---------- "+ SOLTE MAIS" ---------- */
 
 .mais {

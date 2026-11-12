@@ -94,6 +94,14 @@
     <div class="trilho">
         {# Lista ordenada: a ordem visual e a ordem das paginas. #}
         <ol class="fita" id="fita" aria-label="Páginas, na ordem do PDF"></ol>
+        {# Escondido com menos de duas imagens: com uma so, e o mesmo que o
+           girar do palco. #}
+        <div class="girar-todas" id="girar-todas" hidden>
+            <button type="button" class="girar-todas-botao" data-gira-todas="-90"
+                    aria-label="Girar todas as imagens para a esquerda">↺ TODAS</button>
+            <button type="button" class="girar-todas-botao" data-gira-todas="90"
+                    aria-label="Girar todas as imagens para a direita">↻ TODAS</button>
+        </div>
 
         <label class="area mais" id="area">
             <span class="mais-ladrilhos" id="mais-ladrilhos" aria-hidden="true"></span>

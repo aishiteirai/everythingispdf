@@ -120,10 +120,38 @@ export function criaGaleria({ maxImagens, urls = URLS_DO_NAVEGADOR }) {
             if (posicao === -1) return false;
 
             const item = itens[posicao];
-            itens[posicao] = { ...item, rotacao: (item.rotacao + graus + 360) % 360 };
+            itens[posicao] = { ...item, rotacao: somaGiro(item.rotacao, graus) };
+            return true;
+        },
+
+        /**
+         * Gira todas as páginas de uma vez. Soma o giro a cada uma em vez de
+         * alinhar todas: a diferença que o usuário fez à mão continua.
+         */
+        giraTodas(graus) {
+            if (!itens.length) return false;
+
+            itens = itens.map((item) => ({ ...item, rotacao: somaGiro(item.rotacao, graus) }));
             return true;
         },
     };
+}
+
+/** Acumula em módulo 360: a API só aceita 0, 90, 180 e 270. */
+const somaGiro = (rotacao, graus) => (((rotacao + graus) % 360) + 360) % 360;
+
+/**
+ * Ângulo para desenhar na tela. A rotação guardada dá a volta em 360, mas
+ * a imagem não pode dar três quartos de volta para trás ao passar de 270
+ * para 0: o ângulo na tela anda pelo caminho curto a partir do último
+ * ângulo desenhado.
+ */
+export function anguloNaTela(anterior, rotacao) {
+    if (anterior === undefined) return rotacao;
+
+    const atual = ((anterior % 360) + 360) % 360;
+    const passo = ((rotacao - atual + 540) % 360) - 180;
+    return anterior + passo;
 }
 
 /**

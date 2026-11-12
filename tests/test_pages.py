@@ -97,6 +97,11 @@ class TestGaleria:
     def test_titulo(self, galeria):
         assert 'IMAGENS PARA PDF.' in galeria
 
+    def test_tem_girar_todas_nos_dois_sentidos(self, galeria):
+        sentidos = re.findall(r'<button[^>]*data-gira-todas="(-?\d+)"', galeria)
+
+        assert sentidos == ['-90', '90']
+
     def test_tem_palco_e_fita(self, galeria):
         assert 'id="palco"' in galeria and 'id="fita"' in galeria
 

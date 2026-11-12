@@ -8,7 +8,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { criaGaleria, margemEmFracao, proporcaoDaFolha } from '../../static/js/gallery.js';
+import {
+    anguloNaTela,
+    criaGaleria,
+    margemEmFracao,
+    proporcaoDaFolha,
+} from '../../static/js/gallery.js';
 
 /** Coleta as URLs criadas e revogadas, para provar que nada vaza. */
 function urlsDeTeste() {
@@ -123,6 +128,59 @@ test('gira so a pagina pedida', () => {
     galeria.gira(idDe(galeria, 'b'), 90);
 
     assert.deepEqual(galeria.itens().map((item) => item.rotacao), [0, 90]);
+});
+
+test('giraTodas soma o giro a cada pagina e preserva as diferencas', () => {
+    const { galeria } = galeriaCom(['a', 'b', 'c']);
+    galeria.gira(idDe(galeria, 'b'), 90);
+
+    assert.equal(galeria.giraTodas(90), true);
+
+    assert.deepEqual(galeria.itens().map((item) => item.rotacao), [90, 180, 90]);
+});
+
+test('giraTodas para a esquerda passa de zero para 270', () => {
+    const { galeria } = galeriaCom(['a', 'b']);
+
+    galeria.giraTodas(-90);
+
+    assert.deepEqual(galeria.itens().map((item) => item.rotacao), [270, 270]);
+});
+
+test('giraTodas quatro vezes volta ao original', () => {
+    const { galeria } = galeriaCom(['a', 'b']);
+
+    for (let volta = 0; volta < 4; volta += 1) galeria.giraTodas(90);
+
+    assert.deepEqual(galeria.itens().map((item) => item.rotacao), [0, 0]);
+});
+
+test('giraTodas mantem ordem e selecao', () => {
+    const { galeria } = galeriaCom(['a', 'b', 'c']);
+    galeria.seleciona(idDe(galeria, 'b'));
+
+    galeria.giraTodas(90);
+
+    assert.deepEqual(nomes(galeria), ['a', 'b', 'c']);
+    assert.equal(galeria.selecionado(), idDe(galeria, 'b'));
+});
+
+test('giraTodas numa galeria vazia devolve false', () => {
+    const { galeria } = galeriaCom([]);
+
+    assert.equal(galeria.giraTodas(90), false);
+});
+
+test('anguloNaTela segue o caminho curto ao passar de 270 para 0', () => {
+    // A rotacao guardada volta a 0, mas na tela a imagem continua girando
+    // para a direita em vez de dar tres quartos de volta para tras.
+    assert.equal(anguloNaTela(270, 0), 360);
+    assert.equal(anguloNaTela(0, 270), -90);
+    assert.equal(anguloNaTela(360, 90), 450);
+});
+
+test('anguloNaTela sem angulo anterior usa a rotacao', () => {
+    assert.equal(anguloNaTela(undefined, 180), 180);
 });
 
 test('remove revoga a URL que criou', () => {

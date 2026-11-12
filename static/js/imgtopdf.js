@@ -25,6 +25,7 @@ const ui = criaInterfaceDaGaleria({
     seleciona: (id) => aplica(() => galeria.seleciona(id)),
     giraEsquerda: (id) => aplica(() => galeria.gira(id, -90)),
     giraDireita: (id) => aplica(() => galeria.gira(id, 90)),
+    giraTodas: (graus) => aplica(() => galeria.giraTodas(graus)),
     moveTras: (id) => aplica(() => galeria.move(id, -1)),
     moveFrente: (id) => aplica(() => galeria.move(id, 1)),
     remove: (id) => aplica(() => galeria.remove(id)),

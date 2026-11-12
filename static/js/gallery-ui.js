@@ -12,7 +12,7 @@
 
 import { ESPERA_NO_TOQUE_MS, tornaArrastavel } from './drag.js';
 import { criaFeedback } from './feedback.js';
-import { focoDepoisDe, margemEmFracao, proporcaoDaFolha } from './gallery.js';
+import { anguloNaTela, focoDepoisDe, margemEmFracao, proporcaoDaFolha } from './gallery.js';
 import { criaPrensa } from './press.js';
 import { criaGradeDeLadrilhos } from './tile-grid.js';
 import { colunasDaGrade } from './tiles.js';
@@ -35,6 +35,7 @@ const ELEMENTOS = {
     cena: 'cena',
     fita: 'fita',
     maisLadrilhos: 'mais-ladrilhos',
+    girarTodas: 'girar-todas',
     barra: 'barra',
     preenchimento: 'preenchimento',
     recado: 'recado',
@@ -67,6 +68,11 @@ export function criaInterfaceDaGaleria(acoes) {
        depende delas e só se sabe depois do load. */
     const dimensoes = new Map();
 
+    /* Último ângulo desenhado de cada imagem, por id. A rotação guardada
+       volta a 0 depois de 270; o ângulo na tela continua andando para a
+       imagem não girar para trás (ver anguloNaTela). */
+    const angulos = new Map();
+
     let itensDesenhados = [];
     let selecionadoAtual = null;
     let opcoesAtuais = { tamanho: 'a4', margemMm: 0 };
@@ -88,8 +94,10 @@ export function criaInterfaceDaGaleria(acoes) {
         folha.style.setProperty('--margem-y', `${horizontal * proporcao * 100}%`);
 
         // Quem gira de verdade é o servidor; aqui é só a prévia.
+        const angulo = anguloNaTela(angulos.get(item.id), item.rotacao);
+        angulos.set(item.id, angulo);
         imagem.dataset.deitada = String(item.rotacao % 180 !== 0);
-        imagem.style.setProperty('--rotacao', `${item.rotacao}deg`);
+        imagem.style.setProperty('--rotacao', `${angulo}deg`);
     }
 
     function lembraDimensoes(imagem, id) {
@@ -143,12 +151,29 @@ export function criaInterfaceDaGaleria(acoes) {
         imagem.src = item.url;
         area.append(imagem);
         folha.append(area);
+
+        // A fita é recriada a cada desenho, então a miniatura nasce já no
+        // ângulo novo e não gira. Nascer no ângulo de antes e trocar no
+        // quadro seguinte faz ela girar junto com a página do palco.
+        const antes = angulos.get(item.id);
         aplicaFolha(folha, imagem, item);
+        const depois = angulos.get(item.id);
+        if (antes !== undefined && antes !== depois) {
+            imagem.style.setProperty('--rotacao', `${antes}deg`);
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                imagem.style.setProperty('--rotacao', `${depois}deg`);
+            }));
+        }
 
         botao.append(numero, folha);
         li.append(botao);
         return li;
     }
+
+    el.girarTodas.addEventListener('click', (evento) => {
+        const botao = evento.target.closest('[data-gira-todas]');
+        if (botao) acoes.giraTodas?.(Number(botao.dataset.giraTodas));
+    });
 
     el.fita.addEventListener('click', (evento) => {
         const li = evento.target.closest('[data-id]');
@@ -279,6 +304,8 @@ export function criaInterfaceDaGaleria(acoes) {
             selecionadoAtual = selecionado;
 
             el.galeria.classList.toggle('vazia', itens.length === 0);
+            // Com uma imagem só, girar todas é o mesmo que girar a do palco.
+            el.girarTodas.hidden = itens.length < 2;
             el.fita.replaceChildren(
                 ...itens.map((item, indice) => {
                     const li = itemDaFita(item, indice, item.id === selecionado);
@@ -294,6 +321,7 @@ export function criaInterfaceDaGaleria(acoes) {
             // Dimensões de quem saiu não servem mais.
             const vivos = new Set(itens.map((item) => item.id));
             [...dimensoes.keys()].forEach((id) => vivos.has(id) || dimensoes.delete(id));
+            [...angulos.keys()].forEach((id) => vivos.has(id) || angulos.delete(id));
 
             if (ultimaAcao) {
                 devolveFoco(focoDepoisDe(ultimaAcao.acao, ultimaAcao.id, itensDesenhados, itens));
@@ -320,6 +348,9 @@ export function criaInterfaceDaGaleria(acoes) {
             el.opcoes.disabled = enviando;
             el.fita.classList.toggle('travada', enviando);
             el.entrada.disabled = enviando;
+            el.girarTodas.querySelectorAll('button').forEach((botao) => {
+                botao.disabled = enviando;
+            });
         },
 
         marcaArrastando(arrastando) {
